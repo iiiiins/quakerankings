@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/quakerankings/static/css/main.e08f3bf7.css",
+    "main.js": "/quakerankings/static/js/main.1934f31a.js",
+    "static/js/198.34818101.chunk.js": "/quakerankings/static/js/198.34818101.chunk.js",
+    "static/media/quakelive_logo.png": "/quakerankings/static/media/quakelive_logo.e90c61a92097f75612e8.png",
+    "static/media/x_logo.png": "/quakerankings/static/media/x_logo.1d1713557c1d4807461d.png",
+    "static/media/quakechampions_logo.png": "/quakerankings/static/media/quakechampions_logo.d80233acfa0dafb9b995.png",
+    "static/media/tv_logo.png": "/quakerankings/static/media/tv_logo.d1051c2ba5f3ba345730.png",
+    "static/media/quake4_logo.png": "/quakerankings/static/media/quake4_logo.48c58019de2774686a55.png",
+    "static/media/quake2_logo.png": "/quakerankings/static/media/quake2_logo.a9f31268dc3dfba65254.png",
+    "static/media/diabotical_logo.png": "/quakerankings/static/media/diabotical_logo.dccee53369f2d35a96ce.png",
+    "static/media/quake3_logo.png": "/quakerankings/static/media/quake3_logo.22a84450a4a5f278bee1.png",
+    "static/media/quakeworld_logo.png": "/quakerankings/static/media/quakeworld_logo.e3e52695928832930229.png",
+    "index.html": "/quakerankings/index.html",
+    "main.e08f3bf7.css.map": "/quakerankings/static/css/main.e08f3bf7.css.map",
+    "main.1934f31a.js.map": "/quakerankings/static/js/main.1934f31a.js.map",
+    "198.34818101.chunk.js.map": "/quakerankings/static/js/198.34818101.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e08f3bf7.css",
+    "static/js/main.1934f31a.js"
+  ]
+}
