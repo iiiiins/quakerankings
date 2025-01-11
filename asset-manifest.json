@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/quakerankings/static/css/main.e08f3bf7.css",
-    "main.js": "/quakerankings/static/js/main.1934f31a.js",
+    "main.js": "/quakerankings/static/js/main.795c8fb9.js",
     "static/js/198.34818101.chunk.js": "/quakerankings/static/js/198.34818101.chunk.js",
     "static/media/quakelive_logo.png": "/quakerankings/static/media/quakelive_logo.e90c61a92097f75612e8.png",
     "static/media/x_logo.png": "/quakerankings/static/media/x_logo.1d1713557c1d4807461d.png",
@@ -14,11 +14,11 @@
     "static/media/quakeworld_logo.png": "/quakerankings/static/media/quakeworld_logo.e3e52695928832930229.png",
     "index.html": "/quakerankings/index.html",
     "main.e08f3bf7.css.map": "/quakerankings/static/css/main.e08f3bf7.css.map",
-    "main.1934f31a.js.map": "/quakerankings/static/js/main.1934f31a.js.map",
+    "main.795c8fb9.js.map": "/quakerankings/static/js/main.795c8fb9.js.map",
     "198.34818101.chunk.js.map": "/quakerankings/static/js/198.34818101.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e08f3bf7.css",
-    "static/js/main.1934f31a.js"
+    "static/js/main.795c8fb9.js"
   ]
 }
