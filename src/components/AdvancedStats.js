@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Table,
+  Button,
   Container,
   TableContainer,
   TableHead,
@@ -14,6 +15,9 @@ import {
   FormControl,
   InputLabel,
   Select,
+  List,
+  ListItem,
+  ListItemText,
   TextField,
   MenuItem,
   Box,
@@ -29,8 +33,15 @@ import quake3Logo from "../logos/quake3_logo.png";
 import quake4Logo from "../logos/quake4_logo.png";
 import quakeLiveLogo from "../logos/quakelive_logo.png";
 import quakeChampionsLogo from "../logos/quakechampions_logo.png";
+import { Line } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from "chart.js";
 
-const PlayerList = ({
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+
+
+
+
+const AdvancedStats = ({
   pointsConfig,
   pointsVisibility,
   gameWeights,
@@ -41,7 +52,9 @@ const PlayerList = ({
   modeVisibility,
 }) => {
   const [totalTournaments, setTotalTournaments] = useState(0);
+  
   const [visiblePlayers, setVisiblePlayers] = useState([]);
+  const [processedPlayers, setProcessedPlayers] = useState([]);
   const [loadMore, setLoadMore] = useState(100);
   const [filteredTournaments, setFilteredTournaments] = useState(0);
   const [players, setPlayers] = useState([]);
@@ -55,8 +68,13 @@ const PlayerList = ({
   const [topTournamentsLimit, setTopTournamentsLimit] = useState(25);
   const [topTournamentsFilter, setTopTournamentsFilter] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [lanOnly, setLanOnly] = useState(false);
   const [powerRanking, setPowerRanking] = useState(false);
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [playerIndex, setPlayerIndex] = useState(0);
+  const [chartTitle, setChartTitle] = useState("Overall Max Points Over Time");
+  const [selectedToggle, setSelectedToggle] = useState("overall"); // 'performance' or 'overall'
   const [settings, setSettings] = useState({
     pointsConfig: { first: 100, second: 50, top4: 25, top8: 10 },
     pointsVisibility: { first: true, second: true, top4: false, top8: true },
@@ -83,6 +101,9 @@ const PlayerList = ({
     modeWeights: { "Duel": 100, "2v2": 100, "TDM": 100, "CTF": 100, "CA": 100, "SAC": 100, "WIP": 100, "DBT": 100 },
     modeVisibility: { "Duel": true, "2v2": true, "TDM": true, "CTF": true, "CA": true, "SAC": true, "WIP": true, "DBT": true },
   });
+
+  
+  
 
   const games = [
     "All",
@@ -121,26 +142,178 @@ const PlayerList = ({
   useEffect(() => {
   const getFullList = async() => {
     const tournamentList = await fetchListTournaments();
+    console.log("supabase data", tournamentList)
     setTournamentList(tournamentList);
   }
   getFullList();
 }, []);
 
-useEffect(() => {
-  const handleScroll = () => {
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-    if (scrollTop + clientHeight >= scrollHeight - 10) {
-      setLoadMore((prev) => prev + 100); // Load 100 more players
+
+
+
+const getPlayerColor = (playerName) => {
+  const colors = [
+    "#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33A1",
+    "#33FFF1", "#FFA833", "#8333FF", "#33FF83", "#FF3381",
+  ];
+  const hash = Array.from(playerName).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+};
+
+// Helper to generate random colors
+const getRandomColor = () =>
+  `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
+    Math.random() * 255
+  )}, ${Math.floor(Math.random() * 255)}, 1)`;
+
+  // Update top players when filteredPlayers changes
+  useEffect(() => {
+    if (filteredPlayers.length > 0) {
+      setSelectedPlayers(filteredPlayers.slice(0, 5)); // Default to the top 5 players
     }
+  }, [filteredPlayers]);
+  
+  // Pre-process players to calculate points by year
+  useEffect(() => {
+    const calculatePointsByYear = (player) => {
+      const pointsByYear = {};
+      player.tournaments.forEach((tournament) => {
+        const year = tournament.year;
+        pointsByYear[year] = (pointsByYear[year] || 0) + tournament.points;
+      });
+      return { ...player, pointsByYear };
+    };
+
+    // Process all players and update state
+    const processed = filteredPlayers.map(calculatePointsByYear);
+    setProcessedPlayers(processed);
+
+     // Set the initial top players (first 5)
+     setSelectedPlayers(processed.slice(0, 5));
+    }, [filteredPlayers]);
+
+  // Generate labels (years)
+  const labels = Array.from(
+    new Set(
+      processedPlayers.flatMap((player) => Object.keys(player.pointsByYear || {}))
+    )
+  ).sort();
+
+
+  // Generate datasets
+  const datasets = selectedPlayers.map((player, index) => ({
+    label: player.player,
+    data: labels.map((year) => player.pointsByYear?.[year] || 0), // Points for each year
+    borderColor: getPlayerColor(player.player), // Consistent color
+    backgroundColor: "rgba(0, 0, 0, 0)",
+    fill: false,
+    tension: 0.3, // Smooth curves
+  }));
+
+  // Chart data
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [],
+  });
+
+
+   // Chart options
+   const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { display: true },
+      tooltip: { mode: "index", intersect: false },
+    },
+    scales: {
+      x: { title: { display: true, text: "Years" } },
+      y: { title: { display: true, text: "Points" }, beginAtZero: true },
+    },
   };
 
-  window.addEventListener("scroll", handleScroll);
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
+  // Selecting players
+  const handleCheckboxChange = (player) => {
+    if (!player.pointsByYear) {
+      const pointsByYear = {};
+      player.tournaments.forEach((tournament) => {
+        const year = tournament.year; // Ensure the key is lowercase "year"
+        pointsByYear[year] = (pointsByYear[year] || 0) + tournament.points;
+      });
+      player.pointsByYear = pointsByYear;
+    }
+  
+    setSelectedPlayers((prev) =>
+      prev.some((p) => p.player === player.player)
+        ? prev.filter((p) => p.player !== player.player) // Remove player
+        : [...prev, player] // Add player
+    );
+  };
 
-useEffect(() => {
-  setVisiblePlayers(filteredPlayers.slice(0, loadMore));
-}, [filteredPlayers, loadMore]);
+  //Toggle Mode
+  const toggleMode = () => {
+    setSelectedToggle((prev) => {
+      const newMode = prev === "overall" ? "performance" : "overall";
+      setChartTitle(
+        newMode === "overall"
+          ? "Overall Max Points Over Time"
+          : "Player Performance Per Year"
+      );
+      updateChartData(newMode); // Ensure the chart updates
+      return newMode;
+    });
+  };
+
+  // Calculate overall max points
+  const calculateOverallMaxPoints = (tournaments) => {
+    const pointsByYear = {};
+    let cumulativePoints = 0;
+  
+    tournaments
+      .sort((a, b) => a.year - b.year) // Ensure tournaments are sorted by year
+      .forEach((tournament) => {
+        cumulativePoints += tournament.points;
+        pointsByYear[tournament.year] = cumulativePoints;
+      });
+  
+    return pointsByYear;
+  };
+
+  //Update Chart Data based on Toggle
+  const updateChartData = (toggle) => {
+    const datasets = selectedPlayers.map((player) => {
+      const pointsByYear =
+        toggle === "performance"
+          ? player.pointsByYear // Points gained per year
+          : calculateOverallMaxPoints(player.tournaments); // Cumulative points
+  
+      // Ensure color assignment
+      const color = getPlayerColor(player.player);
+  
+      return {
+        label: player.player,
+        data: Object.entries(pointsByYear).map(([year, points]) => ({
+          x: year,
+          y: points,
+        })),
+        borderColor: color,
+        backgroundColor: color,
+        fill: false,
+      };
+    });
+  
+    const labels = [...new Set(datasets.flatMap((ds) => ds.data.map((d) => d.x)))].sort();
+  
+    setChartData({
+      labels,
+      datasets,
+    });
+  };
+
+  useEffect(() => {
+    updateChartData(selectedToggle);
+    console.log("updating chart data, power ranking is ", powerRanking);
+  }, [selectedToggle, selectedPlayers]);
+
 
   //CALCULATE PLAYERS AND FILTERED TOURNAMENTS AT EVERY CHANGE
   useEffect(() => {
@@ -287,20 +460,23 @@ useEffect(() => {
         console.error("No players found in playerStats.");
       }
       
+      
       if (powerRanking) {
+        console.log("Calculating power rankings...");
         players.forEach((player) => {
           // Sort tournaments by points
           player.tournaments.sort((a, b) => b.points - a.points);
   
           // Filter to top 25 tournaments
           const topTournaments = player.tournaments.slice(0, 25);
+          player.tournaments = player.tournaments.slice(0, 25);
   
           // Recalculate stats based on top tournaments
-          player.points = Math.round(topTournaments.reduce((sum, t) => sum + t.points, 0) || 0);
+          player.points = Math.round(player.tournaments.reduce((sum, t) => sum + t.points, 0) || 0);
           player.placements = { first: 0, second: 0, top4: 0, top8: 0 };
-          player.participations = topTournaments.length;
+          player.participations = player.tournaments.length;
   
-          topTournaments.forEach((t) => {
+          player.tournaments.forEach((t) => {
             if (t.placement === "first") player.placements.first++;
             if (t.placement === "second") player.placements.second++;
             if (t.placement === "top4") player.placements.top4++;
@@ -379,15 +555,39 @@ useEffect(() => {
     setYearRange(newValue);
   };
 
-  const handleSearch = (event) => {
-    const query = event.target.value.toLowerCase();
+  const handleSearch = (query) => {
     setSearchQuery(query);
+    if (query.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
 
-    const searchedPlayers = players.filter((player) =>
-      player.player.toLowerCase().includes(query)
+    const results = filteredPlayers
+      .filter((player) =>
+        player.player.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, 10); // Show top 10 matches
+    setSearchResults(results);
+  };
+
+  const handleAddPlayer = (player) => {
+    setSearchQuery(""); // Clear search
+    setSearchResults([]); // Clear results
+
+    if (!player.pointsByYear) {
+      const pointsByYear = {};
+      player.tournaments.forEach((tournament) => {
+        const year = tournament.year;
+        pointsByYear[year] = (pointsByYear[year] || 0) + tournament.points;
+      });
+      player.pointsByYear = pointsByYear;
+    }
+
+    setSelectedPlayers((prev) =>
+      prev.some((p) => p.player === player.player)
+        ? prev // Player already exists; do nothing
+        : [...prev, player] // Add player
     );
-
-    setFilteredPlayers(searchedPlayers);
   };
 
   return (
@@ -440,15 +640,44 @@ useEffect(() => {
             />
           </Box>
 
-          <Box padding="16px" display="flex" justifyContent="center">
-            <TextField
-              label="Search Player"
-              variant="outlined"
-              value={searchQuery}
-              onChange={handleSearch}
-              style={{ width: "300px" }}
-            />
-          </Box>
+      {/* Search Bar */}
+      <div>
+      <TextField 
+        label="Search Players"
+        value={searchQuery}
+        onChange={(e) => handleSearch(e.target.value)}
+        style={{ marginBottom: "10px", width: "200px" }}
+      />
+
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            background: "#333",
+            border: "1px solid #555",
+            borderRadius: "5px",
+            padding: "10px",
+            width: "200px",
+            zIndex: 1000,
+          }}
+        >
+          {searchResults.map((player) => (
+            <div
+              key={player.player}
+              onClick={() => handleAddPlayer(player)}
+              style={{
+                cursor: "pointer",
+                padding: "5px 10px",
+                borderBottom: "1px solid #555",
+              }}
+            >
+              {player.player} - {player.points} Points
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
 
           <FormControlLabel
             control={
@@ -477,178 +706,60 @@ useEffect(() => {
 
         {/* Summary Message */}
         <Typography variant="subtitle1" align="left" gutterBottom>
+          CHARTS PAGE
           Showing {filteredPlayers.length} players in{" "}
           {totalTournaments - filteredTournaments} tournaments (
           {filteredTournaments} tournaments filtered out of {totalTournaments})
         </Typography>
 
-        <Table>
-          <TableHead className="table-header">
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={sortBy === "Rank"}
-                  direction={sortBy === "Rank" ? sortOrder : "asc"}
-                  onClick={() => handleSort("Rank")}
-                >
-                  Rank
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={sortBy === "player"}
-                  direction={sortBy === "player" ? sortOrder : "asc"}
-                  onClick={() => handleSort("player")}
-                >
-                  Player
-                </TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel
-                  active={sortBy === "games"}
-                  direction={sortBy === "games" ? sortOrder : "asc"}
-                  onClick={() => handleSort("games")}
-                >
-                  Games Played
-                </TableSortLabel>
-              </TableCell>
-              <TableCell className="modes-header">
-                <TableSortLabel
-                  active={sortBy === "modes"}
-                  direction={sortBy === "modes" ? sortOrder : "asc"}
-                  onClick={() => handleSort("modes")}
-                >
-                  Modes Played
-                </TableSortLabel>
-              </TableCell>
-              <TableCell class="gold-header" align="right">
-                <TableSortLabel
-                  active={sortBy === "1st"}
-                  direction={sortBy === "1st" ? sortOrder : "asc"}
-                  onClick={() => handleSort("1st")}
-                >
-                  1st
-                </TableSortLabel>
-              </TableCell>
-              <TableCell class="silver-header" align="right">
-                <TableSortLabel
-                  active={sortBy === "2nd"}
-                  direction={sortBy === "2nd" ? sortOrder : "asc"}
-                  onClick={() => handleSort("2nd")}
-                >
-                  2nd
-                </TableSortLabel>
-              </TableCell>
-              <TableCell class="bronze-header" align="right">
-                <TableSortLabel
-                  active={sortBy === "Top4"}
-                  direction={sortBy === "Top4" ? sortOrder : "asc"}
-                  onClick={() => handleSort("Top4")}
-                >
-                  Top4
-                </TableSortLabel>
-              </TableCell>
-              <TableCell class="copper-header" align="right">
-                <TableSortLabel
-                  active={sortBy === "Top8"}
-                  direction={sortBy === "Top8" ? sortOrder : "asc"}
-                  onClick={() => handleSort("Top8")}
-                >
-                  Top8
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right">
-                <TableSortLabel
-                  active={sortBy === "Participations"}
-                  direction={sortBy === "Participations" ? sortOrder : "asc"}
-                  onClick={() => handleSort("participations")}
-                >
-                  Participations
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="right">
-                <TableSortLabel
-                  active={sortBy === "Points"}
-                  direction={sortOrder}
-                  onClick={() => handleSort("Points")}
-                >
-                  Points
-                </TableSortLabel>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredPlayers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  No results found
-                </TableCell>
-              </TableRow>
-            ) : (
-              visiblePlayers.map((player) => (
-                <TableRow key={player.player}>
-                  <TableCell>{player.Rank}</TableCell>
-                  <TableCell className="players-list">
-                    <Link to={`/players/${player.player}`}>
-                      {player.player}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="games-list" align="right">
-                    {player.games.split(", ").map((game) =>
-                      gameLogos[game] ? (
-                        <img
-                          key={game}
-                          src={gameLogos[game]}
-                          alt={game}
-                          title={game}
-                          style={{
-                            width: "30px",
-                            height: "30px",
-                            marginRight: "5px",
-                          }}
-                        />
-                      ) : null
-                    )}
-                  </TableCell>
-                  <TableCell className="modes-list" align="right">{player.modes || "N/A"}</TableCell>
-                  <TableCell
-                    className="numbers-list gold-placement"
-                    align="right"
-                  >
-                    {player.placements?.first || 0}
-                  </TableCell>
-                  <TableCell
-                    className="numbers-list silver-placement"
-                    align="right"
-                  >
-                    {player.placements?.second || 0}
-                  </TableCell>
-                  <TableCell
-                    className="numbers-list bronze-placement"
-                    align="right"
-                  >
-                    {player.placements?.top4 || 0}
-                  </TableCell>
-                  <TableCell
-                    className="numbers-list copper-placement"
-                    align="right"
-                  >
-                    {player.placements?.top8 || 0}
-                  </TableCell>
-                  <TableCell className="numbers-list" align="right">
-                    {player.participations || 0}
-                  </TableCell>
-                  <TableCell className="numbers-list" align="right">
-                    {player.points || 0}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <Typography className="toggle-title" variant="h4" align="center" gutterBottom>
+        {chartTitle}
+      </Typography>
+
+      {/* Toggle Button */}
+      <Button onClick={toggleMode} style={{ marginBottom: "10px" }}>
+        {selectedToggle === "performance"
+          ? "Switch to Overall Max Points"
+          : "Switch to Performance Per Year"}
+      </Button>
+
+      {/* Line Chart */}
+      <Box className="chart-box" >
+        {selectedPlayers.length > 0 ? (
+          <Line data={chartData} options={chartOptions} />
+        ) : (
+          <Typography variant="h6" align="center" color="textSecondary">
+            No data to display. Adjust filters to see results.
+          </Typography>
+        )}
+      </Box>
+
+      {/* Player Selection */}
+      <Box className="chart-buttons" flex={1}>
+        <Typography variant="h6">Player Selection</Typography>
+        <List>
+          {filteredPlayers.slice(0, 25).map((player) => (
+            <ListItem 
+            className="player-list-item"
+            key={player.player}>
+              <Checkbox
+                checked={selectedPlayers.some(
+                  (selectedPlayer) => selectedPlayer.player === player.player
+                )}
+                onChange={() => handleCheckboxChange(player)}
+              />
+              <ListItemText
+                primary={`${player.player} - ${player.points} points`}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
       </TableContainer>
     </Container>
   );
 };
 
-export default PlayerList;
+
+
+export default AdvancedStats;

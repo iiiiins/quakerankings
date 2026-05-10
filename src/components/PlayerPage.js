@@ -40,6 +40,8 @@ const PlayerPage = ({
   gameVisibility,
   tierWeights,
   tierVisibility,
+  modeWeights,
+  modeVisibility,
 }) => {
   const { playerName } = useParams();
   const navigate = useNavigate();
@@ -47,8 +49,9 @@ const PlayerPage = ({
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState({});
   const [selectedGame, setSelectedGame] = useState("None");
+  const [selectedMode, setSelectedMode] = useState("None");
   const [lanOnly, setLanOnly] = useState(false);
-  const [yearRange, setYearRange] = useState([2000, 2024]);
+  const [yearRange, setYearRange] = useState([1996, 2025]);
   //console.log("player page called");
   //console.log("Points Config:", pointsConfig);
   //console.log("Points Visibility:", pointsVisibility);
@@ -74,20 +77,24 @@ const PlayerPage = ({
 
       const query = supabase.from("Tournaments").select();
       query.or([
-        `1st.ilike.%${normalizedPlayerName}%`,
-        `2nd.ilike.%${normalizedPlayerName}%`,
-        `3rd.ilike.%${normalizedPlayerName}%`,
-        `4th.ilike.%${normalizedPlayerName}%`,
-        `5th.ilike.%${normalizedPlayerName}%`,
-        `6th.ilike.%${normalizedPlayerName}%`,
-        `7th.ilike.%${normalizedPlayerName}%`,
-        `8th.ilike.%${normalizedPlayerName}%`,
+        `1st.eq.${normalizedPlayerName}`,
+        `2nd.eq.${normalizedPlayerName}`,
+        `3rd.eq.${normalizedPlayerName}`,
+        `4th.eq.${normalizedPlayerName}`,
+        `5th.eq.${normalizedPlayerName}`,
+        `6th.eq.${normalizedPlayerName}`,
+        `7th.eq.${normalizedPlayerName}`,
+        `8th.eq.${normalizedPlayerName}`,
       ]);
 
       query.gte("Year", yearRange[0]).lte("Year", yearRange[1]);
 
       if (selectedGame !== "None") {
         query.eq("Game", selectedGame);
+      }
+
+      if (selectedMode !== "None") {
+        query.eq("Mode", selectedMode);
       }
 
       if (lanOnly) {
@@ -106,6 +113,11 @@ const PlayerPage = ({
       const filteredTournaments = tournaments.filter((tournament) => {
         // Exclude tournaments with unchecked game visibility
         if (!gameVisibility[tournament.Game]) {
+          return false;
+        }
+
+        // Exclude tournaments with unchecked mode visibility
+        if (!modeVisibility[tournament.Mode]) {
           return false;
         }
 
@@ -246,45 +258,41 @@ const PlayerPage = ({
         );
 
         if (playerPlacement) {
+          const tierWeight = tierWeights[tournament.Tier] || 100;
+          const gameWeight = gameWeights[tournament.Game] || 100;
+          const modeWeight = modeWeights[tournament.Mode] || 100;
+        
           switch (playerPlacement[0]) {
             case "1st":
               points =
-                (pointsConfig.first *
-                  (tierWeights[tournament.Tier] || 100) *
-                  (gameWeights[tournament.Game] || 100)) /
-                10000;
+                (pointsConfig.first * tierWeight * gameWeight * modeWeight) / 1000000;
               break;
             case "2nd":
               points =
-                (pointsConfig.second *
-                  (tierWeights[tournament.Tier] || 100) *
-                  (gameWeights[tournament.Game] || 100)) /
-                10000;
+                (pointsConfig.second * tierWeight * gameWeight * modeWeight) / 1000000;
               break;
             case "3rd":
             case "4th":
               points =
-                (pointsConfig.top4 *
-                  (tierWeights[tournament.Tier] || 100) *
-                  (gameWeights[tournament.Game] || 100)) /
-                10000;
+                (pointsConfig.top4 * tierWeight * gameWeight * modeWeight) / 1000000;
               break;
             case "5th":
             case "6th":
             case "7th":
             case "8th":
               points =
-                (pointsConfig.top8 *
-                  (tierWeights[tournament.Tier] || 100) *
-                  (gameWeights[tournament.Game] || 100)) /
-                10000;
+                (pointsConfig.top8 * tierWeight * gameWeight * modeWeight) / 1000000;
               break;
             default:
+              console.log("Unexpected Placement:", playerPlacement[0]);
               points = 0;
           }
+        
+          console.log("Calculated Points:", points);
+          totalPoints += points;
+          console.log("Updated Total Points:", totalPoints);
         }
 
-        totalPoints += points;
 
         if (!groupedTournaments[game]) {
           groupedTournaments[game] = {
@@ -320,6 +328,7 @@ const PlayerPage = ({
   }, [
     playerName,
     selectedGame,
+    selectedMode,
     lanOnly,
     yearRange,
     pointsConfig,
@@ -328,6 +337,8 @@ const PlayerPage = ({
     gameVisibility,
     tierWeights,
     tierVisibility,
+    modeWeights,
+    modeVisibility,
   ]);
 
   const calculateYearRanges = (years) => {
@@ -392,15 +403,7 @@ const PlayerPage = ({
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Container>
-        <Button
-          className="home-button"
-          variant="contained"
-          color="primary"
-          style={{ marginBottom: "20px" }}
-          onClick={() => navigate("/")}
-        >
-          Home
-        </Button>
+        
         <Typography variant="h3" align="center" gutterBottom>
           {playerName}
         </Typography>
@@ -445,6 +448,24 @@ const PlayerPage = ({
               <MenuItem value="Quake Champions">Quake Champions</MenuItem>
             </Select>
           </FormControl>
+          <FormControl>
+            <InputLabel>Mode</InputLabel>
+            <Select
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value)}
+              style={{ width: "200px" }}
+            >
+              <MenuItem value="None">All Modes</MenuItem>
+              <MenuItem value="Duel">Duel</MenuItem>
+              <MenuItem value="2v2">2vs2</MenuItem>
+              <MenuItem value="TDM">Team Deathmatch 4v4</MenuItem>
+              <MenuItem value="CTF">Capture the Flag</MenuItem>
+              <MenuItem value="CA">Clan Arena</MenuItem>
+              <MenuItem value="SAC">Sacrifice</MenuItem>
+              <MenuItem value="WIP">Wipeout</MenuItem>
+              <MenuItem value="DBT">McGuffin+Extinction+Wipeout</MenuItem>
+            </Select>
+          </FormControl>
           <FormControlLabel
             control={
               <Checkbox
@@ -462,8 +483,8 @@ const PlayerPage = ({
               value={yearRange}
               onChange={(e, newValue) => setYearRange(newValue)}
               valueLabelDisplay="auto"
-              min={2000}
-              max={2024}
+              min={1996}
+              max={2025}
             />
           </Box>
         </Box>
@@ -488,6 +509,19 @@ const PlayerPage = ({
                         onClick={() => handleSort(game, "Event_Name")}
                       >
                         Event Name
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={sortConfig[game]?.column === "Mode"}
+                        direction={
+                          sortConfig[game]?.column === "Mode"
+                            ? sortConfig[game]?.direction
+                            : "asc"
+                        }
+                        onClick={() => handleSort(game, "Mode")}
+                      >
+                        Mode
                       </TableSortLabel>
                     </TableCell>
                     <TableCell>
@@ -561,6 +595,7 @@ const PlayerPage = ({
                   {data.tournaments.map((tournament) => (
                     <TableRow key={tournament.id}>
                       <TableCell>{tournament.Event_Name}</TableCell>
+                      <TableCell>{tournament.Mode}</TableCell>
                       <TableCell>{tournament.Year}</TableCell>
                       <TableCell
                         className={

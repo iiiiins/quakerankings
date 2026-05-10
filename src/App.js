@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import PlayerList from "./components/PlayerList";
 import PlayerPage from "./components/PlayerPage";
+import AdvancedStats from "./components/AdvancedStats";
+import ReactGA from "react-ga4";
+ReactGA.initialize("G-X11M9568HY");
+
 import {
   Box,
   Button,
@@ -21,6 +25,7 @@ import { fetchPlayers } from "./services/fetchPlayersByGame";
 import "./App.css";
 import twitterLogo from "./logos/x_logo.png";
 import twitchLogo from "./logos/tv_logo.png";
+import AnalyticsTracker from "./AnalyticsTracker";
 
 // Create a dark theme for the app
 const darkTheme = createTheme({
@@ -30,10 +35,10 @@ const darkTheme = createTheme({
 });
 
 const App = () => {
+  
   const [lanOnly, setLanOnly] = useState(false); // Default to false (no filtering)
-
+  const [powerRanking, setPowerRanking] = useState(false); // Default to false (no filtering) 
   const [yearRange, setYearRange] = useState([1996, 2025]); // Default range
-
   const [selectedGame, setSelectedGame] = useState("All"); // Default to "All"
 
   const [selectedMode, setSelectedMode] = useState("All"); // Default to "All"
@@ -87,6 +92,28 @@ const App = () => {
     4: true,
     5: true,
   });
+
+  const [modeVisibility, setModeVisibility] = useState({
+    "Duel": true,
+    "2v2": true,
+    "TDM": true,
+    "CTF": true,
+    "CA": true,
+    "SAC": true,
+    "WIP": true,
+    "DBT": true,
+  });
+
+  const [modeWeights, setModeWeights] = useState({
+    "Duel": 100,
+    "2v2": 100,
+    "TDM": 100,
+    "CTF": 100,
+    "CA": 100,
+    "SAC": 100,
+    "WIP": 100,
+    "DBT": 100,
+  });
   //console.log("Points Config:", pointsConfig);
   //console.log("Points Visibility:", pointsVisibility);
 
@@ -97,37 +124,6 @@ const App = () => {
   //console.log("Tier Visibility:", tierVisibility);
   const [players, setPlayers] = useState([]);
 
-  useEffect(() => {
-    const fetchAndRecalculate = async () => {
-      const updatedPlayers = await fetchPlayers(
-        selectedGame,
-        selectedMode,
-        yearRange,
-        lanOnly,
-        pointsConfig,
-        pointsVisibility,
-        gameWeights,
-        gameVisibility,
-        tierWeights,
-        tierVisibility
-      );
-      setPlayers(updatedPlayers);
-    };
-
-    fetchAndRecalculate();
-  }, [
-    selectedGame,
-    selectedMode,
-    yearRange,
-    lanOnly,
-    pointsConfig,
-    pointsVisibility,
-    gameWeights,
-    gameVisibility,
-    tierWeights,
-    tierVisibility,
-  ]);
-
   const [anchorEl, setAnchorEl] = useState(null);
   const handleSettingsClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -137,16 +133,37 @@ const App = () => {
   };
   const isOpen = Boolean(anchorEl);
 
+  
+
   return (
     <ThemeProvider theme={darkTheme}>
+      
       <CssBaseline />
       <Router>
+      <AnalyticsTracker />
         <Container>
           <TableContainer component={Paper}>
             <Typography className="title-top" variant="h4" align="center" gutterBottom>
               Quake Player Rankings
             </Typography>
-
+            <div className="stats-div">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => (window.location.hash = "#/")}
+                style={{ margin: "20px" }}
+              >
+                Home
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => (window.location.hash = "#/charts")}
+                style={{ margin: "20px" }}
+              >
+                Advanced Stats
+              </Button>
+            </div>
             <Box
               display="flex"
               justifyContent="flex-end"
@@ -159,6 +176,7 @@ const App = () => {
                 onClick={handleSettingsClick}
                 aria-controls="settings-menu"
                 aria-haspopup="true"
+                className="settings-button"
               >
                 <SettingsIcon />
               </IconButton>
@@ -193,6 +211,10 @@ const App = () => {
                   setTierWeights={setTierWeights}
                   tierVisibility={tierVisibility}
                   setTierVisibility={setTierVisibility}
+                  modeVisibility={modeVisibility}
+                  setModeVisibility={setModeVisibility}
+                  modeWeights={modeWeights}
+                  setModeWeights={setModeWeights}
                 />
               </Popover>
             </Box>
@@ -214,6 +236,36 @@ const App = () => {
                     gameVisibility={gameVisibility}
                     tierWeights={tierWeights}
                     tierVisibility={tierVisibility}
+                    powerRanking={powerRanking}
+                    modeVisibility={modeVisibility}
+                    setModeVisibility={setModeVisibility}
+                    modeWeights={modeWeights}
+                    setModeWeights={setModeWeights}
+                  />
+                }
+              />
+              {/* Stats Page */}
+              <Route
+                path="/charts"
+                element={
+                  <AdvancedStats
+                    players={players}
+                    setPlayers={setPlayers}
+                    selectedGame={selectedGame}
+                    selectedMode={selectedMode}
+                    yearRange={yearRange}
+                    lanOnly={lanOnly}
+                    pointsConfig={pointsConfig}
+                    pointsVisibility={pointsVisibility}
+                    gameWeights={gameWeights}
+                    gameVisibility={gameVisibility}
+                    tierWeights={tierWeights}
+                    tierVisibility={tierVisibility}
+                    powerRanking={powerRanking}
+                    modeVisibility={modeVisibility}
+                    setModeVisibility={setModeVisibility}
+                    modeWeights={modeWeights}
+                    setModeWeights={setModeWeights}
                   />
                 }
               />
@@ -228,6 +280,8 @@ const App = () => {
                     gameVisibility={gameVisibility}
                     tierWeights={tierWeights}
                     tierVisibility={tierVisibility}
+                    modeWeights={modeWeights}
+                    modeVisibility={modeVisibility}
                   />
                 }
               />

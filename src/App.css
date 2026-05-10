@@ -25,7 +25,7 @@
 }
 
 /* Settings Button */
-.css-xjgp8o-MuiButtonBase-root-MuiIconButton-root {
+.settings-button {
   position: absolute;
   top: -75px;
 }
@@ -171,6 +171,7 @@ a:focus,
 a:hover,
 a:active {
   color: olive;
+  color: rgb(255,255,114);
   text-decoration: none;
 }
 
@@ -208,6 +209,7 @@ a:active {
   text-align: center !important;
   padding-top: 2px !important;
   padding-bottom: 2px !important;
+  width: fit-content !important
 }
 
 .year-range {
@@ -240,9 +242,7 @@ footer ul li a img {
   padding-top:50px;
 }
 
-.css-5c1adp-MuiContainer-root {
-  max-width: 1500px !important;
-}
+
 
 .table-header {
   background-color: #2a2a2a; /* Dark background */
@@ -266,4 +266,34 @@ footer ul li a img {
   width: fit-content;
   padding: 0;
 
+}
+
+.MuiContainer-maxWidthLg {
+  max-width: 1500px !important;
+}
+
+.chart-box{ 
+  position: relative;
+  left: 15%;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  vertical-align: center;
+  width: 950px !important;
+  height: 450px !important;
+}
+
+canvas {
+  width: 90% !important;
+  height: 100% !important;
+}
+.chart-buttons {
+  position: relative;
+  top: 0px;
+  justify-content: end;
+  overflow-x: hidden !important;
+}
+.player-list-item {
+  margin-top:-20px !important;
+  padding-top:0px !important;
 }

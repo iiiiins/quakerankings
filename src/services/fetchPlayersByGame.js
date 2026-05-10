@@ -1,5 +1,20 @@
 import { supabase } from "./supabaseClient";
 
+export async function fetchListTournaments() {
+  const { data: tournaments, error } = await supabase
+    .from("Tournaments")
+    .select();
+  if (error) {
+    console.error("Error fetching tournaments:", error.message);
+    return { players: [], filteredCount: 0, totalTournaments: 0 };
+  }
+  let filteredCount = 0;
+  
+  //console.log("Total tournaments in fetchplayers:", tournaments);
+  //console.log("tournaments length", tournaments.length);
+  return tournaments;
+}
+
 export async function fetchTotalTournaments() {
   const { count, error } = await supabase
     .from("Tournaments")
@@ -12,7 +27,7 @@ export async function fetchTotalTournaments() {
 
   return count;
 }
-
+/*
 export async function fetchPlayers(
   selectedGame = "All",
   selectedMode = "All",
@@ -39,7 +54,8 @@ export async function fetchPlayers(
     Diabotical: true,
   },
   tierWeights = { 1: 100, 2: 60, 3: 35, 4: 20, 5: 10 },
-  tierVisibility = { 1: true, 2: true, 3: true, 4: true, 5: true }
+  tierVisibility = { 1: true, 2: true, 3: true, 4: true, 5: true },
+  tournamentList
 ) {
   pointsConfig = pointsConfig || { first: 100, second: 50, top4: 25, top8: 10 };
   (pointsVisibility = pointsVisibility || {
@@ -57,6 +73,7 @@ export async function fetchPlayers(
       "Quake Champions": 100,
       Diabotical: 100,
     });
+    //console.log("Fetch players called");
   /* console.log("fetchPlayers called with settings:", {
       selectedGame,
       selectedMode,
@@ -69,22 +86,26 @@ export async function fetchPlayers(
       tierWeights,
       tierVisibility,
     });*/
-
+/*
   const { data: tournaments, error } = await supabase
     .from("Tournaments")
     .select();
-
   if (error) {
     console.error("Error fetching tournaments:", error.message);
     return { players: [], filteredCount: 0, totalTournaments: 0 };
   }
 
   let filteredCount = 0;
-  const totalTournaments = tournaments.length;
 
   const playerStats = {};
+  const tournamentsArray = Object.values(tournamentList)
+  
+  const totalTournaments = tournamentsArray.length;
+  console.log("tournamentList:", tournamentList);
+  console.log("Total tournaments:", totalTournaments);
+  console.log("Tournaments array:", tournamentsArray);
 
-  tournaments.forEach((tournament) => {
+  tournamentsArray.forEach((tournament) => {
     // Debugging logs
     //console.log("Points Config:", pointsConfig);
     //console.log("Points Visibility:", pointsVisibility);
@@ -187,6 +208,7 @@ export async function fetchPlayers(
       modes: Array.from(player.modes).join(", "),
     })),
     filteredCount, // Define filteredTournamentsCount properly
-    totalTournaments: tournaments.length,
+    totalTournaments: tournamentList.length,
   };
 }
+*/
