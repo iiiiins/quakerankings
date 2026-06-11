@@ -1023,6 +1023,81 @@ a.ph-row {
   padding: 34px 0;
 }
 
+/* ---------- methodology ---------- */
+.method-page {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.method-title {
+  margin: 30px 0 6px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ece8df;
+}
+
+.method-title::before {
+  content: "▸ ";
+  color: #e05a1f;
+}
+
+.method-lede {
+  margin: 0 0 6px;
+  color: #a39c8d;
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+.method-page .game-section {
+  padding: 16px 20px 12px;
+}
+
+.method-page p,
+.method-page ul {
+  margin: 0 0 12px;
+  color: #a39c8d;
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.method-page ul {
+  padding-left: 20px;
+}
+
+.method-page li {
+  margin-bottom: 5px;
+}
+
+.method-page p b,
+.method-page li b,
+.method-lede b {
+  color: #ece8df;
+  font-variant-numeric: tabular-nums;
+}
+
+.method-formula {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: #ece8df;
+  background: #1b1813;
+  border: 1px solid #2e2922;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 2px 0 12px;
+}
+
+footer a.method-link {
+  color: #a39c8d;
+}
+
+footer a.method-link:hover {
+  color: #e05a1f;
+}
+
 /* ---------- charts ---------- */
 .chart-panel {
   background: #14120e;

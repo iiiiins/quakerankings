@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { HashRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, useLocation, Link } from "react-router-dom";
 import PlayerList from "./components/PlayerList";
 import PlayerPage from "./components/PlayerPage";
 import AdvancedStats from "./components/AdvancedStats";
 import EventsBrowser from "./components/EventsBrowser";
+import Methodology from "./components/Methodology";
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-X11M9568HY");
 
@@ -257,6 +258,8 @@ const App = () => {
               />
               {/* Tournament Browser */}
               <Route path="/events" element={<EventsBrowser />} />
+              {/* Methodology */}
+              <Route path="/methodology" element={<Methodology />} />
               {/* Stats Page */}
               <Route
                 path="/charts"
@@ -304,6 +307,11 @@ const App = () => {
               </li>
               <li>
                 <span>discord @ theamazingins</span>
+              </li>
+              <li>
+                <Link className="method-link" to="/methodology">
+                  How the ranking works
+                </Link>
               </li>
             </ul>
           </footer>
