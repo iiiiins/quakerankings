@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings Icon
 import SettingsMenu from "./components/SettingsMenu";
+import { loadStoredFormula, saveStoredFormula } from "./lib/formulaStorage";
 import theme from "./theme";
 import "./App.css";
 import twitterLogo from "./logos/x_logo.png";
@@ -49,12 +50,18 @@ const NavTabs = () => {
   );
 };
 
+// Read once per page load; each state below spreads the stored section over
+// its defaults, so a formula saved before a new game/mode/setting was added
+// still loads cleanly.
+const storedFormula = loadStoredFormula();
+
 const App = () => {
   const [pointsConfig, setPointsConfig] = useState({
     first: 100,
     second: 50,
     top4: 25,
     top8: 10,
+    ...storedFormula?.pointsConfig,
   });
 
   const [pointsVisibility, setPointsVisibility] = useState({
@@ -62,6 +69,7 @@ const App = () => {
     second: true,
     top4: true,
     top8: true,
+    ...storedFormula?.pointsVisibility,
   });
 
   const [gameWeights, setGameWeights] = useState({
@@ -72,6 +80,7 @@ const App = () => {
     "Quake Live": 100,
     "Quake Champions": 100,
     Diabotical: 100,
+    ...storedFormula?.gameWeights,
   });
 
   const [gameVisibility, setGameVisibility] = useState({
@@ -82,6 +91,7 @@ const App = () => {
     "Quake Live": true,
     "Quake Champions": true,
     Diabotical: true,
+    ...storedFormula?.gameVisibility,
   });
 
   const [tierWeights, setTierWeights] = useState({
@@ -90,6 +100,7 @@ const App = () => {
     3: 35,
     4: 20,
     5: 10,
+    ...storedFormula?.tierWeights,
   });
 
   const [tierVisibility, setTierVisibility] = useState({
@@ -98,6 +109,7 @@ const App = () => {
     3: true,
     4: true,
     5: true,
+    ...storedFormula?.tierVisibility,
   });
 
   const [modeVisibility, setModeVisibility] = useState({
@@ -109,6 +121,7 @@ const App = () => {
     "SAC": true,
     "WIP": true,
     "DBT": true,
+    ...storedFormula?.modeVisibility,
   });
 
   const [modeWeights, setModeWeights] = useState({
@@ -120,10 +133,38 @@ const App = () => {
     "SAC": 100,
     "WIP": 100,
     "DBT": 100,
+    ...storedFormula?.modeWeights,
   });
 
   // Points/Event is only shown for players with at least this many events
-  const [minEventsForPpe, setMinEventsForPpe] = useState(15);
+  const [minEventsForPpe, setMinEventsForPpe] = useState(
+    storedFormula?.minEventsForPpe ?? 15
+  );
+
+  // Formula memory: returning visitors keep their tuning
+  useEffect(() => {
+    saveStoredFormula({
+      pointsConfig,
+      pointsVisibility,
+      gameWeights,
+      gameVisibility,
+      tierWeights,
+      tierVisibility,
+      modeWeights,
+      modeVisibility,
+      minEventsForPpe,
+    });
+  }, [
+    pointsConfig,
+    pointsVisibility,
+    gameWeights,
+    gameVisibility,
+    tierWeights,
+    tierVisibility,
+    modeWeights,
+    modeVisibility,
+    minEventsForPpe,
+  ]);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const handleSettingsClick = (event) => {
