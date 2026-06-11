@@ -1,167 +1,39 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Orbitron:wght@900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap");
 
-/* Custom styles for the Popover container */
-.custom-popover {
-  z-index: 1300; /* Ensure it's above other elements */
-}
+/* ============================================================
+   Quake Player Rankings — hybrid redesign globals.
+   Fixed visual target: docs/mocks/direction-hybrid.html
+   Everything theme-able lives in src/theme.js; this file holds
+   fonts, page-level atmosphere, and design-system classes only.
+   ============================================================ */
 
-/* Custom styles for the Popover Paper */
-.settings-box {
-  background-color: #2a2a2a; /* Dark background */
-  color: #fff; /* White text */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
-  padding: 10px; /* Inner padding */
-  padding-left: 20px;
-  padding-right: 20px;
-  font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+/* ---------- page atmosphere ---------- */
+#root {
+  position: relative;
+  z-index: 1;
 }
 
-/* Settings Button */
-.settings-button {
-  position: absolute;
-  top: -75px;
-}
-/* Typography inside the Popover */
-.custom-paper .MuiTypography-root {
-  font-size: 0.7rem; /* Smaller font size */
-  margin-bottom: 0px;
-  margin-top: 0px;
-  font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+/* scanline */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 3px);
 }
 
-/* Input fields inside the Popover */
-.custom-paper .MuiTextField-root {
-  background-color: #3a3a3a; /* Slightly lighter background for inputs */
-  border-radius: 4px;
-}
-
-/* Checkbox labels inside the Popover */
-.custom-paper .MuiFormControlLabel-root {
-  margin-bottom: 0px;
-}
-
-
-
-.custom-paper input {
-  font-size: 0.6rem;
-  font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
-}
-
-.custom-paper .subtitle1 {
-  font-size: 1rem;
-}
-
-.settings-boxes {
-  display: flex !important;
-  align-items: center !important;
-  margin: -5px !important;
-  padding: 0px !important;
-  padding-left: 5px !important;
-  padding-right: 5px !important;
-  font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
-}
-.css-kmnzss {
-  justify-content: space-between;
-}
-
-.gold-header {
-  background-color: #ffd700; /* Gold-like yellow background */
-  font-weight: bold; /* Bold text for the cell */
-  align-items: start !important;
-  text-align: center; /* Center-align the text */
-}
-
-.gold-placement {
-  background-color: #3b3602;
-  /*color: black !important;*/
-  text-align: center;
-}
-
-.gold-header .MuiTableSortLabel-root {
-  color: #000 !important; /* Black text for contrast */
-  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-  justify-content: center; /* Align the text centrally */
-}
-
-.gold-header .MuiTableSortLabel-root:hover {
-  color: #333 !important; /* Darker hover text */
-}
-
-.gold-header .MuiTableSortLabel-icon {
-  color: #000 !important; /* Black sort icon */
-}
-
-.silver-header {
-  background-color: #94938b; /* Silver-like  background */
-  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-  text-align: center; /* Center-align text */
-}
-
-.silver-placement {
-  background-color: #2a2a2a;
-}
-
-.silver-header .MuiTableSortLabel-root {
-  color: #000 !important; /* Black text for contrast */
-  font-weight: bold; /* Bold text */
-}
-
-.silver-header .MuiTableSortLabel-root:hover {
-  color: #333 !important; /* Darker hover text */
-}
-
-.bronze-header {
-  background-color: #e9c18a; /* Silver-like  background */
-  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-  text-align: center; /* Center-align text */
-}
-.bronze-placement {
-  background-color: #362d21;
-}
-
-.bronze-header .MuiTableSortLabel-root {
-  color: #000 !important; /* Black text for contrast */
-  font-weight: bold; /* Bold text */
-}
-
-.bronze-header .MuiTableSortLabel-root:hover {
-  color: #333 !important; /* Darker hover text */
-}
-.copper-header {
-  background-color: #9c6820; /* Silver-like  background */
-  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-  text-align: center; /* Center-align text */
-}
-.copper-placement {
-  background-color: #352008;
-}
-
-.copper-header .MuiTableSortLabel-root {
-  color: #000 !important; /* Black text for contrast */
-  font-weight: bold; /* Bold text */
-}
-
-.copper-header .MuiTableSortLabel-root:hover {
-  color: #333 !important; /* Darker hover text */
-}
-
-.players-list {
-  font-family: "Orbitron", serif !important;
-  font-optical-sizing: auto !important;
-  font-weight: 900 !important;
-  font-style: normal !important;
-  font-size: 28px !important;
-  text-transform: lowercase !important;
-  padding: 0px !important;
-  text-decoration: none !important;
+/* ember top strip + warm vignette */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(#e05a1f, #e05a1f) top / 100% 2px no-repeat,
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(224, 90, 31, 0.06), transparent 70%);
 }
 
 a,
@@ -170,130 +42,521 @@ a:visited,
 a:focus,
 a:hover,
 a:active {
-  color: olive;
-  color: rgb(255,255,114);
+  color: rgb(255, 255, 114);
   text-decoration: none;
 }
 
-.players-list .MuiTableCell-root {
-  padding: 8px; /* Adjust padding for a tighter layout */
+/* ---------- site header ---------- */
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 18px 0 14px;
+  border-bottom: 1px solid #2e2922;
+  flex-wrap: wrap;
 }
 
-.games-list {
-  font-family: "Roboto Mono", monospace !important;
-  font-size: 8px !important; /* Adjust font size as needed */
-  /*font-weight: 200;*/
+.wordmark {
+  margin: 0;
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: 2.5px;
+  white-space: nowrap;
+  color: #ece8df;
+  text-transform: uppercase;
+}
+
+.wordmark .q {
+  color: #ffff72;
+  text-shadow: 0 0 16px rgba(255, 255, 114, 0.3);
+}
+
+.site-tabs {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.site-tabs .tab-idle {
+  background: #1b1813;
+  border: 1px solid #2e2922;
+  color: #a39c8d;
+}
+
+.site-tabs .tab-idle:hover {
+  color: #ece8df;
+  border-color: #463e32;
+  background: #1b1813;
+}
+
+.header-icons {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+/* ---------- filter toolbar ---------- */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #14120e;
+  border: 1px solid #2e2922;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 26px 0 0;
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #e05a1f;
+  text-transform: uppercase;
+}
+
+.years-field {
+  min-width: 235px;
+}
+
+.yearline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 8px;
+}
+
+.yearval {
+  font-size: 14px;
+  font-weight: 700;
+  color: #a39c8d;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.toggle-plates {
+  display: flex;
+  gap: 8px;
+  align-self: flex-end;
+  padding-bottom: 1px;
+}
+
+.plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 36px;
+  padding: 0 15px;
+  border: 1px solid #2e2922;
+  border-radius: 999px;
+  background: #1b1813;
+  color: #a39c8d;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.plate .led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6e6859;
+}
+
+.plate.on {
+  color: #ece8df;
+  border-color: #e05a1f;
+  background: rgba(224, 90, 31, 0.15);
+}
+
+.plate.on .led {
+  background: #e05a1f;
+  box-shadow: 0 0 8px #e05a1f;
+}
+
+/* ---------- summary line ---------- */
+.summary-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 2px 10px;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  color: #a39c8d;
+  text-transform: uppercase;
+}
+
+.summary-line::before {
+  content: "▸";
+  color: #e05a1f;
+}
+
+.summary-line b {
+  color: #ece8df;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- podium ---------- */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  margin: 30px 0 0;
+}
+
+.pcard {
+  position: relative;
+  width: 264px;
+  background: linear-gradient(180deg, #1b1813, #14120e);
+  border: 1px solid #463e32;
+  border-radius: 14px;
+  padding: 20px 20px 16px;
+  text-align: center;
+}
+
+.pcard.p1 {
+  width: 296px;
+  padding-top: 28px;
+  padding-bottom: 22px;
+  border-color: rgba(245, 197, 24, 0.4);
+  box-shadow: 0 0 0 1px rgba(245, 197, 24, 0.12), 0 22px 60px rgba(245, 197, 24, 0.07);
+}
+
+.pcard .pmedal {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #181200;
+}
+
+.pcard.p1 .pmedal { background: linear-gradient(160deg, #f5c518, #a07800); width: 30px; height: 30px; top: -15px; }
+.pcard.p2 .pmedal { background: linear-gradient(160deg, #c8ccd4, #7e838c); color: #14161a; }
+.pcard.p3 .pmedal { background: linear-gradient(160deg, #e2a35e, #9c6420); color: #1c1206; }
+
+.pcard .pname,
+.pcard .pname a {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.05em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 16px rgba(255, 255, 114, 0.25);
+}
+
+.pcard .pname { margin-top: 8px; }
+.pcard.p1 .pname, .pcard.p1 .pname a { font-size: 25px; }
+
+.pcard .ppoints {
+  margin-top: 5px;
+  font-size: 23px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ece8df;
+}
+
+.pcard.p1 .ppoints {
+  font-size: 28px;
+  color: #f5c518;
+  text-shadow: 0 0 18px rgba(245, 197, 24, 0.25);
+}
+
+.pcard .plabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #6e6859;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.pcard .plogos {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.pcard .plogos img {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+}
+
+.pcard .pmedals {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid #2e2922;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-g { color: #f5c518; }
+.pm-s { color: #c8ccd4; }
+.pm-b { color: #e2a35e; }
+.pm-c { color: #b06a1e; }
+
+.pcard .pmedals i {
   font-style: normal;
-  text-transform: uppercase; /* Or use uppercase for all caps */
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #6e6859;
+  letter-spacing: 0.08em;
+  margin-left: 3px;
+}
+
+/* ---------- leaderboard ---------- */
+.board {
+  background: #14120e;
+  border: 1px solid #2e2922;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.MuiTableBody-root .MuiTableRow-root:hover .MuiTableCell-root {
+  box-shadow: inset 0 0 0 999px rgba(224, 90, 31, 0.045);
+}
+
+.MuiTableCell-root.rank-cell {
+  width: 54px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #6e6859;
+  letter-spacing: 0.06em;
+}
+
+.row-1 .rank-cell { color: #f5c518 !important; text-shadow: 0 0 10px rgba(245, 197, 24, 0.4); }
+.row-2 .rank-cell { color: #c8ccd4 !important; }
+.row-3 .rank-cell { color: #e2a35e !important; }
+
+.MuiTableCell-root.players-list {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.players-list a {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 15.5px;
+  letter-spacing: 0.07em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 12px rgba(255, 255, 114, 0.18);
+}
+
+.players-list a:hover {
+  text-shadow: 0 0 18px rgba(255, 255, 114, 0.55);
+}
+
+.MuiTableCell-root.games-list {
+  white-space: nowrap;
+}
+
+.games-list img {
+  width: 20px;
+  height: 20px;
+  margin: 0 2px;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+}
+
+.MuiTableCell-root.modes-list {
+  text-align: left;
+  color: #a39c8d;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.modes-more {
+  color: #e05a1f;
+  font-size: 11px;
+  border: 1px solid rgba(224, 90, 31, 0.35);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+}
+
+/* medal headers — painted metal gradients (design identity) */
+.MuiTableCell-root.gold-header   { background: linear-gradient(180deg, #f5c518, #a07800); }
+.MuiTableCell-root.silver-header { background: linear-gradient(180deg, #c8ccd4, #7e838c); }
+.MuiTableCell-root.bronze-header { background: linear-gradient(180deg, #e2a35e, #9c6420); }
+.MuiTableCell-root.copper-header { background: linear-gradient(180deg, #b06a1e, #6e3d0e); }
+
+.gold-header .MuiTableSortLabel-root,
+.gold-header .MuiTableSortLabel-root:hover,
+.gold-header .MuiTableSortLabel-root.Mui-active { color: #181200; }
+.silver-header .MuiTableSortLabel-root,
+.silver-header .MuiTableSortLabel-root:hover,
+.silver-header .MuiTableSortLabel-root.Mui-active { color: #14161a; }
+.bronze-header .MuiTableSortLabel-root,
+.bronze-header .MuiTableSortLabel-root:hover,
+.bronze-header .MuiTableSortLabel-root.Mui-active { color: #1c1206; }
+.copper-header .MuiTableSortLabel-root,
+.copper-header .MuiTableSortLabel-root:hover,
+.copper-header .MuiTableSortLabel-root.Mui-active { color: #190e02; }
+
+.gold-header .MuiTableSortLabel-icon,
+.silver-header .MuiTableSortLabel-icon,
+.bronze-header .MuiTableSortLabel-icon,
+.copper-header .MuiTableSortLabel-icon { color: #181200 !important; }
+
+/* medal placement lanes — tinted cells with edge lines */
+.MuiTableCell-root.gold-placement   { background: rgba(245, 197, 24, 0.10); border-left: 1px solid rgba(245, 197, 24, 0.18); }
+.MuiTableCell-root.silver-placement { background: rgba(200, 204, 212, 0.09); border-left: 1px solid rgba(200, 204, 212, 0.15); }
+.MuiTableCell-root.bronze-placement { background: rgba(226, 163, 94, 0.10); border-left: 1px solid rgba(226, 163, 94, 0.16); }
+.MuiTableCell-root.copper-placement { background: rgba(176, 106, 30, 0.12); border-left: 1px solid rgba(176, 106, 30, 0.20); border-right: 1px solid rgba(176, 106, 30, 0.20); }
+
+/* points column */
+.MuiTableCell-root.points-cell {
+  font-weight: 700;
+  font-size: 15.5px;
+  color: #fff;
+  min-width: 92px;
+}
+
+.pwrap {
+  display: inline-block;
+  min-width: 58px;
+  text-align: right;
+}
+
+.pbar {
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 3px;
+  margin-left: auto;
+  background: linear-gradient(90deg, #e05a1f, #f5c518);
+}
+
+.loadhint {
   text-align: center;
-  width: 200%;
+  color: #6e6859;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  padding: 15px 0 4px;
+  text-transform: uppercase;
 }
 
-.games-list .MuiTableCell-root {
-  padding: 8px; /* Adjust padding for a tighter layout */
+.loadhint::before {
+  content: "▾ ";
+  color: #e05a1f;
 }
 
-.numbers-list {
-  font-family: "Nunito", serif !important;
-  font-optical-sizing: auto !important;
-  font-weight: 200 !important;
-  font-style: normal !important;
+/* ---------- settings popover ---------- */
+.settings-box {
+  padding: 14px 16px;
+  min-width: 250px;
 }
 
-.home-button {
-  position: absolute !important;
-  top: 50px;
+.settings-boxes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
 }
 
-.MuiTableCell-root {
-  text-align: center !important;
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
-  width: fit-content !important
+.settings-boxes .MuiFormControlLabel-root {
+  margin-bottom: 0;
 }
 
-.year-range {
-  width: 80% !important;
-  padding-left: 20px !important;
-  padding-right: 20px !important;
-}
-
+/* ---------- footer ---------- */
 footer {
-  text-align: center;
-  align-items: flex;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 26px 0 18px;
+  color: #6e6859;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 footer ul {
   align-items: center;
   list-style-type: none;
   display: inline-flex;
+  margin: 0;
+  padding: 0;
 }
+
 footer ul li {
-  margin: 10px;
+  margin: 0 10px;
 }
 
 footer ul li a img {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
+  opacity: 0.55;
+  filter: grayscale(35%);
+  vertical-align: middle;
 }
 
-.title-top {
-  text-transform: uppercase;
-  padding-top:50px;
+footer ul li a:hover img {
+  opacity: 1;
 }
 
-
-
-.table-header {
-  background-color: #2a2a2a; /* Dark background */
-  color: #fff; /* White text */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow */
-  padding: 10px; /* Inner padding */
-  padding-left: 20px;
-  padding-right: 20px;
-  font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
-}
-
-.modes-list {
-  margin: 0 !important;
-  font-size: 0.7rem !important;
-  font-weight: 100 !important;
-}
-
-.css-zpntfe-MuiTableCell-root{
-  /*modes-list*/
-  width: fit-content;
-  padding: 0;
-
-}
-
-.MuiContainer-maxWidthLg {
-  max-width: 1500px !important;
-}
-
-.chart-box{ 
+/* ---------- charts (interim — finalized in the charts pass) ---------- */
+.chart-box {
   position: relative;
-  left: 15%;
+  width: 100%;
+  max-width: 960px;
+  height: 430px;
+  margin: 0 auto;
   display: flex;
   justify-content: center;
-  text-align: center;
-  vertical-align: center;
-  width: 950px !important;
-  height: 450px !important;
 }
 
 canvas {
-  width: 90% !important;
+  max-width: 100%;
   height: 100% !important;
 }
+
 .chart-buttons {
   position: relative;
-  top: 0px;
   justify-content: end;
-  overflow-x: hidden !important;
 }
+
 .player-list-item {
-  margin-top:-20px !important;
-  padding-top:0px !important;
+  margin-top: -20px !important;
+  padding-top: 0px !important;
 }

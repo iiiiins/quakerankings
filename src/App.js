@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import PlayerList from "./components/PlayerList";
 import PlayerPage from "./components/PlayerPage";
 import AdvancedStats from "./components/AdvancedStats";
@@ -12,27 +12,43 @@ import {
   CssBaseline,
   Container,
   IconButton,
-  TableContainer,
   ThemeProvider,
-  createTheme,
-  Paper,
   Popover,
-  Typography,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings Icon
 import SettingsMenu from "./components/SettingsMenu";
 import { fetchPlayers } from "./services/fetchPlayersByGame";
+import theme from "./theme";
 import "./App.css";
 import twitterLogo from "./logos/x_logo.png";
 import twitchLogo from "./logos/tv_logo.png";
 import AnalyticsTracker from "./AnalyticsTracker";
 
-// Create a dark theme for the app
-const darkTheme = createTheme({
-  palette: {
-    mode: "dark",
-  },
-});
+// Nav tabs live in their own component so useLocation runs inside <Router>
+const NavTabs = () => {
+  const location = useLocation();
+  const onCharts = location.pathname === "/charts";
+  return (
+    <nav className="site-tabs">
+      <Button
+        variant={onCharts ? "text" : "contained"}
+        color="primary"
+        className={onCharts ? "tab-idle" : ""}
+        onClick={() => (window.location.hash = "#/")}
+      >
+        Home
+      </Button>
+      <Button
+        variant={onCharts ? "contained" : "text"}
+        color="primary"
+        className={onCharts ? "" : "tab-idle"}
+        onClick={() => (window.location.hash = "#/charts")}
+      >
+        Advanced Stats
+      </Button>
+    </nav>
+  );
+};
 
 const App = () => {
   
@@ -136,47 +152,24 @@ const App = () => {
   
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      
+    <ThemeProvider theme={theme}>
+
       <CssBaseline />
       <Router>
       <AnalyticsTracker />
-        <Container>
-          <TableContainer component={Paper}>
-            <Typography className="title-top" variant="h4" align="center" gutterBottom>
-              Quake Player Rankings
-            </Typography>
-            <div className="stats-div">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => (window.location.hash = "#/")}
-                style={{ margin: "20px" }}
-              >
-                Home
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => (window.location.hash = "#/charts")}
-                style={{ margin: "20px" }}
-              >
-                Advanced Stats
-              </Button>
-            </div>
-            <Box
-              display="flex"
-              justifyContent="flex-end"
-              alignItems="center"
-              p={2}
-              className="settings-menu"
-            >
+        <Container maxWidth="lg">
+          <header className="site-header">
+            <h1 className="wordmark">
+              <span className="q">Quake</span> Player Rankings
+            </h1>
+            <NavTabs />
+            <Box className="header-icons">
               <IconButton
                 color="inherit"
                 onClick={handleSettingsClick}
                 aria-controls="settings-menu"
                 aria-haspopup="true"
-                className="settings-button"
+                aria-label="Settings"
               >
                 <SettingsIcon />
               </IconButton>
@@ -192,10 +185,6 @@ const App = () => {
                 transformOrigin={{
                   vertical: "top",
                   horizontal: "right",
-                }}
-                className="custom-popover" // Custom class name
-                PaperProps={{
-                  className: "custom-paper", // Class for the paper element
                 }}
               >
                 <SettingsMenu
@@ -218,6 +207,7 @@ const App = () => {
                 />
               </Popover>
             </Box>
+          </header>
             <Routes>
               {/* Home Page */}
               <Route
@@ -286,7 +276,6 @@ const App = () => {
                 }
               />
             </Routes>
-          </TableContainer>
           <footer>
             <ul>
               <li>
