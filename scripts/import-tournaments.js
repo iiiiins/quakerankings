@@ -15,22 +15,21 @@ const { createClient } = require("@supabase/supabase-js");
 
 const SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/1kLwGkzlC82_wjiDTEJuy5Q7nbeCFAmmQNwv-tFeTP4o/export?format=csv&gid=1304795890";
-const SUPABASE_URL = "https://ruykhdsevmwnptvxiwll.supabase.co";
-// Public anon key (read-only, same one the site ships) — used for dry runs and dupe checks.
-const ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1eWtoZHNldm13bnB0dnhpd2xsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ0ODQyMjgsImV4cCI6MjA1MDA2MDIyOH0.Pvtw2J6uU4A_r0ntkUwriKvkm751YbQ4IWNqmYMAtTU";
 
 const GAMES = ["Quake World", "Quake 2", "Quake 3", "Quake 4", "Quake Live", "Quake Champions", "Diabotical"];
 const MODES = ["Duel", "2v2", "TDM", "CTF", "CA", "SAC", "WIP", "DBT"];
 const PLACEMENTS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
 const CURRENT_YEAR = new Date().getFullYear();
 
-function loadEnvLocal() {
-  const p = path.join(__dirname, "..", ".env.local");
-  if (!fs.existsSync(p)) return;
-  for (const line of fs.readFileSync(p, "utf8").split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2];
+// .env.local first (secrets, wins), then .env (public config) — same files CRA uses.
+function loadEnv() {
+  for (const file of [".env.local", ".env"]) {
+    const p = path.join(__dirname, "..", file);
+    if (!fs.existsSync(p)) continue;
+    for (const line of fs.readFileSync(p, "utf8").split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (m && !(m[1] in process.env)) process.env[m[1]] = m[2];
+    }
   }
 }
 
@@ -154,7 +153,11 @@ async function main() {
     return true;
   });
 
-  loadEnvLocal();
+  loadEnv();
+  const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
+  // Public anon key (read-only, same one the site ships) — used for dry runs and dupe checks.
+  const ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
+  if (!SUPABASE_URL || !ANON_KEY) throw new Error("REACT_APP_SUPABASE_URL / REACT_APP_SUPABASE_ANON_KEY missing — check .env");
   const serviceKey = process.env.SUPABASE_SERVICE_KEY;
   const supabase = createClient(SUPABASE_URL, dryRun || !serviceKey ? ANON_KEY : serviceKey);
 

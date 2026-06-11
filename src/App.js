@@ -6,7 +6,7 @@ import AdvancedStats from "./components/AdvancedStats";
 import EventsBrowser from "./components/EventsBrowser";
 import Methodology from "./components/Methodology";
 import ReactGA from "react-ga4";
-ReactGA.initialize("G-X11M9568HY");
+ReactGA.initialize(process.env.REACT_APP_GA_ID);
 
 import {
   Box,
