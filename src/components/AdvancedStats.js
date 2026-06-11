@@ -223,12 +223,21 @@ const getRandomColor = () =>
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
-      legend: { display: true },
+      legend: { display: true, labels: { color: "#ece8df" } },
       tooltip: { mode: "index", intersect: false },
     },
     scales: {
-      x: { title: { display: true, text: "Years" } },
-      y: { title: { display: true, text: "Points" }, beginAtZero: true },
+      x: {
+        title: { display: true, text: "Years", color: "#a39c8d" },
+        ticks: { color: "#a39c8d" },
+        grid: { color: "rgba(255,255,255,0.06)" },
+      },
+      y: {
+        title: { display: true, text: "Points", color: "#a39c8d" },
+        beginAtZero: true,
+        ticks: { color: "#a39c8d" },
+        grid: { color: "rgba(255,255,255,0.06)" },
+      },
     },
   };
 
@@ -590,20 +599,15 @@ const getRandomColor = () =>
   };
 
   return (
-    <Container>
-      <TableContainer component={Paper}>
-        <Typography variant="h4" align="center" gutterBottom></Typography>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          padding="16px"
-        >
-          <FormControl style={{ minWidth: "200px" }}>
-            <InputLabel>Filter by Game</InputLabel>
+    <Container disableGutters maxWidth={false}>
+      <div className="filter-bar">
+        <div className="filter-field">
+          <span className="filter-label">Game</span>
+          <FormControl size="small" style={{ minWidth: "150px" }}>
             <Select
               value={selectedGame}
               onChange={(e) => setSelectedGame(e.target.value)}
+              renderValue={(v) => (v === "All" ? "All games" : v)}
             >
               {games.map((game) => (
                 <MenuItem key={game} value={game}>
@@ -612,9 +616,11 @@ const getRandomColor = () =>
               ))}
             </Select>
           </FormControl>
+        </div>
 
-          <FormControl style={{ minWidth: "200px" }}>
-            <InputLabel>Filter by Mode</InputLabel>
+        <div className="filter-field">
+          <span className="filter-label">Mode</span>
+          <FormControl size="small" style={{ minWidth: "110px" }}>
             <Select
               value={selectedMode}
               onChange={(e) => setSelectedMode(e.target.value)}
@@ -626,9 +632,11 @@ const getRandomColor = () =>
               ))}
             </Select>
           </FormControl>
+        </div>
 
-          <Box width="300px" className="year-range">
-            <Typography gutterBottom>Filter by Year</Typography>
+        <div className="filter-field years-field">
+          <span className="filter-label">Years</span>
+          <div className="yearline">
             <Slider
               value={yearRange}
               onChange={handleYearRangeChange}
@@ -637,123 +645,118 @@ const getRandomColor = () =>
               max={CURRENT_YEAR}
               step={1}
             />
-          </Box>
-
-      {/* Search Bar */}
-      <div>
-      <TextField 
-        label="Search Players"
-        value={searchQuery}
-        onChange={(e) => handleSearch(e.target.value)}
-        style={{ marginBottom: "10px", width: "200px" }}
-      />
-
-      {/* Search Results */}
-      {searchResults.length > 0 && (
-        <div
-          style={{
-            position: "absolute",
-            background: "#333",
-            border: "1px solid #555",
-            borderRadius: "5px",
-            padding: "10px",
-            width: "200px",
-            zIndex: 1000,
-          }}
-        >
-          {searchResults.map((player) => (
-            <div
-              key={player.player}
-              onClick={() => handleAddPlayer(player)}
-              style={{
-                cursor: "pointer",
-                padding: "5px 10px",
-                borderBottom: "1px solid #555",
-              }}
-            >
-              {player.player} - {player.points} Points
-            </div>
-          ))}
+            <span className="yearval">
+              {yearRange[0]}–{yearRange[1]}
+            </span>
+          </div>
         </div>
-      )}
-    </div>
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={lanOnly}
-                onChange={(e) => setLanOnly(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="LAN Only"
+        <div className="filter-field search-field" style={{ position: "relative" }}>
+          <span className="filter-label">Add player to chart</span>
+          <TextField
+            size="small"
+            placeholder="Search players…"
+            variant="outlined"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            fullWidth
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={powerRanking}
-                onChange={(e) => setPowerRanking(e.target.checked)}
-                color="primary"
-                title="Show only the top 25 tournaments for each player"
-              />
-              
-            }
-            label="POWER RANKING"
+          {searchResults.length > 0 && (
+            <div className="search-results">
+              {searchResults.map((player) => (
+                <div
+                  key={player.player}
+                  className="search-result"
+                  onClick={() => handleAddPlayer(player)}
+                >
+                  {player.player} · {player.points.toLocaleString("en-US")} pts
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="toggle-plates">
+          <button
+            type="button"
+            className={`plate${lanOnly ? " on" : ""}`}
+            onClick={() => setLanOnly(!lanOnly)}
+            title="Only LAN tournaments"
+          >
+            <span className="led" />
+            LAN Only
+          </button>
+          <button
+            type="button"
+            className={`plate${powerRanking ? " on" : ""}`}
+            onClick={() => setPowerRanking(!powerRanking)}
             title="Show only the top 25 tournaments for each player"
-          />
-        </Box>
+          >
+            <span className="led" />
+            Power Ranking
+          </button>
+        </div>
+      </div>
 
-        {/* Summary Message */}
-        <Typography variant="subtitle1" align="left" gutterBottom>
-          Showing {filteredPlayers.length} players in{" "}
-          {totalTournaments - filteredTournaments} tournaments (
-          {filteredTournaments} tournaments filtered out of {totalTournaments})
-        </Typography>
-
-        <Typography className="toggle-title" variant="h4" align="center" gutterBottom>
-        {chartTitle}
+      {/* Summary Message */}
+      <Typography component="div" className="summary-line">
+        <b>{filteredPlayers.length.toLocaleString("en-US")}</b> players ·{" "}
+        <b>{(totalTournaments - filteredTournaments).toLocaleString("en-US")}</b>{" "}
+        tournaments · {filteredTournaments.toLocaleString("en-US")} filtered
       </Typography>
 
-      {/* Toggle Button */}
-      <Button onClick={toggleMode} style={{ marginBottom: "10px" }}>
-        {selectedToggle === "performance"
-          ? "Switch to Overall Max Points"
-          : "Switch to Performance Per Year"}
-      </Button>
-
-      {/* Line Chart */}
-      <Box className="chart-box" >
-        {selectedPlayers.length > 0 ? (
-          <Line data={chartData} options={chartOptions} />
-        ) : (
-          <Typography variant="h6" align="center" color="textSecondary">
-            No data to display. Adjust filters to see results.
+      <div className="chart-panel">
+        <div className="chart-head">
+          <Typography component="h2" className="chart-title">
+            {chartTitle}
           </Typography>
-        )}
-      </Box>
+          <Button variant="outlined" size="small" onClick={toggleMode}>
+            {selectedToggle === "performance"
+              ? "Switch to Overall Max Points"
+              : "Switch to Performance Per Year"}
+          </Button>
+        </div>
+
+        {/* Line Chart */}
+        <Box className="chart-box">
+          {selectedPlayers.length > 0 ? (
+            <Line data={chartData} options={chartOptions} />
+          ) : (
+            <Typography variant="h6" align="center" color="textSecondary">
+              No data to display. Adjust filters to see results.
+            </Typography>
+          )}
+        </Box>
+      </div>
 
       {/* Player Selection */}
-      <Box className="chart-buttons" flex={1}>
-        <Typography variant="h6">Player Selection</Typography>
-        <List>
+      <div className="picker-panel">
+        <span className="filter-label">Player selection — top 25</span>
+        <List dense className="picker-list">
           {filteredPlayers.slice(0, 25).map((player) => (
-            <ListItem 
-            className="player-list-item"
-            key={player.player}>
+            <ListItem className="player-list-item" key={player.player}>
               <Checkbox
+                size="small"
                 checked={selectedPlayers.some(
                   (selectedPlayer) => selectedPlayer.player === player.player
                 )}
                 onChange={() => handleCheckboxChange(player)}
               />
               <ListItemText
-                primary={`${player.player} - ${player.points} points`}
+                disableTypography
+                primary={
+                  <span className="picker-row">
+                    <span className="picker-name">{player.player}</span>
+                    <span className="picker-points">
+                      {player.points.toLocaleString("en-US")} pts
+                    </span>
+                  </span>
+                }
               />
             </ListItem>
           ))}
         </List>
-      </Box>
-      </TableContainer>
+      </div>
     </Container>
   );
 };

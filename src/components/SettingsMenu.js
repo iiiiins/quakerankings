@@ -102,7 +102,7 @@ const SettingsMenu = ({
           key={placement}
           display="flex"
           alignItems="center"
-          mb={2}
+          mb={0}
         >
           <FormControlLabel
             control={
@@ -120,7 +120,7 @@ const SettingsMenu = ({
               size="small"
               value={pointsConfig[placement]}
               onChange={(e) => handlePointsChange(placement, e.target.value)}
-              style={{ marginLeft: "10px", width: "100px" }}
+              style={{ marginLeft: "10px", width: "78px" }}
             />
           )}
         </Box>
@@ -137,7 +137,7 @@ const SettingsMenu = ({
           key={game}
           display="flex"
           alignItems="center"
-          mb={2}
+          mb={0}
         >
           <FormControlLabel
             control={
@@ -155,7 +155,7 @@ const SettingsMenu = ({
               size="small"
               value={gameWeights[game]}
               onChange={(e) => handleGameWeightChange(game, e.target.value)}
-              style={{ marginLeft: "10px", width: "100px" }}
+              style={{ marginLeft: "10px", width: "78px" }}
             />
           )}
         </Box>
@@ -172,7 +172,7 @@ const SettingsMenu = ({
           key={tier}
           display="flex"
           alignItems="center"
-          mb={2}
+          mb={0}
         >
           <FormControlLabel
             control={
@@ -190,7 +190,7 @@ const SettingsMenu = ({
               size="small"
               value={tierWeights[tier]}
               onChange={(e) => handleTierWeightChange(tier, e.target.value)}
-              style={{ marginLeft: "10px", width: "100px" }}
+              style={{ marginLeft: "10px", width: "78px" }}
             />
           )}
         </Box>
@@ -205,7 +205,7 @@ const SettingsMenu = ({
           key={mode}
           display="flex"
           alignItems="center"
-          mb={2}
+          mb={0}
         >
           <FormControlLabel
             control={
@@ -223,7 +223,7 @@ const SettingsMenu = ({
               size="small"
               value={modeWeights[mode]}
               onChange={(e) => handleModeWeightChange(mode, e.target.value)}
-              style={{ marginLeft: "10px", width: "100px" }}
+              style={{ marginLeft: "10px", width: "78px" }}
             />
           )}
         </Box>

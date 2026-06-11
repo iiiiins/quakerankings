@@ -502,6 +502,106 @@ a:active {
   margin-bottom: 0;
 }
 
+/* ---------- player page ---------- */
+.player-hero {
+  text-align: center;
+  padding: 30px 0 6px;
+}
+
+.pp-name {
+  margin: 0;
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: 30px;
+  letter-spacing: 0.05em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 18px rgba(255, 255, 114, 0.28);
+}
+
+.pp-points {
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #f5c518;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 18px rgba(245, 197, 24, 0.25);
+}
+
+.pp-sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #6e6859;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.pp-stats {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-wrap: wrap;
+}
+
+.pp-stats i {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #6e6859;
+  letter-spacing: 0.08em;
+  margin-left: 3px;
+}
+
+.pp-extra {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #a39c8d;
+  text-transform: uppercase;
+}
+
+.pp-extra b {
+  color: #ece8df;
+  font-size: 13px;
+}
+
+.game-section {
+  background: #14120e;
+  border: 1px solid #2e2922;
+  border-radius: 10px;
+  padding: 16px 18px 8px;
+  margin: 18px 0;
+}
+
+.game-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 10px;
+}
+
+.MuiTypography-root.game-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #e05a1f;
+}
+
+.game-section-points {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ece8df;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- footer ---------- */
 footer {
   display: flex;
@@ -763,28 +863,108 @@ a.ph-row {
   .summary-line { font-size: 11px !important; padding: 4px 2px 8px; }
 }
 
-/* ---------- charts (interim — finalized in the charts pass) ---------- */
+/* ---------- charts ---------- */
+.chart-panel {
+  background: #14120e;
+  border: 1px solid #2e2922;
+  border-radius: 10px;
+  padding: 14px 18px 18px;
+  margin-top: 10px;
+}
+
+.chart-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.MuiTypography-root.chart-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #e05a1f;
+  margin-right: auto;
+}
+
 .chart-box {
   position: relative;
   width: 100%;
-  max-width: 960px;
-  height: 430px;
+  max-width: 1000px;
   margin: 0 auto;
-  display: flex;
-  justify-content: center;
 }
 
-canvas {
+.chart-box canvas {
   max-width: 100%;
-  height: 100% !important;
 }
 
-.chart-buttons {
-  position: relative;
-  justify-content: end;
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  background: #1b1813;
+  border: 1px solid #463e32;
+  border-radius: 8px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.search-result {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ece8df;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-result:hover {
+  background: rgba(224, 90, 31, 0.12);
+}
+
+.picker-panel {
+  background: #14120e;
+  border: 1px solid #2e2922;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 14px 0;
+}
+
+.picker-list {
+  column-width: 230px;
+  column-gap: 18px;
+  padding-top: 8px !important;
 }
 
 .player-list-item {
-  margin-top: -20px !important;
-  padding-top: 0px !important;
+  break-inside: avoid;
+  padding: 0 !important;
+}
+
+.picker-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  font-size: 13.5px;
+}
+
+.picker-name {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #ffff72;
+  text-transform: lowercase;
+}
+
+.picker-points {
+  margin-left: auto;
+  color: #a39c8d;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
 }

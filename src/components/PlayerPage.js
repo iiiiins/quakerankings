@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
   Container,
   Typography,
-  Button,
   Paper,
   Table,
   TableContainer,
@@ -15,23 +11,13 @@ import {
   TableCell,
   TableSortLabel,
   TableBody,
-  Box,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
-  Checkbox,
-  FormControlLabel,
   Slider,
 } from "@mui/material";
 import { supabase } from "../services/supabaseClient";
 import { useNavigate } from "react-router-dom";
-
-const darkTheme = createTheme({
-  palette: {
-    mode: "dark",
-  },
-});
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -398,102 +384,105 @@ const PlayerPage = ({
   const { roundedPoints, groupedTournaments, yearRanges } = playerData;
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Container>
-        
-        <Typography variant="h3" align="center" gutterBottom>
-          {playerName}
-        </Typography>
-        <Typography variant="h5" align="center" gutterBottom>
-          Total Points: {roundedPoints}
-        </Typography>
-        <Typography variant="h6" align="center" gutterBottom>
-          Years of Activity: {yearRanges}
-        </Typography>
-        <Typography variant="h6" align="center" gutterBottom>
-          Total Tournaments: {stats.totalTournaments}
-        </Typography>
-        <Typography variant="h6" align="center" gutterBottom>
-          1st Places: {stats.firstPlaces} | 2nd Places: {stats.secondPlaces} |
-          Top4: {stats.top4} | Top8: {stats.top8}
-        </Typography>
-        <Typography variant="h6" align="center" gutterBottom>
-          Average Placement: {stats.averagePlacement}
-        </Typography>
-        <Typography variant="h6" align="center" gutterBottom>
-          Grand Final Win Rate: {stats.grandFinalWinRate}
-        </Typography>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          marginBottom={2}
-        >
-          <FormControl>
-            <InputLabel>Game</InputLabel>
-            <Select
-              value={selectedGame}
-              onChange={(e) => setSelectedGame(e.target.value)}
-              style={{ width: "200px" }}
-            >
-              <MenuItem value="None">All Games</MenuItem>
-              <MenuItem value="Quake World">Quake World</MenuItem>
-              <MenuItem value="Quake 2">Quake 2</MenuItem>
-              <MenuItem value="Quake 3">Quake 3</MenuItem>
-              <MenuItem value="Quake 4">Quake 4</MenuItem>
-              <MenuItem value="Quake Live">Quake Live</MenuItem>
-              <MenuItem value="Quake Champions">Quake Champions</MenuItem>
-              <MenuItem value="Diabotical">Diabotical</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl>
-            <InputLabel>Mode</InputLabel>
-            <Select
-              value={selectedMode}
-              onChange={(e) => setSelectedMode(e.target.value)}
-              style={{ width: "200px" }}
-            >
-              <MenuItem value="None">All Modes</MenuItem>
-              <MenuItem value="Duel">Duel</MenuItem>
-              <MenuItem value="2v2">2vs2</MenuItem>
-              <MenuItem value="TDM">Team Deathmatch 4v4</MenuItem>
-              <MenuItem value="CTF">Capture the Flag</MenuItem>
-              <MenuItem value="CA">Clan Arena</MenuItem>
-              <MenuItem value="SAC">Sacrifice</MenuItem>
-              <MenuItem value="WIP">Wipeout</MenuItem>
-              <MenuItem value="DBT">McGuffin+Extinction+Wipeout</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={lanOnly}
-                onChange={(e) => setLanOnly(e.target.checked)}
+      <Container disableGutters maxWidth={false}>
+        <div className="player-hero">
+          <h2 className="pp-name">{playerName}</h2>
+          <div className="pp-points">
+            {roundedPoints.toLocaleString("en-US")}
+          </div>
+          <div className="pp-sub">
+            points · {stats.totalTournaments} events · active {yearRanges || "—"}
+          </div>
+          <div className="pp-stats">
+            <span className="pm-g">{stats.firstPlaces}<i>1ST</i></span>
+            <span className="pm-s">{stats.secondPlaces}<i>2ND</i></span>
+            <span className="pm-b">{stats.top4}<i>T4</i></span>
+            <span className="pm-c">{stats.top8}<i>T8</i></span>
+            <span className="pp-extra">
+              Avg placement <b>{stats.averagePlacement}</b>
+            </span>
+            <span className="pp-extra">
+              GF win rate <b>{stats.grandFinalWinRate}</b>
+            </span>
+          </div>
+        </div>
+
+        <div className="filter-bar">
+          <div className="filter-field">
+            <span className="filter-label">Game</span>
+            <FormControl size="small" style={{ minWidth: "170px" }}>
+              <Select
+                value={selectedGame}
+                onChange={(e) => setSelectedGame(e.target.value)}
+              >
+                <MenuItem value="None">All Games</MenuItem>
+                <MenuItem value="Quake World">Quake World</MenuItem>
+                <MenuItem value="Quake 2">Quake 2</MenuItem>
+                <MenuItem value="Quake 3">Quake 3</MenuItem>
+                <MenuItem value="Quake 4">Quake 4</MenuItem>
+                <MenuItem value="Quake Live">Quake Live</MenuItem>
+                <MenuItem value="Quake Champions">Quake Champions</MenuItem>
+                <MenuItem value="Diabotical">Diabotical</MenuItem>
+              </Select>
+            </FormControl>
+          </div>
+          <div className="filter-field">
+            <span className="filter-label">Mode</span>
+            <FormControl size="small" style={{ minWidth: "170px" }}>
+              <Select
+                value={selectedMode}
+                onChange={(e) => setSelectedMode(e.target.value)}
+              >
+                <MenuItem value="None">All Modes</MenuItem>
+                <MenuItem value="Duel">Duel</MenuItem>
+                <MenuItem value="2v2">2vs2</MenuItem>
+                <MenuItem value="TDM">Team Deathmatch 4v4</MenuItem>
+                <MenuItem value="CTF">Capture the Flag</MenuItem>
+                <MenuItem value="CA">Clan Arena</MenuItem>
+                <MenuItem value="SAC">Sacrifice</MenuItem>
+                <MenuItem value="WIP">Wipeout</MenuItem>
+                <MenuItem value="DBT">McGuffin+Extinction+Wipeout</MenuItem>
+              </Select>
+            </FormControl>
+          </div>
+          <div className="filter-field years-field">
+            <span className="filter-label">Years</span>
+            <div className="yearline">
+              <Slider
+                value={yearRange}
+                onChange={(e, newValue) => setYearRange(newValue)}
+                valueLabelDisplay="auto"
+                min={1996}
+                max={CURRENT_YEAR}
               />
-            }
-            label="LAN Only"
-          />
-          <Box sx={{ width: 300 }}>
-            <Typography gutterBottom>
-              Year Range: {yearRange[0]} - {yearRange[1]}
-            </Typography>
-            <Slider
-              value={yearRange}
-              onChange={(e, newValue) => setYearRange(newValue)}
-              valueLabelDisplay="auto"
-              min={1996}
-              max={CURRENT_YEAR}
-            />
-          </Box>
-        </Box>
+              <span className="yearval">
+                {yearRange[0]}–{yearRange[1]}
+              </span>
+            </div>
+          </div>
+          <div className="toggle-plates">
+            <button
+              type="button"
+              className={`plate${lanOnly ? " on" : ""}`}
+              onClick={() => setLanOnly(!lanOnly)}
+              title="Only LAN tournaments"
+            >
+              <span className="led" />
+              LAN Only
+            </button>
+          </div>
+        </div>
         {Object.entries(groupedTournaments).map(([game, data]) => (
-          <Paper key={game} style={{ marginBottom: "20px", padding: "20px" }}>
-            <Typography variant="h5">{game} Tournaments</Typography>
-            <Typography variant="subtitle1">
-              Total Points: {Math.round(data.totalPoints * 10) / 10}
-            </Typography>
-            <TableContainer component={Paper}>
+          <Paper key={game} elevation={0} className="game-section">
+            <div className="game-section-head">
+              <Typography component="h3" className="game-section-title">
+                {game}
+              </Typography>
+              <span className="game-section-points">
+                {(Math.round(data.totalPoints * 10) / 10).toLocaleString("en-US")} pts
+              </span>
+            </div>
+            <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -604,6 +593,8 @@ const PlayerPage = ({
                             ? "silver-placement"
                             : tournament.placement === "Top4"
                             ? "bronze-placement"
+                            : tournament.placement === "Top8"
+                            ? "copper-placement"
                             : ""
                         }
                       >
@@ -620,7 +611,6 @@ const PlayerPage = ({
           </Paper>
         ))}
       </Container>
-    </ThemeProvider>
   );
 };
 
