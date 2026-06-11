@@ -91,4 +91,10 @@ an admin data-entry page, and a public "submit a tournament" form (features B1/B
   cuts; compact dir-1 header since the podium provides the hero moment; Rajdhani kept as part of
   dir-2's theme at dir-1 densities; points bar kept, recolored ember→gold). Pending Bruno's
   confirmation as the fixed Phase-2 target.
-- (append direction choice and deviations here)
+- 2026-06-11 — **DIRECTION CHOSEN: the hybrid** ("i'm very happy with this, let's go for it").
+  One tweak requested and applied before locking: table/mobile-list player names were too heavy at
+  small sizes — Orbitron weight 900→700 with 0.06–0.07em letter-spacing and reduced glow; podium
+  names stay 900 (display size) with 0.05em tracking. `docs/mocks/direction-hybrid.html` is now the
+  **fixed Phase-2 target**. Phase 1 complete.
+- Phase 2 deviations from the mock (append below):
+  - Share icon in the header is a designed slot for feature A — not shipped until feature A exists.
