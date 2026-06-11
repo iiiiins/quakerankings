@@ -58,4 +58,6 @@ Deviations from pure parity, all deliberate and surfaced:
 New trade-off accepted: 11 columns ≈ 1060px, so 900–1110px viewports scroll the board
 horizontally (MUI overflow-x). Noted in CLAUDE.md known issues.
 
-Not deployed — `npm run deploy` is the next action when Bruno wants it live.
+Deployed 2026-06-11 after Bruno's hands-on check ("ship it"): pre-deploy checks passed, main
+pushed (`58fe0cf`), `npm run deploy` published bundle `f94633fc`, live index.html + bundle
+grep verified (Pts/Event, qpr.formula.v1, Points per event, minEventsForPpe all present).

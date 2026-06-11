@@ -19,7 +19,7 @@ CLAUDE.md updated the same session. Build-time decisions: PPE shows a muted dash
 min-events threshold and always sorts last; mobile got a Sort-by select (Points | Points per
 event) in the bottom sheet, with the row value showing PPE while PPE-sorted; localStorage key
 is `qpr.formula.v1`. Known trade-off: the 11-column table horizontally scrolls between 900 and
-~1110px viewports. Not yet deployed — deploy with `npm run deploy` when ready.
+~1110px viewports. Deployed to production 2026-06-11 (bundle `f94633fc`, verified live).
 
 Three pieces, one session — they all touch the same code.
 
