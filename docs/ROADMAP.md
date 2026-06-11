@@ -1,197 +1,171 @@
-# Feature roadmap
+# Feature roadmap — v2
 
-Written 2026-06-11 at the end of the feature-planning session (discussion only — no code that
-session). This is the handoff for the implementation sessions: **one committed feature per
-session**, same model as the redesign. Read `CLAUDE.md` (repo root) first for the codebase map;
-this file only covers what to build, why, and what was decided against.
+v1 written 2026-06-11 (planning session); v2 locked 2026-06-12 after the v1 committed set
+shipped. This is the standing handoff for implementation sessions: **one committed feature per
+session**, atomic commits, every step verified against the dev preview, no deploy without
+Bruno's "ship it". Read `CLAUDE.md` (repo root) first for the codebase map; this file only
+covers what to build, why, and what was decided against.
 
-How the priorities were set: Bruno's stated goal for this stretch is **depth for visitors**
-(richer exploration for people already on the site) over reach or data ops; effort appetite is
-open-ended, including refactor groundwork; on data work he explicitly wants real on-site admin
-entry (full CRUD), not just the existing sheet+script pipeline.
+How v2 was set: Bruno's asks were (a) visitor submissions for new tournaments AND corrections,
+(b) sharing your point system + the top-10 it produces, (c) more player depth. Interview
+2026-06-12 locked: in-app submissions over a Google-Form pipeline; share link + image card;
+all four player-depth candidates committed; order = sharing → submissions → player depth.
+
+## Shipped (v1) — condensed; details in CLAUDE.md + git history
+
+1. **Leaderboard upgrades + foundation** — useTournaments/computeRankings extraction, PPE
+   column (min-events threshold), formula memory (`qpr.formula.v1`). Commits `772d97b`,
+   `28f53b4`, `5d60ef5`; deployed bundle `f94633fc`.
+2. **Tournament browser + methodology** — `/events` grouped-event browser (group key
+   `Event_Name|Year|Game|Mode`, 1,925 rows → 1,385 events), `/methodology` footer page.
+   Commits `9aaac5d`, `f3da4ca`; deployed bundle `4a86168d`.
+3. **Admin full CRUD** — `.env` config, shared `tournamentRules`, Supabase email/password auth
+   (signups disabled), uid-scoped RLS (`scripts/setup-admin.sql`), `/admin` add form, edit/
+   delete from the browser, `probe-rls.js` as the standing security regression (8/8).
+   Commits `f1eb7b5`…`9ace29b`; deployed bundle `98ad6618`. The baseline probe caught and
+   killed a legacy any-authenticated-INSERT policy + open signups.
 
 ## Committed features, in order
 
-### 1. Leaderboard upgrades + foundation (~1 session) — ✅ SHIPPED 2026-06-11
+### 4. Shareable rankings + top-10 share card (~1–1.5 sessions)
 
-All three pieces landed (commits `772d97b` refactor, `28f53b4` PPE, `5d60ef5` formula memory);
-CLAUDE.md updated the same session. Build-time decisions: PPE shows a muted dash below the
-min-events threshold and always sorts last; mobile got a Sort-by select (Points | Points per
-event) in the bottom sheet, with the row value showing PPE while PPE-sorted; localStorage key
-is `qpr.formula.v1`. Known trade-off: the 11-column table horizontally scrolls between 900 and
-~1110px viewports. Deployed to production 2026-06-11 (bundle `f94633fc`, verified live).
+- **Share link**: encode the full scoring config (8 objects + minEventsForPpe, plus the list
+  filters) into the URL; anyone opening it sees the board that formula produces. UI per the
+  existing mock `docs/mocks/shareable-rankings-walkthrough.html` (share popover from the
+  header's reserved icon slot; "viewing a shared ranking" banner with adopt/reset actions —
+  adopt writes the shared formula into the visitor's localStorage).
+- **Encoding is a permanent public contract** the moment links hit Discord: version it
+  (`v1` prefix), omit defaults, document the schema in CLAUDE.md when it ships. HashRouter
+  note: params live inside the fragment (`#/?f=…`) — parse from the hash, not `location.search`.
+- **Share card rider**: client-side canvas render of the top-10 + a formula summary →
+  downloadable / clipboard-copyable PNG in the site's visual language. This is the Discord
+  answer: OG previews stay generic for all links (fragment never reaches a server), so the
+  card is what makes a shared ranking *look* like something. Mind Orbitron font loading
+  before canvas draw.
+- Era presets deliberately NOT in this slice (backlog — they ride on the encoding for ~free).
 
-Three pieces, one session — they all touch the same code.
+### 5. Community submissions — in-app, with admin review queue (~1.5 sessions)
 
-- **Points-per-event column** (Bruno's own ask): a sortable points ÷ events column on the main
-  leaderboard. Today per-event points exist only as per-row values on PlayerPage; there is no
-  aggregate anywhere. This adds the missing axis to the GOAT debate: efficiency vs longevity
-  (the 300-event grinder vs the prime monster who averaged 12 a tournament).
-  - Decided 2026-06-11 (Bruno): PPE is only computed for players with a **minimum number of
-    events — default 15, adjustable via a new field in the settings menu**. This kills the
-    one-event-wonder problem (1 event, 1 title = huge average). Implementation detail: below
-    the threshold the column shows a dash and the player sorts last under a PPE sort.
-  - Mobile: the one-row list is dense (rank · name · medals · points). PPE as a sort option in
-    the bottom sheet at minimum; whether it displaces a visible element is a build-time call.
-- **Formula memory (A-lite)**: persist the 8 scoring-config objects (`App.js` state) to
-  localStorage — load on mount, save on change, versioned key so a future schema change can
-  invalidate cleanly. This is the depth-serving fragment of feature A (returning visitors keep
-  their formula), deliberately decoupled from the share UI, which stays in tier 2.
-- **Foundation extraction**: extract the duplicated fetch + scoring into a shared `useTournaments`
-  hook and a `computeRankings` module, consumed by PlayerList and AdvancedStats. Kills known
-  issues #1 (~200-line copy-paste) and #2 (dead state blocks); #3 (AdvancedStats chart
-  double-init) can ride along if that code is touched anyway. Feature 2 reuses the hook.
-  - After this lands, CLAUDE.md's copy-paste / dead-state sections are stale — update them in
-    the same session.
+Supersedes v1's "B2-lite first" stance — two things changed: Bruno explicitly wants
+corrections-from-visitors now, and feature 3 built the auth/RLS/admin surfaces that made
+B2-full expensive. Decision logged 2026-06-12.
 
-### 2. Tournament browser (~1–1.5 sessions) — ✅ SHIPPED 2026-06-11
+- **New `Submissions` table**: type (`new` | `correction`), `target_id` (row id for
+  corrections), `payload` jsonb (proposed row / changes), optional submitter note + handle,
+  `status` (`pending`/`approved`/`rejected`), honeypot column.
+- **RLS**: anon INSERT only (WITH CHECK forces `status = 'pending'`); **no anon SELECT** —
+  submissions are invisible to the public; admin uid gets SELECT/UPDATE/DELETE.
+  ⚠ Needs a dashboard SQL handoff again (table + policies — service key can't DDL); ship a
+  `scripts/setup-submissions.sql` the same way as feature 3, and **extend `probe-rls.js`**:
+  anon CAN insert a pending submission, CANNOT read/update/delete any, and still can't touch
+  `Tournaments`.
+- **Public UI**: "suggest a fix" affordance on every event row (form prefilled with that
+  event, reusing TournamentForm in a suggest mode) + a "submit a tournament" entry point on
+  /events. Client-side validation via the shared `tournamentRules` so the queue stays clean.
+  Spam posture: honeypot + length caps + review-before-apply; no captcha.
+- **Admin queue** in `/admin`: pending list, diff view against the current row for
+  corrections, approve (applies via `tournamentWrites` with the admin session, then marks
+  approved) / reject. Sheet + import script stay for bulk; this is for drive-by QA.
 
-Landed in commits `9aaac5d` (browser) + `f3da4ca` (methodology rider); CLAUDE.md updated the
-same session. Build-time decisions: the group key is **`Event_Name|Year|Game|Mode`**, not the
-literal name+year below — a live probe found 18 name+year groups spanning multiple modes and 3
-spanning games (QuakeCon divisions = separate competitions); the wider key still merges all 243
-team multi-row groups → **1,385 events** from 1,925 rows. Merge rules: placement buckets union
-rosters (rows by id), tier = min, LAN = OR, prize = max non-null. Filters per spec + event-name
-search; no mode filter (one-line add if wanted); Top8 names omitted from the table for width
-(player pages have them). Desktop columns capped with inner max-width divs so team rosters wrap
-instead of stretching the table. Methodology lives at `/methodology` via a **footer link**
-("How the ranking works"), not a 4th tab; it shows live dataset counts. Verified against the
-dev preview (counts, merges, filters, sorts incl. prize-blanks-last, links, mobile, console)
-and `npm run build`. Deployed to production 2026-06-11 after Bruno's "ship it" (bundle
-`4a86168d`, live bundle + CSS grep-verified for the new pages).
+### 6. Records page (~1 session) — player-depth opener
 
-- New `/events` route: a filterable list of all ~1,925 tournaments — game / tier / year / LAN
-  filters (reuse the filter-toolbar patterns), podium chips linking to player pages, prize-pool
-  display.
-- Why: the tournaments are the dataset and they're currently invisible except through player
-  pages. A browsable events surface gives the site a second content axis, fits the
-  authoritative-reference ambition, and makes the data auditable — visitors spotting a missing
-  event is free data QA. It is also the natural substrate for the admin page (feature 3).
-- **Data fact that shapes the build**: multi-row events are real — team modes store the same
-  `Event_Name`+`Year` across multiple rows (one row per player group). The browser must group
-  rows into events, not render rows raw.
-- Prizepool coverage is 94% (1,801 of 1,925 rows, verified 2026-06-11 via anon query) — good
-  enough to display, expect some blanks.
-- **Rider: methodology page** — a short "how the ranking works" page, including how tiers were
-  assigned (prize pool, era, competitiveness — Bruno's actual criteria). Cheap, and it's the
-  standing answer to every "this ranking is rigged" thread.
+- `/records`: most titles (overall + per game), tier-1 title counts, grand-final conversion
+  (min-N guard), longest career span, most events attended, biggest prize-pool events won
+  (prize stays display-only data).
+- The twist that makes it ours: **recomputes under the visitor's formula** — records respect
+  the gear settings and visibility toggles (a hidden game's titles don't count while hidden).
+- Cheap and standalone: useTournaments + computeRankings + groupEvents already provide
+  everything. Nav decision at build time: 4th header tab vs footer link (mobile header is the
+  constraint — tabs wrap below ~900px).
 
-### 3. Admin data-entry, full CRUD (~2 sessions) — ✅ SHIPPED 2026-06-11
+### 7. Rank-over-time + "who was #1" timeline (~1 session)
 
-Built and verified in one session (commits `f1eb7b5`…`9ace29b`); CLAUDE.md updated the same
-session. The design below held; what the build added/learned:
+- **Per-year ranking engine**: run the scoring pipeline per year slice; memoized client-side
+  (30 × computeRankings over 1,925 rows is fine).
+- Build-time decision to settle at discuss-phase: *season* rank (results in year Y only) vs
+  *career-to-date* rank (results ≤ Y). Lean: season for the #1 timeline ("best of 2005"),
+  career-to-date for per-player rank curves — both views from one engine.
+- Surfaces: rank-over-time as an AdvancedStats chart mode (player picker already exists);
+  the #1 timeline strip lands wherever it reads best (records page or charts — build-time).
+- This engine also feeds feature 9's "peak year" — that's why it precedes PlayerPage upgrades.
 
-- **The baseline probe found a live gap**: signups were OPEN (Supabase default) and a legacy
-  RLS policy let ANY authenticated user INSERT — anyone could have scripted signup→insert.
-  `scripts/setup-admin.sql` therefore drops ALL existing policies (DO block over pg_policies)
-  before creating the intended four; Bruno disabled signups in the dashboard the same day.
-- Tooling: `create-admin-user.js` (idempotent, service key, emits the SQL with the uid baked
-  in), `probe-rls.js` (anon insert/update/delete + public-signup probes; `--full` adds
-  signed-in CRUD on service-key marker rows — never touches real data). **Probe result 8/8**
-  post-setup; blocked UPDATE/DELETE surface as 0-affected-rows, which both the probe and the
-  UI write service treat as rejection, not success.
-- UI: `/admin` (login + add form, no nav tab), pencil column on /events when signed in
-  (desktop only), edit dialog edits raw rows (team events get a row picker + add-row), every
-  write refreshes the shared cache. Full CRUD E2E'd against live RLS (add #1928 → edit prize
-  777→999 + add 2nd → two-step delete → 1,385 events restored).
-- Riders landed: env vars (`.env` public config — closed known issue #1) and the shared
-  validation module (`src/lib/tournamentRules.js`, CJS; the import script consumes it — 9-case
-  invalid CSV verified). Gotcha: the file must avoid babel-helper syntax (spread/for-of) or
-  CRA flips it to ESM and the build breaks.
-- Fix along the way: `signOut()` on a session revoked elsewhere (password rotation) errors
-  without clearing the persisted token — handler force-clears + reloads.
-- Deployed to production 2026-06-11 after Bruno's "ship it" (bundle `98ad6618`; live bundle
-  grep-verified: admin UI/validation/edit-dialog tokens present, service key absent).
+### 8. Career comparison page (~1 session)
 
-The auth/RLS design, agreed in-session:
+- `/compare`: two player pickers → side-by-side career panels (titles per game, GF rate,
+  career span, PPE) + overlaid points-over-time chart (chart.js two datasets) + the
+  **meetings record**: events where both placed top-8, each player's bucket, who finished
+  higher (ties when same bucket).
+- **Naming is locked**: "Compare careers" — never "VS"/"head-to-head"; placements only, no
+  match data, and Quakers reading H2H would expect real series results.
+- Build a pure `lib/meetings.js` (pairwise shared events from rows) — feature 9's rivals
+  block reuses it; that's why comparison precedes PlayerPage upgrades.
+- Entry points: the route itself + a "compare this player" link on PlayerPage (build-time).
 
-- **Auth**: Supabase email/password, **signups disabled** in the dashboard (primary control),
-  single user (Bruno). Login UI on a `/admin` route.
-- **RLS**: SELECT stays public (anon + authenticated). INSERT/UPDATE/DELETE require
-  `authenticated` **and** `auth.uid() = '<Bruno's uuid>'` (defense-in-depth on top of disabled
-  signups). The client keeps using the anon key — after login, requests carry the user JWT and
-  RLS sees the role + uid. The service key stays script-only.
-- Shipping admin UI in the public bundle is fine — security lives entirely in RLS, not in
-  hiding the page.
-- **Scope: full CRUD** (decided over insert-only): add, edit, delete from the site. The sheet +
-  `npm run import` pipeline stays for bulk imports; the admin page is for one-off adds and
-  corrections. Build the edit/delete flow on the tournament browser's surface (find event →
-  edit).
-- **Riders**: move the hardcoded Supabase URL/anon key + GA ID to env vars (known issue #4)
-  while touching `supabaseClient.js`; share the validation rules (games/modes/tier 1–5/year
-  range) between the admin form and `scripts/import-tournaments.js` so they can't drift.
-- **Verification requirement**: after any RLS change, re-run the logged-out write probes —
-  insert AND update/delete must all be rejected (the original anon-insert 401 probe only
-  covered insert).
+### 9. PlayerPage upgrades (~1 session) — consumes both engines
+
+- **Rivals block**: most-shared-podium opponents from `lib/meetings.js`, framed as "shared
+  podiums" with bucket-comparison tallies (placement-based framing, not match-based).
+- **Peak year** under the current formula (per-year engine from feature 7).
+- **Titles-by-game grid** and **career milestones** (first/last title, active span).
+- Everything placement-derived only — no win streaks (years, not dates), no upsets (no
+  seeds), no real H2H.
 
 ## Tier 2 backlog (interested, unordered)
 
-- **Career comparison page** — two career panels side by side (titles per game, GF rate, career
-  span, PPE) + overlaid points-over-time chart + a meetings record: events where both placed
-  top-8 and who finished higher. Placements only — the data supports this. **Naming matters**:
-  frame as "Compare careers", NOT "VS"/"head-to-head" — no match data exists and Quakers would
-  expect real H2H results. Bruno: interested, revisit after the committed three.
-- **Records page** — most titles, per-game GOATs, tier-1 title counts, longest career span, GF
-  conversion (min-N), biggest prize-pool events won. Twist: recomputes under the visitor's
-  formula. ~1 session once the extraction exists.
-- **Full shareable rankings (feature A)** — fully spec'd in
-  `docs/mocks/shareable-rankings-walkthrough.html`; the header reserves the share-icon slot.
-  The URL encoding becomes a permanent public contract the moment links hit Discord — version
-  it and omit defaults. Known cap on the payoff: OG previews stay generic for all links (the
-  hash fragment never reaches a server on GH Pages + HashRouter).
-- **Rank-over-time / "who was #1" timeline** — per-year rank under the current formula; a
-  timeline strip of #1s falls out nearly free once rank-over-time exists.
-- **B2-lite public intake** — Google Form → sheet tab → the existing import script as the
-  review queue. Zero auth, zero new infra. The escape hatch if community submissions ever
-  matter.
-- **Era presets** — canned share links ("the golden era 2003–2013") once feature A exists.
-- **Embed widget** (iframe top-10 for forums/streams), **CSV export** of the current ranking.
+- **Era presets** — 2–3 curated share links ("the golden era 2003–2013") on methodology/home;
+  rides on feature 4's encoding for near-zero cost.
+- **Embed widget** — iframe-able top-10 for forums/streams.
+- **CSV export** of the current ranking.
+- **Submission notifications** — surface "N pending" to Bruno (email/discord webhook needs a
+  server or Edge Function — out of static-hosting scope today; the /admin badge is the free
+  version).
 
 ## Rejected / parked, with rationale — don't relitigate without new information
 
-- **Prize-pool weighting in the scoring formula** — rejected: Bruno's tiers already encode
-  prize pool (plus era and competitiveness), so a prizepool weight would double-count what Tier
-  prices in. Prizepool stays as *display* data (browser, records).
-- **Era explorer as a standalone feature** — the year filter already covers most of it; the
-  differentiated remainder becomes era presets after feature A.
-- **B2 full (in-app submission form + review queue + RLS for anon writes)** — premature at
-  current traffic; B2-lite above does the job with zero new infra.
-- **BrowserRouter migration** — infra, not depth. It is the only path to per-page link previews
-  and Google indexing (HashRouter fragments never reach any server), so revisit if reach
-  becomes the goal — but it risks every existing `#/` link and needs the GH Pages 404 trick.
+- **Prize-pool weighting in the scoring formula** — rejected (v1): Bruno's tiers already
+  encode prize pool (plus era and competitiveness); a prizepool weight would double-count.
+  Prizepool stays display data (browser, records).
+- **Era explorer as a standalone feature** — the year filter covers most of it; the remainder
+  becomes era presets after feature 4.
+- **Google-Form intake (B2-lite)** — superseded 2026-06-12 by committed feature 5 (in-app):
+  explicit demand for visitor corrections + the feature-3 infrastructure flipped the
+  cost/benefit. The sheet + import script remain the bulk-import path.
+- **BrowserRouter migration** — still parked. It remains the only path to per-link previews
+  and indexing (fragments never reach a server), and it risks every existing `#/` link +
+  needs the GH Pages 404 trick. The share *card* (feature 4) is the deliberate mitigation.
+  New revisit trigger: share links circulating in the wild with complaints that previews look
+  generic.
 
 ## Cross-cutting constraints
 
-- Static hosting (GitHub Pages), no server. Everything is client-side or Supabase. The anon key
-  is read-only today; feature 3 changes the write story via RLS only.
-- The design system is fixed post-redesign: new surfaces (browser, admin, methodology) must
-  drop into the hybrid theme — `src/theme.js` + the `App.css` design-system classes; visual
-  target `docs/mocks/direction-hybrid.html`. See `docs/REDESIGN.md` for the brief.
-- Player names are stored lowercase in Supabase; `eq` queries depend on it.
+- Static hosting (GitHub Pages), no server. Everything is client-side or Supabase. Writes:
+  admin-only via uid-scoped RLS; feature 5 adds anon INSERT to `Submissions` only.
+- **After any auth/RLS change, run `node scripts/probe-rls.js --full`** — and extend the probe
+  whenever a new table/policy ships (feature 5). Dashboard SQL pastes are a known handoff
+  step: prepare the `.sql`, Bruno pastes, verify by probe.
+- The design system is fixed: new surfaces (share popover/banner/card, submission forms,
+  queue, records, compare) drop into `src/theme.js` + the `App.css` design-system classes;
+  visual target `docs/mocks/direction-hybrid.html`.
+- Player names are stored lowercase (`tournamentRules.normalizeRow` on every write path);
+  `eq` queries depend on it.
+- Header tabs are near capacity — feature 6 decides the nav pattern for new pages (tab vs
+  footer vs a "More" affordance), and features 7–9 follow it.
 - One feature per implementation session; if a session drifts or runs long, stop and hand off
-  fresh (the redesign's working model).
+  fresh.
 
 ## Decision log
 
-- 2026-06-11 — Session interview: goal = depth for visitors; appetite = whatever it takes
-  (refactor groundwork in scope); data work = real B1 with full CRUD. Reach features demoted
-  accordingly.
-- 2026-06-11 — Committed order locked: leaderboard upgrades + foundation → tournament browser
-  (+ methodology rider) → admin full CRUD. Records stays tier 2; A-lite (localStorage formula
-  memory) rides along in session 1.
-- 2026-06-11 — Comparison page kept tier 2 with the "Compare careers" framing after discussing
-  the no-match-data concern; prize-pool weighting rejected (tiers already encode it).
-- 2026-06-11 — Bruno: PPE only for players with ≥ N events, N default 15 and adjustable in the
-  settings menu (kills one-event wonders). Implemented in `computeRankings` (`minEventsForPpe`).
-- 2026-06-11 — Feature 1 shipped (extraction + PPE + formula memory). Session model held:
-  three atomic commits, each verified in the dev preview before landing.
-- 2026-06-11 — Feature 2 built (browser + methodology). Group key widened to include Game+Mode
-  after a data probe showed name+year merges distinct competitions (18 multi-mode / 3
-  multi-game cases); roadmap's team-row fact fully handled (243 groups merged, 1,385 events).
-  Feature 3 note: the admin "find event → edit" flow can reuse `groupEvents` + the browser
-  surface as planned, but edits target the underlying *rows* — the browser groups them.
-- 2026-06-11 — Feature 3 built (env vars, shared validation, auth, full CRUD, RLS setup +
-  probes). Pre-setup probe exposed open signups + a legacy any-authenticated-INSERT policy —
-  the setup SQL now wipes all policies first; post-setup probe 8/8. Verification requirement
-  satisfied: logged-out insert AND update AND delete all rejected (update/delete via the
-  0-affected-rows signal), public signup rejected, admin CRUD allowed and E2E'd through the UI.
+- 2026-06-11 — v1 interview: goal = depth for visitors; appetite = whatever it takes; data
+  work = real admin with full CRUD. Committed order: leaderboard+foundation → browser+
+  methodology → admin CRUD. (All three shipped same day — see Shipped section.)
+- 2026-06-11 — PPE min-events (default 15, adjustable); comparison framing "Compare careers";
+  prize-pool weighting rejected; feature-2 group key widened to include Game+Mode after the
+  data probe; feature-3 baseline probe caught open signups + a legacy any-authenticated
+  INSERT policy (both closed same day).
+- 2026-06-12 — **v2 interview (Bruno)**: submissions = in-app suggest-a-fix + admin queue
+  (supersedes B2-lite; rationale above); sharing = link + top-10 image card (era presets stay
+  backlog); player depth = ALL FOUR candidates committed; order = sharing → submissions →
+  depth.
+- 2026-06-12 — Depth-internal order set by engine reuse: records (standalone opener) →
+  rank-over-time (builds the per-year engine) → comparison (builds the meetings engine) →
+  PlayerPage upgrades (consumes both).
