@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction 1 — Stat Sheet · Quake Player Rankings redesign mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0e12;
+  --surface: #13161c;
+  --surface2: #1a1e26;
+  --surface3: #20242e;
+  --line: rgba(255,255,255,0.07);
+  --text: #e9ebf1;
+  --muted: #98a1b3;
+  --faint: #636c7e;
+  --accent: #7aa7ff;
+  --accent-dim: rgba(122,167,255,0.14);
+  --name: #ffe14d;
+  --gold: #e8b923;   --gold-t: rgba(232,185,35,0.09);
+  --silver: #a9aeb9; --silver-t: rgba(169,174,185,0.09);
+  --bronze: #d08e4c; --bronze-t: rgba(208,142,76,0.09);
+  --copper: #9c6420; --copper-t: rgba(156,100,32,0.10);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #06070a; font-family: Inter, system-ui, sans-serif; color: var(--text); }
+
+/* ---------- spec strip (not part of the design) ---------- */
+.spec-strip { background: #16181d; border-bottom: 1px solid #26292f; padding: 10px 20px; font-size: 12px; color: #9aa3b2; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+.spec-strip b { color: #e9ebf1; font-weight: 600; }
+.spec-strip a { color: #7aa7ff; text-decoration: none; }
+.spec-strip details { display: inline; }
+.spec-strip summary { cursor: pointer; color: #7aa7ff; display: inline; }
+.spec-strip p { max-width: 980px; line-height: 1.6; margin: 8px 0 2px; }
+
+/* ---------- the page ---------- */
+.page { background: var(--bg); min-height: 100vh; padding-bottom: 48px; }
+.shell { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+
+header.site { display: flex; align-items: center; gap: 28px; padding: 18px 0 14px; border-bottom: 1px solid var(--line); }
+.wordmark { font-family: Orbitron, sans-serif; font-weight: 900; font-size: 17px; letter-spacing: 2.5px; white-space: nowrap; }
+.wordmark .q { color: var(--name); }
+.wordmark .rest { color: var(--text); }
+nav.tabs { display: flex; gap: 4px; margin-left: 8px; }
+.tab { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); padding: 9px 14px; border-radius: 8px; text-decoration: none; position: relative; }
+.tab:hover { color: var(--text); background: var(--surface2); }
+.tab.on { color: var(--text); }
+.tab.on::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 2px; border-radius: 2px; background: var(--accent); }
+.head-icons { margin-left: auto; display: flex; gap: 6px; }
+.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: none; background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.icon-btn:hover { background: var(--surface2); color: var(--text); }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* ---------- filter toolbar ---------- */
+.toolbar { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 18px 0 0; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--faint); text-transform: uppercase; }
+.select { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 140px; height: 36px; padding: 0 10px 0 12px; background: var(--surface2); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
+.select svg { width: 14px; height: 14px; color: var(--faint); }
+.years { min-width: 230px; }
+.yearline { display: flex; align-items: center; gap: 12px; height: 36px; }
+.track { position: relative; flex: 1; height: 4px; border-radius: 2px; background: var(--surface3); }
+.track .fill { position: absolute; left: 0%; right: 0%; height: 4px; border-radius: 2px; background: var(--accent); }
+.knob { position: absolute; top: -5px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.yearval { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.search { flex: 1; min-width: 200px; }
+.searchbox { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; background: var(--surface2); border: 1px solid var(--line); border-radius: 8px; color: var(--faint); font-size: 13px; }
+.searchbox svg { width: 15px; height: 15px; }
+.toggles { display: flex; gap: 8px; align-self: flex-end; height: 36px; }
+.chip-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; }
+.chip-toggle .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.chip-toggle.on { background: var(--accent-dim); border-color: rgba(122,167,255,0.4); color: var(--accent); }
+.chip-toggle.on .dot { background: var(--accent); }
+
+.summary { display: flex; align-items: baseline; gap: 8px; padding: 14px 4px 10px; font-size: 12px; color: var(--muted); }
+.summary b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- leaderboard ---------- */
+.board { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+thead th { position: sticky; top: 0; background: var(--surface2); font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+thead th.sortable { cursor: pointer; }
+thead th .arrow { color: var(--accent); font-size: 9px; }
+thead th.medal { padding: 7px 8px; }
+thead th.medal span { display: inline-block; min-width: 52px; padding: 4px 10px; border-radius: 6px; color: #0b0d10; font-weight: 700; letter-spacing: 0.06em; }
+th.h-gold span { background: var(--gold); } th.h-silver span { background: var(--silver); }
+th.h-bronze span { background: var(--bronze); } th.h-copper span { background: var(--copper); }
+th.left, td.left { text-align: left; }
+th.right, td.right { text-align: right; }
+
+tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--text); text-align: center; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { box-shadow: inset 0 0 0 999px rgba(255,255,255,0.025); }
+td.rank { width: 48px; color: var(--faint); font-weight: 600; }
+tr.r1 td.rank { color: var(--gold); } tr.r2 td.rank { color: var(--silver); } tr.r3 td.rank { color: var(--bronze); }
+td.player { white-space: nowrap; }
+td.player a { font-family: Orbitron, sans-serif; font-weight: 800; font-size: 15px; color: var(--name); text-decoration: none; text-transform: lowercase; }
+td.player a:hover { text-shadow: 0 0 14px rgba(255,225,77,0.45); }
+td.games { white-space: nowrap; }
+td.games img { width: 20px; height: 20px; margin: 0 2px; vertical-align: middle; }
+.glyph-fb { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; margin: 0 2px; border-radius: 4px; background: var(--surface3); color: var(--muted); font-size: 8px; font-weight: 700; padding: 0 3px; vertical-align: middle; }
+td.modes { color: var(--muted); font-size: 12px; white-space: nowrap; }
+td.modes .more { color: var(--faint); font-size: 11px; background: var(--surface3); border-radius: 4px; padding: 1px 5px; margin-left: 5px; }
+td.m-gold { background: var(--gold-t); } td.m-silver { background: var(--silver-t); }
+td.m-bronze { background: var(--bronze-t); } td.m-copper { background: var(--copper-t); }
+td.part { color: var(--muted); }
+td.points { font-weight: 700; font-size: 14px; min-width: 90px; }
+.pwrap { display: inline-block; min-width: 56px; text-align: right; }
+.pbar { height: 3px; border-radius: 2px; margin-top: 3px; margin-left: auto; background: linear-gradient(90deg, var(--gold), var(--name)); }
+.loadhint { text-align: center; color: var(--faint); font-size: 11.5px; letter-spacing: 0.06em; padding: 14px 0 4px; }
+
+footer.site { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 26px 0 0; color: var(--faint); font-size: 12px; }
+footer.site img { width: 20px; height: 20px; opacity: 0.55; filter: grayscale(35%); vertical-align: middle; }
+footer.site a:hover img { opacity: 1; }
+
+/* ---------- annex (mobile + components) ---------- */
+.annex { background: #08090c; border-top: 1px dashed #2a2e36; padding: 28px 24px 56px; }
+.annex .inner { max-width: 1240px; margin: 0 auto; }
+.annex h2 { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: #9aa3b2; margin: 26px 0 14px; }
+.annex .cols { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+.annex ul { font-size: 13px; color: #b7bdc9; line-height: 1.75; max-width: 520px; padding-left: 18px; margin: 0; }
+.annex ul b { color: #e9ebf1; font-weight: 600; }
+
+.phone { width: 375px; flex-shrink: 0; border: 8px solid #1d2027; border-radius: 38px; background: var(--bg); overflow: hidden; box-shadow: 0 18px 60px rgba(0,0,0,0.5); }
+.phone .ph-in { padding: 14px 12px 18px; }
+.ph-head { display: flex; align-items: center; gap: 8px; padding: 2px 2px 10px; }
+.ph-head .wordmark { font-size: 12px; letter-spacing: 1.8px; }
+.ph-head .icon-btn { width: 28px; height: 28px; margin-left: auto; }
+.ph-head .icon-btn + .icon-btn { margin-left: 0; }
+.ph-head .icon-btn svg { width: 15px; height: 15px; }
+.ph-chips { display: flex; gap: 6px; overflow: hidden; padding-bottom: 10px; }
+.ph-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface2); color: var(--muted); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.ph-chip.on { background: var(--accent-dim); border-color: rgba(122,167,255,0.4); color: var(--accent); }
+.ph-chip svg { width: 12px; height: 12px; }
+.ph-sum { font-size: 10.5px; color: var(--faint); padding: 0 2px 8px; }
+.card { display: flex; flex-direction: column; gap: 7px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.card .l1 { display: flex; align-items: baseline; gap: 10px; }
+.card .rk { font-size: 12px; font-weight: 700; color: var(--faint); min-width: 18px; font-variant-numeric: tabular-nums; }
+.card.r1 .rk { color: var(--gold); } .card.r2 .rk { color: var(--silver); } .card.r3 .rk { color: var(--bronze); }
+.card .nm { font-family: Orbitron, sans-serif; font-weight: 800; font-size: 14px; color: var(--name); text-transform: lowercase; }
+.card .pt { margin-left: auto; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.card .l2 { display: flex; align-items: center; gap: 5px; }
+.card .l2 img { width: 15px; height: 15px; }
+.card .l2 .glyph-fb { min-width: 15px; height: 15px; font-size: 7px; }
+.mpill { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; border-radius: 5px; padding: 2px 6px; font-variant-numeric: tabular-nums; }
+.mp-gold { background: var(--gold-t); color: var(--gold); } .mp-silver { background: var(--silver-t); color: var(--silver); }
+.mp-bronze { background: var(--bronze-t); color: var(--bronze); } .mp-copper { background: var(--copper-t); color: var(--copper); }
+.card .pn { margin-left: auto; font-size: 10.5px; color: var(--faint); }
+.fade { height: 56px; margin-top: -64px; position: relative; background: linear-gradient(transparent, var(--bg)); pointer-events: none; }
+
+.pop-demo { width: 280px; background: var(--surface2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; box-shadow: 0 14px 40px rgba(0,0,0,0.5); }
+.pop-demo h4 { margin: 0 0 10px; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+.set-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; font-size: 13px; color: var(--text); }
+.cbx { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--faint); display: inline-flex; align-items: center; justify-content: center; }
+.cbx.on { background: var(--accent); border-color: var(--accent); color: #0b0d10; font-size: 11px; font-weight: 800; }
+.set-row .win { margin-left: auto; width: 58px; height: 28px; background: var(--surface3); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font-size: 12.5px; display: inline-flex; align-items: center; justify-content: flex-end; padding: 0 9px; font-variant-numeric: tabular-nums; }
+.set-row.off { color: var(--faint); }
+.pop-div { border-top: 1px solid var(--line); margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<div class="spec-strip">
+  <span><b>Direction 1 of 3 — “Stat Sheet”</b> · pro esports-data UI</span>
+  <span>Compare: <a href="direction-2-arena-hud.html">2 · Arena HUD</a> · <a href="direction-3-hall-of-champions.html">3 · Hall of Champions</a></span>
+  <details><summary>Rationale</summary>
+    <p>The data is the interface. This direction styles the site like the reference stat platforms the audience
+    already trusts (HLTV, Liquipedia): near-black cool surfaces, one workhorse font (Inter) with tabular numerals,
+    and exactly two voices of color — yellow is reserved for player identity (Orbitron names, the Q in the wordmark,
+    the points bar), blue for interactive controls. The medal system stays but grows up: header pills and low-alpha
+    cell tints instead of paint-bucket columns, so 24 dense rows scan without noise. It is the safest direction to
+    implement — almost everything is a literal MUI theme token — and its restraint is what makes the leaderboard
+    feel authoritative rather than hobbyist. Filter chrome collapses into one toolbar; on phones rows become
+    two-line cards and filters become a chip rail, so nothing is lost at 375px.</p>
+  </details>
+</div>
+
+<div class="page">
+  <div class="shell">
+
+    <header class="site">
+      <div class="wordmark"><span class="q">QUAKE</span> <span class="rest">PLAYER RANKINGS</span></div>
+      <nav class="tabs">
+        <a class="tab on" href="#">HOME</a>
+        <a class="tab" href="#">ADVANCED STATS</a>
+      </nav>
+      <div class="head-icons">
+        <button class="icon-btn" title="Share this ranking (feature A slot)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        </button>
+        <button class="icon-btn" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="field"><label>Game</label>
+        <div class="select">All games <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>
+      </div>
+      <div class="field"><label>Mode</label>
+        <div class="select" style="min-width:110px;">All <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>
+      </div>
+      <div class="field years"><label>Years</label>
+        <div class="yearline">
+          <div class="track"><div class="fill"></div><div class="knob" style="left:-2px;"></div><div class="knob" style="right:-2px;"></div></div>
+          <span class="yearval">1996 – 2026</span>
+        </div>
+      </div>
+      <div class="field search"><label>Search</label>
+        <div class="searchbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          Search player…
+        </div>
+      </div>
+      <div class="toggles">
+        <button class="chip-toggle"><span class="dot"></span>LAN ONLY</button>
+        <button class="chip-toggle on"><span class="dot"></span>POWER RANKING</button>
+      </div>
+    </div>
+
+    <div class="summary"><b>1,690</b> players · <b>1,925</b> tournaments · <span>0 filtered out</span></div>
+
+    <div class="board">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th class="left sortable">Player</th>
+            <th class="sortable">Games</th>
+            <th class="left sortable">Modes</th>
+            <th class="medal h-gold sortable"><span>1ST</span></th>
+            <th class="medal h-silver sortable"><span>2ND</span></th>
+            <th class="medal h-bronze sortable"><span>TOP 4</span></th>
+            <th class="medal h-copper sortable"><span>TOP 8</span></th>
+            <th class="sortable">Events</th>
+            <th class="right sortable">Points <span class="arrow">▼</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="loadhint">SCROLL — NEXT 100 LOAD AUTOMATICALLY</div>
+
+    <footer class="site">
+      <a href="#"><img src="../../src/logos/x_logo.png" alt="X" onerror="this.replaceWith('X')"></a>
+      <a href="#"><img src="../../src/logos/tv_logo.png" alt="Twitch" onerror="this.replaceWith('Twitch')"></a>
+      <span>discord @ theamazingins</span>
+    </footer>
+  </div>
+</div>
+
+<div class="annex">
+  <div class="inner">
+    <h2>Mobile treatment (shown, not described)</h2>
+    <div class="cols">
+      <div>
+        <div class="phone"><div class="ph-in">
+          <div class="ph-head">
+            <div class="wordmark"><span class="q">QUAKE</span> <span class="rest">PLAYER RANKINGS</span></div>
+            <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+            <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+          </div>
+          <div class="ph-chips">
+            <span class="ph-chip">All games <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ph-chip">Duel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="ph-chip">1996–2026</span>
+            <span class="ph-chip on">POWER</span>
+            <span class="ph-chip">LAN</span>
+          </div>
+          <div class="ph-sum">1,690 players · 1,925 tournaments</div>
+          <div id="cards"></div>
+          <div class="fade"></div>
+        </div></div>
+      </div>
+      <ul>
+        <li><b>Rows become two-line cards.</b> Line 1: rank, name, points (the three things that matter). Line 2: game logos, the four medal counts as color-coded pills — the medal column system survives as pills — plus event count. No horizontal scrolling, ever.</li>
+        <li><b>Filters become a chip rail.</b> One horizontal row of chips (game, mode, years, LAN, POWER). Tapping a chip opens a bottom sheet with the full control (the year slider lives there at full width). The rail is sticky under the header.</li>
+        <li><b>Search</b> docks into the header as an expanding icon field.</li>
+        <li><b>Tap a card</b> → player page; the card layout reuses the exact desktop tokens, so it is one responsive render path in <code>PlayerList</code>, not a second design.</li>
+      </ul>
+    </div>
+
+    <h2>Control language — settings popover excerpt</h2>
+    <div class="cols">
+      <div class="pop-demo">
+        <h4>Placement points</h4>
+        <div class="set-row"><span class="cbx on">✓</span> 1st place <span class="win">100</span></div>
+        <div class="set-row"><span class="cbx on">✓</span> 2nd place <span class="win">50</span></div>
+        <div class="set-row off"><span class="cbx"></span> Top 4 <span class="win" style="opacity:.4;">25</span></div>
+        <div class="pop-div"></div>
+        <h4>Game weights</h4>
+        <div class="set-row"><span class="cbx on">✓</span> Quake Live <span class="win">100</span></div>
+        <div class="set-row"><span class="cbx on">✓</span> Quake Champions <span class="win">80</span></div>
+        <div class="set-row off"><span class="cbx"></span> Diabotical <span class="win" style="opacity:.4;">100</span></div>
+      </div>
+      <ul>
+        <li>Same surface, radius, and 13px Inter as the toolbar — the popover stops being a serif-fallback orphan.</li>
+        <li>Checkbox → accent blue; weight inputs are right-aligned tabular fields, all 28px tall.</li>
+        <li>This is the pattern the future share popover and submit-tournament form inherit: label left, control right, one density.</li>
+      </ul>
+    </div>
+
+    <h2>Implementation notes (MUI mapping)</h2>
+    <ul style="max-width:760px;">
+      <li>Pure theme work: <code>palette</code> (bg/paper/primary <code>#7aa7ff</code>), <code>shape.borderRadius: 8–12</code>, <code>typography</code> = Inter + custom <code>playerName</code> style (Orbitron 800); font imports drop from 8 families to 2.</li>
+      <li>Medal classes (<code>gold-header</code> …) keep their names — values change to pill-style overrides; emotion-hash selectors die. Cell tints are the existing classes at new alphas.</li>
+      <li>LAN / POWER checkboxes restyled as MUI <code>Chip</code>/<code>ToggleButton</code> — presentational swap inside the existing FormControlLabel slots.</li>
+      <li>Points bar = <code>::after</code> on the points cell (width % of leader) — one styleOverride, no new component.</li>
+      <li>Modes column renders “first two + <b>+N</b>” with the full list as tooltip — formatting only, sort logic untouched.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+var LOGO = { QW:"quakeworld_logo.png", Q2:"quake2_logo.png", Q3:"quake3_logo.png", Q4:"quake4_logo.png", QL:"quakelive_logo.png", QC:"quakechampions_logo.png", DBT:"diabotical_logo.png" };
+var NAMES = { QW:"Quake World", Q2:"Quake 2", Q3:"Quake 3", Q4:"Quake 4", QL:"Quake Live", QC:"Quake Champions", DBT:"Diabotical" };
+var DATA = [
+  [1,"rapha",["QC","QL","DBT","Q3"],["Duel","CTF","SAC","DBT","WIP","2v2","TDM","CA"],93,28,26,13,160,4650],
+  [2,"cypher",["QC","QL","DBT","Q3","Q4"],["Duel","CTF","DBT","2v2","SAC","CA","TDM"],117,81,70,46,314,4457],
+  [3,"toxjq",["QL","Q4","QC","Q3"],["Duel","SAC","2v2","TDM","CTF"],34,20,18,20,92,3120],
+  [4,"cooller",["QL","Q3","Q4","QC"],["Duel","CTF","2v2","TDM","SAC"],41,44,62,33,180,3093],
+  [5,"dahang",["QL","Q4","QC","DBT"],["Duel","CTF","SAC","DBT","WIP","2v2","TDM"],37,18,16,20,91,2166],
+  [6,"av3k",["QL","Q4","QC","Q3"],["Duel","CTF","SAC","2v2","TDM"],29,33,43,23,128,2070],
+  [7,"evil",["QL","Q3","Q4","QC"],["Duel","2v2","TDM"],96,37,46,15,194,2052],
+  [8,"k1llsen",["QL","QC","DBT","Q3","Q4"],["Duel","SAC","2v2","TDM"],35,41,59,34,169,1875],
+  [9,"raisy",["QC","QL"],["Duel","SAC","2v2"],79,34,34,21,168,1860],
+  [10,"agent",["QC","DBT","QL"],["Duel","WIP","DBT","2v2"],66,49,80,32,227,1749],
+  [11,"spart1e",["QC","QL","DBT","Q3"],["Duel","CTF","SAC","WIP","2v2","TDM","CA"],32,36,57,55,180,1573],
+  [12,"base",["QC","QL"],["Duel","2v2","SAC"],72,48,70,37,227,1384],
+  [13,"zero4",["QL","Q3","QW"],["Duel","CTF","2v2","TDM","CA"],12,10,18,8,48,1376],
+  [14,"strenx",["QL","DBT","Q3","QC"],["Duel","CTF","WIP","TDM"],69,20,25,21,135,1353],
+  [15,"deathstalker",["Q3","QL"],["Duel","CTF","TDM"],14,11,16,9,52,1290],
+  [16,"fox",["QL","Q3","Q4"],["Duel","CTF","2v2","TDM"],13,8,15,12,48,1224],
+  [17,"fazz",["QL","QC","Q3"],["Duel","CTF","SAC","2v2","TDM"],15,21,26,20,82,1049],
+  [18,"pavel",["QL","DBT"],["Duel","WIP","DBT","TDM","2v2","CTF","CA"],18,43,80,44,185,1018],
+  [19,"imprezzive",["QL","Q3"],["TDM","Duel","CTF"],16,12,19,11,58,968],
+  [20,"clawz",["DBT","QC","QL"],["DBT","WIP","Duel","SAC","2v2","CTF","TDM"],16,10,11,18,55,930],
+  [21,"stermy",["QL","Q3","Q4","QC"],["Duel","CTF","2v2","SAC","TDM","CA"],5,10,11,13,39,923],
+  [22,"winz",["Q3","Q4","QC","QL"],["TDM","Duel","SAC","2v2","CTF"],11,5,10,2,28,907],
+  [23,"guard1an",["QW","Q3"],["Duel","TDM","CTF"],9,12,14,10,45,866],
+  [24,"paradoks",["QW","Q2","QL"],["TDM","Duel","2v2"],8,9,15,12,51,820]
+];
+var MAX = DATA[0][9];
+
+function logos(games, cls) {
+  return games.map(function (g) {
+    return '<img src="../../src/logos/' + LOGO[g] + '" alt="' + NAMES[g] + '" title="' + NAMES[g] + '" onerror="this.outerHTML=\'<span class=&quot;glyph-fb\&quot;>' + g + '</span>\'">';
+  }).join('');
+}
+function modesCell(modes) {
+  var shown = modes.slice(0, 2).join(' · ');
+  var extra = modes.length - 2;
+  return shown + (extra > 0 ? '<span class="more" title="' + modes.join(', ') + '">+' + extra + '</span>' : '');
+}
+
+document.getElementById('rows').innerHTML = DATA.map(function (r) {
+  var rc = r[0] <= 3 ? ' r' + r[0] : '';
+  var barW = Math.max(8, Math.round((r[9] / MAX) * 100));
+  return '<tr class="' + rc + '">' +
+    '<td class="rank">' + r[0] + '</td>' +
+    '<td class="player left"><a href="#">' + r[1] + '</a></td>' +
+    '<td class="games">' + logos(r[2]) + '</td>' +
+    '<td class="modes left">' + modesCell(r[3]) + '</td>' +
+    '<td class="m-gold">' + r[4] + '</td>' +
+    '<td class="m-silver">' + r[5] + '</td>' +
+    '<td class="m-bronze">' + r[6] + '</td>' +
+    '<td class="m-copper">' + r[7] + '</td>' +
+    '<td class="part">' + r[8] + '</td>' +
+    '<td class="points right"><span class="pwrap">' + r[9].toLocaleString('en-US') + '<div class="pbar" style="width:' + barW + '%;"></div></span></td>' +
+  '</tr>';
+}).join('');
+
+document.getElementById('cards').innerHTML = DATA.slice(0, 8).map(function (r) {
+  var rc = r[0] <= 3 ? ' r' + r[0] : '';
+  return '<div class="card' + rc + '">' +
+    '<div class="l1"><span class="rk">' + r[0] + '</span><span class="nm">' + r[1] + '</span><span class="pt">' + r[9].toLocaleString('en-US') + '</span></div>' +
+    '<div class="l2">' + logos(r[2]) +
+      '<span class="mpill mp-gold">' + r[4] + '</span><span class="mpill mp-silver">' + r[5] + '</span>' +
+      '<span class="mpill mp-bronze">' + r[6] + '</span><span class="mpill mp-copper">' + r[7] + '</span>' +
+      '<span class="pn">' + r[8] + ' ev</span></div>' +
+  '</div>';
+}).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "D:\\ins\\quakerankings\\quakerankings"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "mocks",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "D:\\ins\\quakerankings\\quakerankings", "-l", "5051"],
+      "port": 5051,
+      "autoPort": true
+    }
+  ]
+}

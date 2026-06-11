@@ -74,4 +74,14 @@ an admin data-entry page, and a public "submit a tournament" form (features B1/B
 
 ## Decision log
 
+- 2026-06-11 — Phase 1 mocks produced (real top-20 data pulled from the live table; 24 rows incl.
+  long-name stress rows; each file: desktop hero + phone-frame mobile + settings-popover excerpt +
+  rationale + MUI mapping notes):
+  - `docs/mocks/direction-1-stat-sheet.html` — pro esports-data UI (HLTV-grade density, cool
+    neutrals, medal header pills, points bars).
+  - `docs/mocks/direction-2-arena-hud.html` — Quake-identity industrial (ember accent, angular
+    cut-corner plates, scanlines, beveled metal headers, glowing nametags).
+  - `docs/mocks/direction-3-hall-of-champions.html` — editorial prestige (champagne metals, airy
+    rows, top-3 podium strip — podium flagged as the one element beyond pure theming).
+  - Awaiting Bruno's pick (or hybrid notes).
 - (append direction choice and deviations here)
