@@ -12,14 +12,11 @@ const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
 const { createClient } = require("@supabase/supabase-js");
+// Validation rules shared with the admin form — single source, can't drift.
+const { PLACEMENTS, validateRow, normalizeRow } = require("../src/lib/tournamentRules");
 
 const SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/1kLwGkzlC82_wjiDTEJuy5Q7nbeCFAmmQNwv-tFeTP4o/export?format=csv&gid=1304795890";
-
-const GAMES = ["Quake World", "Quake 2", "Quake 3", "Quake 4", "Quake Live", "Quake Champions", "Diabotical"];
-const MODES = ["Duel", "2v2", "TDM", "CTF", "CA", "SAC", "WIP", "DBT"];
-const PLACEMENTS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
-const CURRENT_YEAR = new Date().getFullYear();
 
 // .env.local first (secrets, wins), then .env (public config) — same files CRA uses.
 function loadEnv() {
@@ -68,33 +65,20 @@ function isStub(rec) {
   return rec.Event_Name === "" && PLACEMENTS.every((p) => (rec[p] ?? "") === "");
 }
 
-function validate(rec) {
-  const errs = [];
-  if (!rec.Event_Name) errs.push("missing Event_Name");
-  if (!GAMES.includes(rec.Game)) errs.push(`unknown Game "${rec.Game}"`);
-  if (!MODES.includes(rec.Mode)) errs.push(`unknown Mode "${rec.Mode}"`);
-  const tier = Number(rec.Tier);
-  if (!Number.isInteger(tier) || tier < 1 || tier > 5) errs.push(`Tier must be 1-5, got "${rec.Tier}"`);
-  const year = Number(rec.Year);
-  if (!Number.isInteger(year) || year < 1996 || year > CURRENT_YEAR)
-    errs.push(`Year must be 1996-${CURRENT_YEAR}, got "${rec.Year}"`);
-  if (!/^(true|false)$/i.test(rec.LAN)) errs.push(`LAN must be TRUE or FALSE, got "${rec.LAN}"`);
-  if (rec.Prizepool !== "" && isNaN(Number(rec.Prizepool))) errs.push(`Prizepool not a number: "${rec.Prizepool}"`);
-  if (PLACEMENTS.every((p) => rec[p] === "")) errs.push("no players in any placement");
-  return errs;
-}
-
+// Coerce a CSV record's strings to the typed row shape. Values that don't
+// convert pass through raw so validateRow's errors show what the sheet held.
 function toRow(rec) {
+  const num = (s) => (s !== "" && !isNaN(Number(s)) ? Number(s) : s);
   const row = {
-    Year: Number(rec.Year),
+    Year: num(rec.Year),
     Game: rec.Game,
     Event_Name: rec.Event_Name,
-    LAN: /^true$/i.test(rec.LAN),
+    LAN: /^true$/i.test(rec.LAN) ? true : /^false$/i.test(rec.LAN) ? false : rec.LAN,
     Mode: rec.Mode,
-    Prizepool: rec.Prizepool === "" ? null : Number(rec.Prizepool),
-    Tier: Number(rec.Tier),
+    Prizepool: rec.Prizepool === "" ? null : num(rec.Prizepool),
+    Tier: num(rec.Tier),
   };
-  for (const p of PLACEMENTS) row[p] = rec[p] === "" ? null : rec[p].toLowerCase();
+  for (const p of PLACEMENTS) row[p] = rec[p] === "" ? null : rec[p];
   return row;
 }
 
@@ -129,9 +113,12 @@ async function main() {
   }
 
   const invalid = [];
+  const rows = [];
   for (const rec of candidates) {
-    const errs = validate(rec);
+    const row = normalizeRow(toRow(rec));
+    const errs = validateRow(row);
     if (errs.length) invalid.push({ rec, errs });
+    else rows.push(row);
   }
   if (invalid.length) {
     console.error(`\n${invalid.length} invalid row(s) — fix the sheet and rerun:`);
@@ -140,8 +127,6 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-
-  const rows = candidates.map(toRow);
 
   // in-batch exact duplicates: keep the first occurrence
   const seen = new Set();
