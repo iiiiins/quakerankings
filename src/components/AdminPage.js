@@ -36,6 +36,20 @@ const AdminPage = () => {
     return {};
   };
 
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      // A session revoked or expired elsewhere (e.g. a dashboard password
+      // rotation while this tab was open) leaves signOut unable to load the
+      // session — it errors without clearing the persisted token, stranding
+      // the tab "signed in". Drop the token and start over signed out.
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
+        .forEach((k) => localStorage.removeItem(k));
+      window.location.reload();
+    }
+  };
+
   if (loading) return null;
 
   if (!session) {
@@ -94,11 +108,12 @@ const AdminPage = () => {
             variant="text"
             color="primary"
             className="tab-idle"
-            onClick={() => supabase.auth.signOut()}
+            onClick={handleSignOut}
           >
             Sign out
           </Button>
         </div>
+        {authError && <div className="admin-error">{authError}</div>}
         <Typography component="p" className="admin-hint">
           Add a tournament below. To correct or delete one, find it in the{" "}
           <Link to="/events">events browser</Link> — every row gets an edit
