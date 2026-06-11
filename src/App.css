@@ -540,6 +540,229 @@ footer ul li a:hover img {
   opacity: 1;
 }
 
+/* ---------- mobile leaderboard (<900px) ---------- */
+.chip-rail {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 12px 0 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.chip-rail::-webkit-scrollbar { display: none; }
+
+.ph-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 13px;
+  border: 1px solid #2e2922;
+  border-radius: 999px;
+  background: #1b1813;
+  color: #a39c8d;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ph-chip.on {
+  border-color: #e05a1f;
+  color: #ece8df;
+  background: rgba(224, 90, 31, 0.15);
+}
+
+.ph-pod {
+  position: relative;
+  background: linear-gradient(180deg, #1b1813, #14120e);
+  border: 1px solid rgba(245, 197, 24, 0.4);
+  border-radius: 13px;
+  padding: 14px 16px 11px;
+  margin: 14px 0 8px;
+  text-align: center;
+}
+
+.ph-pod .pmedal {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #f5c518, #a07800);
+  color: #181200;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ph-pod .pname,
+.ph-pod .pname a {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 0.05em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 14px rgba(255, 255, 114, 0.25);
+}
+
+.ph-pod .pname { margin-top: 4px; }
+
+.ph-pod .ppoints {
+  font-size: 19px;
+  font-weight: 700;
+  color: #f5c518;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ph-pod .plabel {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #6e6859;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+.ph-podrow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ph-pod.sm {
+  flex: 1;
+  padding: 12px 8px 9px;
+  margin: 11px 0 0;
+  border-color: #463e32;
+}
+
+.ph-pod.sm .pname,
+.ph-pod.sm .pname a {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.ph-pod.sm .ppoints {
+  font-size: 14px;
+  color: #ece8df;
+}
+
+.ph-pod.sm .pmedal {
+  width: 19px;
+  height: 19px;
+  top: -9px;
+  font-size: 10px;
+}
+
+.ph-pod.sm.s2 .pmedal { background: linear-gradient(160deg, #c8ccd4, #7e838c); color: #14161a; }
+.ph-pod.sm.s3 .pmedal { background: linear-gradient(160deg, #e2a35e, #9c6420); color: #1c1206; }
+
+.ph-list {
+  margin-top: 2px;
+}
+
+a.ph-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ph-row .rk {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6e6859;
+  min-width: 24px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.ph-row .nm {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.06em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 10px rgba(255, 255, 114, 0.16);
+}
+
+.ph-row .dots {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ph-row .dots span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ph-row .dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  font-style: normal;
+}
+
+.d-g { color: #f5c518; }
+.d-g i { background: #f5c518; }
+.d-s { color: #c8ccd4; }
+.d-s i { background: #c8ccd4; }
+.d-b { color: #e2a35e; }
+.d-b i { background: #e2a35e; }
+.d-c { color: #b06a1e; }
+.d-c i { background: #b06a1e; }
+
+.ph-row .pt {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 48px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px 22px;
+}
+
+.sheet-grab {
+  width: 44px;
+  height: 4px;
+  border-radius: 2px;
+  background: #463e32;
+  margin: 0 auto 4px;
+}
+
+@media (max-width: 899px) {
+  .wordmark { font-size: 12.5px; letter-spacing: 2px; }
+  .site-header { gap: 10px; padding: 12px 0 10px; }
+  .site-tabs { margin-left: 0; gap: 5px; }
+  .site-tabs .MuiButton-root { padding: 4px 10px; font-size: 10.5px; }
+  .summary-line { font-size: 11px !important; padding: 4px 2px 8px; }
+}
+
 /* ---------- charts (interim — finalized in the charts pass) ---------- */
 .chart-box {
   position: relative;

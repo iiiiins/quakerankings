@@ -16,6 +16,9 @@ import {
   TextField,
   MenuItem,
   Slider,
+  Drawer,
+  Button,
+  useMediaQuery,
 } from "@mui/material";
 import { fetchListTournaments } from "../services/fetchPlayersByGame";
 import diaboticalLogo from "../logos/diabotical_logo.png";
@@ -55,6 +58,8 @@ const PlayerList = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [lanOnly, setLanOnly] = useState(false);
   const [powerRanking, setPowerRanking] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width:899px)");
   const [settings, setSettings] = useState({
     pointsConfig: { first: 100, second: 50, top4: 25, top8: 10 },
     pointsVisibility: { first: true, second: true, top4: false, top8: true },
@@ -394,8 +399,82 @@ useEffect(() => {
 
   return (
     <Container disableGutters maxWidth={false}>
+      {isMobile && (
+        <>
+          <div className="chip-rail">
+            <button
+              type="button"
+              className="ph-chip"
+              onClick={() => setFiltersOpen(true)}
+            >
+              {selectedGame === "All" ? "All games" : selectedGame} ▾
+            </button>
+            <button
+              type="button"
+              className="ph-chip"
+              onClick={() => setFiltersOpen(true)}
+            >
+              {selectedMode === "All" ? "All modes" : selectedMode} ▾
+            </button>
+            <button
+              type="button"
+              className="ph-chip"
+              onClick={() => setFiltersOpen(true)}
+            >
+              {yearRange[0]}–{yearRange[1]}
+            </button>
+            <button
+              type="button"
+              className={`ph-chip${lanOnly ? " on" : ""}`}
+              onClick={() => setLanOnly(!lanOnly)}
+            >
+              LAN
+            </button>
+            <button
+              type="button"
+              className={`ph-chip${powerRanking ? " on" : ""}`}
+              onClick={() => setPowerRanking(!powerRanking)}
+            >
+              Power
+            </button>
+          </div>
+          {podiumPlayers.length === 3 && (
+            <>
+              <div className="ph-pod">
+                <div className="pmedal">1</div>
+                <div className="pname">
+                  <Link to={`/players/${players[0].player}`}>
+                    {players[0].player}
+                  </Link>
+                </div>
+                <div className="ppoints">
+                  {(players[0].points || 0).toLocaleString("en-US")}
+                </div>
+                <div className="plabel">
+                  {players[0].placements?.first || 0} firsts ·{" "}
+                  {players[0].participations || 0} events
+                </div>
+              </div>
+              <div className="ph-podrow">
+                {[players[1], players[2]].map((p) => (
+                  <div key={p.player} className={`ph-pod sm s${p.Rank}`}>
+                    <div className="pmedal">{p.Rank}</div>
+                    <div className="pname">
+                      <Link to={`/players/${p.player}`}>{p.player}</Link>
+                    </div>
+                    <div className="ppoints">
+                      {(p.points || 0).toLocaleString("en-US")}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
       {/* Podium — top 3 under the current filters/formula */}
-      {podiumPlayers.length === 3 && (
+      {!isMobile && podiumPlayers.length === 3 && (
         <div className="podium">
           {podiumPlayers.map((p) => (
             <div key={p.player} className={`pcard p${p.Rank}`}>
@@ -423,6 +502,7 @@ useEffect(() => {
         </div>
       )}
 
+      {!isMobile && (
       <div className="filter-bar">
         <div className="filter-field">
           <span className="filter-label">Game</span>
@@ -507,6 +587,7 @@ useEffect(() => {
           </button>
         </div>
       </div>
+      )}
 
       {/* Summary Message */}
       <Typography component="div" className="summary-line">
@@ -515,6 +596,29 @@ useEffect(() => {
         tournaments · {filteredTournaments.toLocaleString("en-US")} filtered
       </Typography>
 
+      {isMobile ? (
+        <div className="ph-list">
+          {(searchQuery ? visiblePlayers : visiblePlayers.filter((p) => p.Rank > 3)).map(
+            (player) => (
+              <Link
+                key={player.player}
+                className="ph-row"
+                to={`/players/${player.player}`}
+              >
+                <span className="rk">{String(player.Rank).padStart(2, "0")}</span>
+                <span className="nm">{player.player}</span>
+                <span className="dots">
+                  <span className="d-g"><i />{player.placements?.first || 0}</span>
+                  <span className="d-s"><i />{player.placements?.second || 0}</span>
+                  <span className="d-b"><i />{player.placements?.top4 || 0}</span>
+                  <span className="d-c"><i />{player.placements?.top8 || 0}</span>
+                </span>
+                <span className="pt">{(player.points || 0).toLocaleString("en-US")}</span>
+              </Link>
+            )
+          )}
+        </div>
+      ) : (
       <TableContainer component={Paper} elevation={0} className="board">
 
         <Table>
@@ -689,8 +793,92 @@ useEffect(() => {
           </TableBody>
         </Table>
       </TableContainer>
+      )}
       {visiblePlayers.length < filteredPlayers.length && (
         <div className="loadhint">Scroll — next 100 load automatically</div>
+      )}
+
+      {isMobile && (
+        <Drawer
+          anchor="bottom"
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+        >
+          <div className="filter-sheet">
+            <div className="sheet-grab" />
+            <span className="filter-label">Search</span>
+            <TextField
+              size="small"
+              placeholder="Search player…"
+              variant="outlined"
+              value={searchQuery}
+              onChange={handleSearch}
+              fullWidth
+            />
+            <span className="filter-label">Game</span>
+            <FormControl size="small" fullWidth>
+              <Select
+                value={selectedGame}
+                onChange={(e) => setSelectedGame(e.target.value)}
+              >
+                {games.map((game) => (
+                  <MenuItem key={game} value={game}>
+                    {game}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <span className="filter-label">Mode</span>
+            <FormControl size="small" fullWidth>
+              <Select
+                value={selectedMode}
+                onChange={(e) => setSelectedMode(e.target.value)}
+              >
+                {modes.map((mode) => (
+                  <MenuItem key={mode} value={mode}>
+                    {mode}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <span className="filter-label">
+              Years · {yearRange[0]}–{yearRange[1]}
+            </span>
+            <Slider
+              value={yearRange}
+              onChange={handleYearRangeChange}
+              valueLabelDisplay="auto"
+              min={1996}
+              max={CURRENT_YEAR}
+              step={1}
+            />
+            <div className="toggle-plates">
+              <button
+                type="button"
+                className={`plate${lanOnly ? " on" : ""}`}
+                onClick={() => setLanOnly(!lanOnly)}
+              >
+                <span className="led" />
+                LAN Only
+              </button>
+              <button
+                type="button"
+                className={`plate${powerRanking ? " on" : ""}`}
+                onClick={() => setPowerRanking(!powerRanking)}
+              >
+                <span className="led" />
+                Power Ranking
+              </button>
+            </div>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setFiltersOpen(false)}
+            >
+              Done
+            </Button>
+          </div>
+        </Drawer>
       )}
     </Container>
   );
