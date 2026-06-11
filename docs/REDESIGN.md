@@ -84,4 +84,11 @@ an admin data-entry page, and a public "submit a tournament" form (features B1/B
   - `docs/mocks/direction-3-hall-of-champions.html` — editorial prestige (champagne metals, airy
     rows, top-3 podium strip — podium flagged as the one element beyond pure theming).
   - Awaiting Bruno's pick (or hybrid notes).
+- 2026-06-11 — Bruno's hybrid spec: colors/theme of direction 2 **without the blunt cut corners**,
+  density/structure of direction 1, podium of direction 3; on mobile the same, but player entries
+  use direction 3's one-row pattern (rank · name · medal dot-counts · points — no second row of
+  game logos). Composed as `docs/mocks/direction-hybrid.html` (soft 8–10px radii replace clip-path
+  cuts; compact dir-1 header since the podium provides the hero moment; Rajdhani kept as part of
+  dir-2's theme at dir-1 densities; points bar kept, recolored ember→gold). Pending Bruno's
+  confirmation as the fixed Phase-2 target.
 - (append direction choice and deviations here)
