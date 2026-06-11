@@ -44,7 +44,7 @@ Three pieces, one session — they all touch the same code.
   - After this lands, CLAUDE.md's copy-paste / dead-state sections are stale — update them in
     the same session.
 
-### 2. Tournament browser (~1–1.5 sessions) — ✅ SHIPPED 2026-06-11 (pending deploy)
+### 2. Tournament browser (~1–1.5 sessions) — ✅ SHIPPED 2026-06-11
 
 Landed in commits `9aaac5d` (browser) + `f3da4ca` (methodology rider); CLAUDE.md updated the
 same session. Build-time decisions: the group key is **`Event_Name|Year|Game|Mode`**, not the
@@ -57,7 +57,8 @@ search; no mode filter (one-line add if wanted); Top8 names omitted from the tab
 instead of stretching the table. Methodology lives at `/methodology` via a **footer link**
 ("How the ranking works"), not a 4th tab; it shows live dataset counts. Verified against the
 dev preview (counts, merges, filters, sorts incl. prize-blanks-last, links, mobile, console)
-and `npm run build`; **not yet deployed** — Bruno's "ship it" gate.
+and `npm run build`. Deployed to production 2026-06-11 after Bruno's "ship it" (bundle
+`4a86168d`, live bundle + CSS grep-verified for the new pages).
 
 - New `/events` route: a filterable list of all ~1,925 tournaments — game / tier / year / LAN
   filters (reuse the filter-toolbar patterns), podium chips linking to player pages, prize-pool

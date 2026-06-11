@@ -61,8 +61,10 @@ verifiable commits. (Feature 1's plan/review: git `650f4fa`…`b4704ef`.)
 ## Review
 
 Built roadmap feature 2 in three commits: tournament browser (`9aaac5d`), methodology page
-(`f3da4ca`), docs (this commit). Every step verified against the live dev preview; production
-build green. **Not deployed** — awaiting Bruno's hands-on check.
+(`f3da4ca`), docs (`6fe777a`). Every step verified against the live dev preview; production
+build green. Deployed 2026-06-11 after Bruno's "ship it": pre-deploy checks passed, main
+pushed, `npm run deploy` published bundle `4a86168d`, live site verified (bundle hash flipped,
+9/9 feature tokens present in live JS + CSS).
 
 Decisions that diverge from the roadmap's literal text, all data-driven and documented:
 - Group key includes Game+Mode (probe: name+year alone would merge QuakeCon divisions into one
