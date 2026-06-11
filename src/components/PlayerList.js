@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Table,
@@ -20,7 +20,8 @@ import {
   Button,
   useMediaQuery,
 } from "@mui/material";
-import { fetchListTournaments } from "../services/fetchPlayersByGame";
+import useTournaments from "../hooks/useTournaments";
+import computeRankings from "../lib/computeRankings";
 import diaboticalLogo from "../logos/diabotical_logo.png";
 import quakeWorldLogo from "../logos/quakeworld_logo.png";
 import quake2Logo from "../logos/quake2_logo.png";
@@ -30,6 +31,60 @@ import quakeLiveLogo from "../logos/quakelive_logo.png";
 import quakeChampionsLogo from "../logos/quakechampions_logo.png";
 
 const CURRENT_YEAR = new Date().getFullYear();
+
+const games = [
+  "All",
+  "Quake World",
+  "Quake 2",
+  "Quake 3",
+  "Quake 4",
+  "Quake Live",
+  "Quake Champions",
+  "Diabotical",
+];
+
+const modes = ["All", "Duel", "2v2", "TDM", "CTF", "CA", "SAC", "WIP", "DBT"];
+
+const gameLogos = {
+  Diabotical: diaboticalLogo,
+  "Quake World": quakeWorldLogo,
+  "Quake 2": quake2Logo,
+  "Quake 3": quake3Logo,
+  "Quake 4": quake4Logo,
+  "Quake Live": quakeLiveLogo,
+  "Quake Champions": quakeChampionsLogo,
+};
+
+const columnKeyMap = {
+  "1st": "placements.first",
+  "2nd": "placements.second",
+  Top4: "placements.top4",
+  Top8: "placements.top8",
+  Points: "points",
+  Player: "player",
+  Rank: "Rank",
+};
+
+const sortPlayers = (list, column, order) => {
+  const key = columnKeyMap[column] || column;
+  const dir = order === "asc" ? 1 : -1;
+
+  return [...list].sort((a, b) => {
+    if (column === "player") {
+      return dir * a.player.localeCompare(b.player);
+    }
+
+    let valA, valB;
+    if (column === "games" || column === "modes") {
+      valA = a[column] ? a[column].split(", ").length : 0;
+      valB = b[column] ? b[column].split(", ").length : 0;
+    } else {
+      valA = key.split(".").reduce((obj, keyPart) => obj?.[keyPart] || 0, a);
+      valB = key.split(".").reduce((obj, keyPart) => obj?.[keyPart] || 0, b);
+    }
+    return dir * (valA - valB);
+  });
+};
 
 const PlayerList = ({
   pointsConfig,
@@ -41,341 +96,86 @@ const PlayerList = ({
   modeWeights,
   modeVisibility,
 }) => {
-  const [totalTournaments, setTotalTournaments] = useState(0);
-  const [visiblePlayers, setVisiblePlayers] = useState([]);
-  const [loadMore, setLoadMore] = useState(100);
-  const [filteredTournaments, setFilteredTournaments] = useState(0);
-  const [players, setPlayers] = useState([]);
-  const [filteredPlayers, setFilteredPlayers] = useState([]);
-  const [tournamentList, setTournamentList] = useState([]);
   const [sortBy, setSortBy] = useState("Points");
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedGame, setSelectedGame] = useState("All");
   const [selectedMode, setSelectedMode] = useState("All");
   const [yearRange, setYearRange] = useState([1996, CURRENT_YEAR]);
-  const [topTournamentsLimit, setTopTournamentsLimit] = useState(25);
-  const [topTournamentsFilter, setTopTournamentsFilter] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [lanOnly, setLanOnly] = useState(false);
   const [powerRanking, setPowerRanking] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [loadMore, setLoadMore] = useState(100);
   const isMobile = useMediaQuery("(max-width:899px)");
-  const [settings, setSettings] = useState({
-    pointsConfig: { first: 100, second: 50, top4: 25, top8: 10 },
-    pointsVisibility: { first: true, second: true, top4: false, top8: true },
-    gameWeights: {
-      "Quake World": 100,
-      "Quake 2": 100,
-      "Quake 3": 100,
-      "Quake 4": 100,
-      "Quake Live": 100,
-      "Quake Champions": 100,
-      Diabotical: 100,
-    },
-    gameVisibility: {
-      "Quake World": true,
-      "Quake 2": true,
-      "Quake 3": true,
-      "Quake 4": true,
-      "Quake Live": true,
-      "Quake Champions": true,
-      Diabotical: true,
-    },
-    tierWeights: { 1: 100, 2: 60, 3: 35, 4: 20, 5: 10 },
-    tierVisibility: { 1: true, 2: true, 3: true, 4: true, 5: true },
-    modeWeights: { "Duel": 100, "2v2": 100, "TDM": 100, "CTF": 100, "CA": 100, "SAC": 100, "WIP": 100, "DBT": 100 },
-    modeVisibility: { "Duel": true, "2v2": true, "TDM": true, "CTF": true, "CA": true, "SAC": true, "WIP": true, "DBT": true },
-  });
 
-  const games = [
-    "All",
-    "Quake World",
-    "Quake 2",
-    "Quake 3",
-    "Quake 4",
-    "Quake Live",
-    "Quake Champions",
-    "Diabotical",
-  ];
+  const tournamentList = useTournaments();
 
-  const modes = ["All", "Duel", "2v2", "TDM", "CTF", "CA", "SAC", "WIP", "DBT"];
+  const { players, filteredCount, totalTournaments } = useMemo(
+    () =>
+      computeRankings(tournamentList, {
+        selectedGame,
+        selectedMode,
+        yearRange,
+        lanOnly,
+        powerRanking,
+        pointsConfig,
+        pointsVisibility,
+        gameWeights,
+        gameVisibility,
+        tierWeights,
+        tierVisibility,
+        modeWeights,
+        modeVisibility,
+      }),
+    [
+      tournamentList,
+      selectedGame,
+      selectedMode,
+      yearRange,
+      lanOnly,
+      powerRanking,
+      pointsConfig,
+      pointsVisibility,
+      gameWeights,
+      gameVisibility,
+      tierWeights,
+      tierVisibility,
+      modeWeights,
+      modeVisibility,
+    ]
+  );
 
-  const gameLogos = {
-    Diabotical: diaboticalLogo,
-    "Quake World": quakeWorldLogo,
-    "Quake 2": quake2Logo,
-    "Quake 3": quake3Logo,
-    "Quake 4": quake4Logo,
-    "Quake Live": quakeLiveLogo,
-    "Quake Champions": quakeChampionsLogo,
-  };
+  // Search + column sort applied on top of the ranked list
+  const filteredPlayers = useMemo(() => {
+    const searched = searchQuery
+      ? players.filter((p) => p.player.toLowerCase().includes(searchQuery))
+      : players;
+    return sortPlayers(searched, sortBy, sortOrder);
+  }, [players, searchQuery, sortBy, sortOrder]);
 
-  const columnKeyMap = {
-    "1st": "placements.first",
-    "2nd": "placements.second",
-    Top4: "placements.top4",
-    Top8: "placements.top8",
-    Points: "points",
-    Player: "player",
-    Rank: "Rank",
-  };
+  const visiblePlayers = filteredPlayers.slice(0, loadMore);
 
-  //GET LIST OF TOURNAMENTS FROM SUPABASE AT PAGE LOAD
+  // Reset the scroll pager whenever the ranking itself changes
   useEffect(() => {
-  const getFullList = async() => {
-    const tournamentList = await fetchListTournaments();
-    setTournamentList(tournamentList);
-  }
-  getFullList();
-}, []);
+    setLoadMore(100);
+  }, [players]);
 
-useEffect(() => {
-  const handleScroll = () => {
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-    if (scrollTop + clientHeight >= scrollHeight - 10) {
-      setLoadMore((prev) => prev + 100); // Load 100 more players
-    }
-  };
-
-  window.addEventListener("scroll", handleScroll);
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
-
-useEffect(() => {
-  setVisiblePlayers(filteredPlayers.slice(0, loadMore));
-}, [filteredPlayers, loadMore]);
-
-  //CALCULATE PLAYERS AND FILTERED TOURNAMENTS AT EVERY CHANGE
   useEffect(() => {
-    if(!tournamentList || tournamentList.length === 0) return;
-    
-    const TOP_TOURNAMENTS_LIMIT = 25; // Default to 25 top tournaments
-    const fetchAndCalculate = async () => {
-      
-      let filteredCount = 0;
-      setLoadMore(100); // Reset load more count
-      const playerStats = {};
-      const tournamentsArray = Object.values(tournamentList)
-      
-      const totalTournaments = tournamentsArray.length;
-
-      tournamentsArray.forEach((tournament) => {
-        
-        if (
-          !tournament.Game ||
-          !tournament.Mode ||
-          !tournament.Tier ||
-          !tournament.Year
-        ) {
-          console.error("Invalid tournament entry:", tournament);
-          return;
-        }
-        // Filter by Game function
-        if (selectedGame != tournament.Game && selectedGame != "All") {
-          filteredCount++;
-          return;
-        }
-    
-        // Filter by Game function
-        if (selectedMode != tournament.Mode && selectedMode != "All") {
-          filteredCount++;
-          return;
-        }
-        // Filter by game visibility, mode visibility, tier visibility, and LAN
-        const isFiltered =
-          !(gameVisibility[tournament.Game] ?? true) ||
-          !(tierVisibility[tournament.Tier] ?? true) ||
-          !(modeVisibility[tournament.Mode] ?? true) ||
-          (lanOnly && !tournament.LAN) ||
-          tournament.Year < yearRange[0] ||
-          tournament.Year > yearRange[1];
-    
-        if (isFiltered) {
-          filteredCount++;
-          return; // Skip processing this tournament
-        }
-    
-        const tierWeight = tierWeights[tournament.Tier] ?? 100;
-        const gameWeight = gameWeights[tournament.Game] ?? 100;
-        const modeWeight = modeWeights[tournament.Mode] ?? 100;
-        
-        const placements = {
-          first: tournament["1st"],
-          second: tournament["2nd"],
-          top4: [tournament["3rd"], tournament["4th"]],
-          top8: [
-            tournament["5th"],
-            tournament["6th"],
-            tournament["7th"],
-            tournament["8th"],
-          ],
-        };
-        
-        Object.entries(placements).forEach(([placementKey, players]) => {
-          if (!pointsVisibility[placementKey]) return;
-    
-          const playersArray = Array.isArray(players) ? players : [players];
-          playersArray.forEach((player) => {
-            if (!player) return;
-    
-            if (!playerStats[player]) {
-              playerStats[player] = {
-                player,
-                points: 0,
-                placements: { first: 0, second: 0, top4: 0, top8: 0 },
-                games: new Set(),
-                modes: new Set(),
-                participations: 0,
-                tournaments: [],
-              };
-            }
-    
-            let points = 0;
-            if (placementKey === "first") {
-              points = pointsConfig.first * (tierWeight / 100) * (gameWeight / 100) * (modeWeight / 100);
-            } else if (placementKey === "second") {
-              points =
-                pointsConfig.second * (tierWeight / 100) * (gameWeight / 100) * (modeWeight / 100);
-            } else if (placementKey === "top4") {
-              points = pointsConfig.top4 * (tierWeight / 100) * (gameWeight / 100) * (modeWeight / 100);
-            } else if (placementKey === "top8") {
-              points = pointsConfig.top8 * (tierWeight / 100) * (gameWeight / 100) * (modeWeight / 100);
-            }
-            playerStats[player].participations++;
-            playerStats[player].points += points;
-            playerStats[player].placements[placementKey]++;
-            playerStats[player].games.add(tournament.Game);
-            playerStats[player].modes.add(tournament.Mode);
-            playerStats[player].tournaments.push({
-              tournamentName: tournament.Event_Name,
-              year: tournament.Year,
-              game: tournament.Game,
-              mode: tournament.Mode,
-              tier: tournament.Tier,
-              points,
-              placement: placementKey,
-            });
-          });
-        });
-      });
-      
-      
-
-      const players = Object.values(playerStats).map((player, index) => {
-        
-      
-        // Default to empty arrays if `games` or `modes` is missing
-        const games = Array.isArray(player.games)
-          ? player.games
-          : Array.from(player.games || []);
-        const modes = Array.isArray(player.modes)
-          ? player.modes
-          : Array.from(player.modes || []);
-      
-        // Ensure `points` exists
-        const points = Math.round(player.points || 0);
-      
-        return {
-          ...player,
-          points,
-          games: games.join(", "),
-          modes: modes.join(", "),
-        };
-      });
-      
-      // Debugging `players`
-      //console.log("Processed Players:", players);
-      
-      if (players.length === 0) {
-        console.error("No players found in playerStats.");
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      if (scrollTop + clientHeight >= scrollHeight - 10) {
+        setLoadMore((prev) => prev + 100); // Load 100 more players
       }
-      
-      if (powerRanking) {
-        players.forEach((player) => {
-          // Sort tournaments by points
-          player.tournaments.sort((a, b) => b.points - a.points);
-  
-          // Filter to top 25 tournaments
-          const topTournaments = player.tournaments.slice(0, 25);
-  
-          // Recalculate stats based on top tournaments
-          player.points = Math.round(topTournaments.reduce((sum, t) => sum + t.points, 0) || 0);
-          player.placements = { first: 0, second: 0, top4: 0, top8: 0 };
-          player.participations = topTournaments.length;
-  
-          topTournaments.forEach((t) => {
-            if (t.placement === "first") player.placements.first++;
-            if (t.placement === "second") player.placements.second++;
-            if (t.placement === "top4") player.placements.top4++;
-            if (t.placement === "top8") player.placements.top8++;
-          });
-        });
-      }
-
-      const sortedPlayers = [...players].sort((a, b) => b.points - a.points);
-      sortedPlayers.forEach((player, index) => {
-        player.Rank = index + 1; // Assign rank dynamically
-      });
-
-      setPlayers(sortedPlayers);
-      setFilteredPlayers(sortedPlayers);
-      setFilteredTournaments(filteredCount); // Update filtered tournaments state
-      setTotalTournaments(totalTournaments); // Update total tournaments state
     };
 
-    fetchAndCalculate();
-  }, [
-    tournamentList,
-    selectedGame,
-    selectedMode,
-    yearRange,
-    lanOnly,
-    powerRanking,
-    pointsConfig,
-    pointsVisibility,
-    gameWeights,
-    gameVisibility,
-    tierWeights,
-    tierVisibility,
-    modeWeights,
-    modeVisibility,
-  ]);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const handleSort = (column) => {
     const isAsc = sortBy === column && sortOrder === "asc";
-    const newOrder = isAsc ? "desc" : "asc";
     setSortBy(column);
-    setSortOrder(newOrder);
-
-    const key = columnKeyMap[column] || column;
-
-    const sortedPlayers = [...filteredPlayers].sort((a, b) => {
-      let valA, valB;
-
-      // Handle special cases for "Games Played" and "Modes Played" columns
-      if (column === "games") {
-        valA = a.games ? a.games.split(", ").length : 0;
-        valB = b.games ? b.games.split(", ").length : 0;
-      } else if (column === "modes") {
-        valA = a.modes ? a.modes.split(", ").length : 0;
-        valB = b.modes ? b.modes.split(", ").length : 0;
-      } else {
-        // Fallback for other columns
-        valA = key.split(".").reduce((obj, keyPart) => obj?.[keyPart] || 0, a);
-        valB = key.split(".").reduce((obj, keyPart) => obj?.[keyPart] || 0, b);
-      }
-
-      // Handle sorting for "player" (string column)
-      if (column === "player") {
-        return newOrder === "asc"
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
-      }
-
-      // Handle numeric sorting for other columns
-      return newOrder === "asc" ? valA - valB : valB - valA;
-    });
-
-    setFilteredPlayers(sortedPlayers);
+    setSortOrder(isAsc ? "desc" : "asc");
   };
 
   const handleYearRangeChange = (event, newValue) => {
@@ -383,14 +183,7 @@ useEffect(() => {
   };
 
   const handleSearch = (event) => {
-    const query = event.target.value.toLowerCase();
-    setSearchQuery(query);
-
-    const searchedPlayers = players.filter((player) =>
-      player.player.toLowerCase().includes(query)
-    );
-
-    setFilteredPlayers(searchedPlayers);
+    setSearchQuery(event.target.value.toLowerCase());
   };
 
   const maxPoints = players.length > 0 ? players[0].points : 0;
@@ -592,8 +385,8 @@ useEffect(() => {
       {/* Summary Message */}
       <Typography component="div" className="summary-line">
         <b>{filteredPlayers.length.toLocaleString("en-US")}</b> players ·{" "}
-        <b>{(totalTournaments - filteredTournaments).toLocaleString("en-US")}</b>{" "}
-        tournaments · {filteredTournaments.toLocaleString("en-US")} filtered
+        <b>{(totalTournaments - filteredCount).toLocaleString("en-US")}</b>{" "}
+        tournaments · {filteredCount.toLocaleString("en-US")} filtered
       </Typography>
 
       {isMobile ? (

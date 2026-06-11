@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings Icon
 import SettingsMenu from "./components/SettingsMenu";
-import { fetchPlayers } from "./services/fetchPlayersByGame";
 import theme from "./theme";
 import "./App.css";
 import twitterLogo from "./logos/x_logo.png";
@@ -51,14 +50,6 @@ const NavTabs = () => {
 };
 
 const App = () => {
-  
-  const [lanOnly, setLanOnly] = useState(false); // Default to false (no filtering)
-  const [powerRanking, setPowerRanking] = useState(false); // Default to false (no filtering) 
-  const [yearRange, setYearRange] = useState([1996, 2025]); // Default range
-  const [selectedGame, setSelectedGame] = useState("All"); // Default to "All"
-
-  const [selectedMode, setSelectedMode] = useState("All"); // Default to "All"
-
   const [pointsConfig, setPointsConfig] = useState({
     first: 100,
     second: 50,
@@ -130,16 +121,6 @@ const App = () => {
     "WIP": 100,
     "DBT": 100,
   });
-  //console.log("Points Config:", pointsConfig);
-  //console.log("Points Visibility:", pointsVisibility);
-
-  //console.log("Game Config:", gameWeights);
-  //console.log("Game Visibility:", gameVisibility);
-
-  //console.log("Tier Config:", tierWeights);
-  //console.log("Tier Visibility:", tierVisibility);
-  const [players, setPlayers] = useState([]);
-
   const [anchorEl, setAnchorEl] = useState(null);
   const handleSettingsClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -214,23 +195,14 @@ const App = () => {
                 path="/"
                 element={
                   <PlayerList
-                    players={players}
-                    setPlayers={setPlayers}
-                    selectedGame={selectedGame}
-                    selectedMode={selectedMode}
-                    yearRange={yearRange}
-                    lanOnly={lanOnly}
                     pointsConfig={pointsConfig}
                     pointsVisibility={pointsVisibility}
                     gameWeights={gameWeights}
                     gameVisibility={gameVisibility}
                     tierWeights={tierWeights}
                     tierVisibility={tierVisibility}
-                    powerRanking={powerRanking}
-                    modeVisibility={modeVisibility}
-                    setModeVisibility={setModeVisibility}
                     modeWeights={modeWeights}
-                    setModeWeights={setModeWeights}
+                    modeVisibility={modeVisibility}
                   />
                 }
               />
@@ -239,23 +211,14 @@ const App = () => {
                 path="/charts"
                 element={
                   <AdvancedStats
-                    players={players}
-                    setPlayers={setPlayers}
-                    selectedGame={selectedGame}
-                    selectedMode={selectedMode}
-                    yearRange={yearRange}
-                    lanOnly={lanOnly}
                     pointsConfig={pointsConfig}
                     pointsVisibility={pointsVisibility}
                     gameWeights={gameWeights}
                     gameVisibility={gameVisibility}
                     tierWeights={tierWeights}
                     tierVisibility={tierVisibility}
-                    powerRanking={powerRanking}
-                    modeVisibility={modeVisibility}
-                    setModeVisibility={setModeVisibility}
                     modeWeights={modeWeights}
-                    setModeWeights={setModeWeights}
+                    modeVisibility={modeVisibility}
                   />
                 }
               />
