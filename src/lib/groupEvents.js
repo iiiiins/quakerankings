@@ -43,11 +43,13 @@ export default function groupEvents(tournamentList) {
           prizepool: row.Prizepool ?? null,
           placements: { first: [], second: [], top4: [], top8: [] },
           rowCount: 0,
+          rows: [], // raw DB rows (id order) — the admin editor edits these
         };
         groups.set(key, ev);
       }
 
       ev.rowCount++;
+      ev.rows.push(row);
       // rare data inconsistencies across merged rows, resolved deterministically:
       // best tier, any LAN, largest prize pool
       ev.tier = Math.min(ev.tier, row.Tier);

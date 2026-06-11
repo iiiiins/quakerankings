@@ -174,6 +174,16 @@ const theme = createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: "#14120e",
+          backgroundImage: "none",
+          border: "1px solid #463e32",
+          borderRadius: 12,
+        },
+      },
+    },
     MuiChip: {
       styleOverrides: {
         root: {

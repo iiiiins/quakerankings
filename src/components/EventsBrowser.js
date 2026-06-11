@@ -18,11 +18,15 @@ import {
   Slider,
   Drawer,
   Button,
+  IconButton,
   useMediaQuery,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 import useTournaments from "../hooks/useTournaments";
+import useSession from "../hooks/useSession";
 import groupEvents from "../lib/groupEvents";
 import gameLogos from "../lib/gameLogos";
+import EventEditDialog from "./EventEditDialog";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -89,10 +93,20 @@ const EventsBrowser = () => {
   const [lanOnly, setLanOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loadMore, setLoadMore] = useState(100);
+  const [editingKey, setEditingKey] = useState(null);
   const isMobile = useMediaQuery("(max-width:899px)");
 
   const tournamentList = useTournaments();
+  const { session } = useSession();
   const events = useMemo(() => groupEvents(tournamentList), [tournamentList]);
+
+  // Admin corrections are a desktop task — mobile rows stay read-only
+  const canEdit = Boolean(session) && !isMobile;
+  // Derived by key so a cache refresh swaps in fresh rows (or closes the
+  // dialog if the edit changed the event's identity)
+  const editingEvent = canEdit
+    ? events.find((ev) => ev.key === editingKey) || null
+    : null;
 
   const filteredEvents = useMemo(
     () =>
@@ -355,12 +369,13 @@ const EventsBrowser = () => {
                 <TableCell className="gold-header">1st</TableCell>
                 <TableCell className="silver-header">2nd</TableCell>
                 <TableCell className="bronze-header">Top 4</TableCell>
+                {canEdit && <TableCell className="edit-cell" />}
               </TableRow>
             </TableHead>
             <TableBody>
               {sortedEvents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
+                  <TableCell colSpan={canEdit ? 10 : 9} align="center">
                     No events found
                   </TableCell>
                 </TableRow>
@@ -411,12 +426,29 @@ const EventsBrowser = () => {
                         <PodiumNames names={ev.placements.top4} />
                       </div>
                     </TableCell>
+                    {canEdit && (
+                      <TableCell className="edit-cell">
+                        <IconButton
+                          size="small"
+                          aria-label={`Edit ${ev.name}`}
+                          onClick={() => setEditingKey(ev.key)}
+                        >
+                          <EditIcon fontSize="inherit" />
+                        </IconButton>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+      {canEdit && (
+        <EventEditDialog
+          event={editingEvent}
+          onClose={() => setEditingKey(null)}
+        />
       )}
       {visibleEvents.length < sortedEvents.length && (
         <div className="loadhint">Scroll — next 100 load automatically</div>

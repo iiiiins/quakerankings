@@ -1204,6 +1204,84 @@ footer a.method-link:hover {
   }
 }
 
+/* event edit dialog (browser surface) */
+.MuiTableCell-root.edit-cell {
+  width: 40px;
+  padding: 4px 6px;
+}
+
+.edit-cell .MuiIconButton-root {
+  font-size: 16px;
+  color: #6e6859;
+}
+
+.ev-edit {
+  padding: 18px 20px 16px;
+}
+
+.MuiTypography-root.ev-edit-title {
+  margin-bottom: 12px;
+}
+
+.ev-edit-hint {
+  color: #a39c8d;
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+.ev-back {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 10px;
+  color: #e05a1f;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ev-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.ev-row-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #1b1813;
+  border: 1px solid #2e2922;
+  border-radius: 8px;
+}
+
+.ev-row-id {
+  color: #6e6859;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.ev-row-sum {
+  color: #a39c8d;
+  font-size: 13px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ev-row-item .MuiButton-root {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 /* ---------- charts ---------- */
 .chart-panel {
   background: #14120e;

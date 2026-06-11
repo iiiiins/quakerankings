@@ -47,15 +47,21 @@ const fieldsFromRow = (row) => ({
 });
 
 const TournamentForm = ({
-  initialRow = null,
+  initialRow = null, // edit mode: the raw DB row being changed
+  prefill = null, // add mode with prefilled fields (add-row-to-event)
+  dupCheck = true,
   submitLabel = "Save",
   onSubmit,
   onDelete,
   onCancel,
 }) => {
   const isEdit = Boolean(initialRow);
-  const [fields, setFields] = useState(
-    isEdit ? fieldsFromRow(initialRow) : emptyFields()
+  const [fields, setFields] = useState(() =>
+    isEdit
+      ? fieldsFromRow(initialRow)
+      : prefill
+      ? fieldsFromRow(prefill)
+      : emptyFields()
   );
   const [errors, setErrors] = useState([]);
   const [dupWarned, setDupWarned] = useState(false);
@@ -90,7 +96,7 @@ const TournamentForm = ({
 
     // Soft duplicate guard on add — warn once, second submit proceeds
     // (legitimately repeated keys exist: multi-row team events).
-    if (!isEdit && !dupWarned) {
+    if (!isEdit && dupCheck && !dupWarned) {
       const dup = Object.values(tournamentList || {}).some(
         (t) =>
           (t.Event_Name || "").trim().toLowerCase() === row.Event_Name.toLowerCase() &&
