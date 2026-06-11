@@ -1,66 +1,73 @@
 # Feature 3 — Admin data-entry, full CRUD (roadmap.md §3)
 
-Session 2026-06-11. The auth/RLS design is fixed in the roadmap (Supabase email/password,
-signups disabled, single-user RLS on writes, anon key stays the only shipped key). Two steps
-are dashboard-only and land mid-session as a Bruno handoff: paste the policies SQL, toggle
-signups off. Everything else builds and verifies here. No deploy without "ship it".
+Session 2026-06-11. The auth/RLS design was fixed in the roadmap; two dashboard-only steps
+(policies SQL + disable signups) ran mid-session as a Bruno handoff. No deploy without "ship it".
 
-## Assumptions / build-time decisions (made now, surfaced for review)
+## Assumptions / build-time decisions (held)
 
-- `.env` (committed) carries the **public** config — Supabase URL, anon key, GA id; these ship
-  in the bundle by design, the env-var move is hygiene not secrecy. Secrets stay in
-  `.env.local` (gitignored): service key (already there), admin email/password (added by the
-  user-creation script). CRA bakes `REACT_APP_*` at build/server start → dev server restart.
-- Admin user is created programmatically via the service key (auth admin API) with a
-  **generated password** stored in `.env.local`; Bruno rotates it in the dashboard whenever he
-  likes. His uuid gets baked into the policies SQL.
-- **Edit affordance is desktop-only** on /events (pencil column when signed in); mobile rows
-  stay read-only — admin corrections are a desktop task.
-- The editor edits **rows**, not grouped events (feature-2 note): single-row event → form
-  directly; multi-row team event → row picker first, plus "add row to this event" (prefilled).
-- Adds live on `/admin` (login + blank form); corrections start from the browser surface
-  (find event → edit) per the roadmap decision.
-- Insert computes `id = max+1` client-side — mirrors the import script (no DB autoincrement).
-- Player names lowercased on save (shared rule — PlayerPage queries depend on lowercase names);
-  Event_Name kept as typed (DB has mixed case).
-- Soft duplicate warning on insert (same Event_Name+Year+Game+Mode exists) — warn, don't
-  block: legitimate for multi-row team events.
-- No password-reset/signup UI — single user, dashboard handles recovery.
+- `.env` (committed) = public config (Supabase URL, anon key, GA id); `.env.local` = secrets
+  (service key, ADMIN_EMAIL/ADMIN_PASSWORD). CRA bakes env at server/build start.
+- Admin user created programmatically (service key) with a generated password; Bruno replaced
+  it with his own in `.env.local` mid-session (aligned to auth via admin API — see review).
+- Edit affordance desktop-only on /events; editor edits raw rows (team events → row picker).
+- Adds on `/admin`; corrections from the browser surface. Insert id = max+1 (script's scheme).
+- Names lowercased on save via shared `normalizeRow`; soft dup warning (warn once, then allow).
+- No signup/reset UI; `/admin` has no nav tab — RLS is the gate, not obscurity.
 
 ## Plan
 
-- [ ] **Commit 1 — chore: env vars** — `.env` (URL/anon/GA), `supabaseClient.js` + `App.js`
-      read env, import script reads `.env` too (service key stays `.env.local`). Restart dev
-      server; verify site loads + data fetches + GA init; build passes. Closes known issue #1.
-- [ ] **Commit 2 — refactor: shared validation rules** — `src/lib/tournamentRules.js` (CJS so
-      both webpack and the node script consume it): GAMES/MODES/PLACEMENTS/tier+year bounds,
-      `validateRow` on a normalized row, name-lowercasing helper. Import script refactored to
-      use it; verified with a crafted CSV via `--csv --dry-run` (valid + each invalid case).
-- [ ] **Commit 3 — feat: auth session + /admin login** — `useSession` hook (getSession +
-      onAuthStateChange), `/admin` route: login card (design-system), signed-in state + sign
-      out. Verify: renders, bad creds show GoTrue error, session UI switches.
-- [ ] **Commit 4 — feat: add-tournament form** — `TournamentForm` (15 fields, shared
-      validation, error list, dup warning), insert service (max-id+1), success feedback,
-      `useTournaments` cache invalidation (subscriber refresh). Verify: validation errors
-      render per rule; logged-out insert surfaces the RLS rejection.
-- [ ] **Commit 5 — feat: edit/delete from the events browser** — groupEvents keeps raw rows;
-      pencil column when authed (desktop); dialog: row picker for multi-row events → form in
-      edit mode (update/delete + confirm), add-row-to-event. Verify: dialog opens prefilled
-      from a real event, multi-row picker lists rows, writes blocked logged out.
-- [ ] **Commit 6 — feat(scripts): admin setup + RLS probes** — `create-admin-user.js`
-      (service key; creates confirmed user, writes ADMIN_EMAIL/ADMIN_PASSWORD to .env.local,
-      emits `setup-admin.sql` with the uuid), `probe-rls.js` (logged-out insert/update/delete
-      probes; `--full` adds signed-in marker-row insert→update→delete with cleanup). Run:
-      user created; pre-SQL probe = all anon writes rejected.
-- [ ] **HANDOFF → Bruno**: paste `scripts/setup-admin.sql` in the Supabase SQL editor; turn
-      OFF "Allow new users to sign up" (Authentication → Sign In / Up); say done.
-- [ ] **Verification (after handoff)**: `probe-rls.js --full` (anon: 3× rejected; admin:
-      insert/update/delete succeed, row count restored). Preview E2E: login on /admin, add a
-      marked test event, see it on /events, edit it from the browser, delete it, counts
-      restored. Logged-out UI shows no edit affordances.
-- [ ] **Commit 7 — docs**: CLAUDE.md (auth/admin section, env vars, structure, known issue #1
-      closed), roadmap §3 SHIPPED + decision log, review here. No deploy — "ship it" gate.
+- [x] **Commit 1 — chore: env vars** (`f1eb7b5`) — .env + supabaseClient/App.js/import script
+      on env config. Verified: site loads full data + GA; script dry-run green. Known issue #1
+      closed.
+- [x] **Commit 2 — refactor: shared validation rules** (`79b3b60`) — tournamentRules.js (CJS),
+      import script refactored onto it. Verified: 9-case invalid CSV reports every rule with
+      raw sheet values; valid row plans clean.
+- [x] **Commit 3 — feat(scripts): admin setup + RLS probes** (`51921a0`) — create-admin-user.js
+      (user `bcbf6194…` created, creds → .env.local, setup-admin.sql emitted), probe-rls.js.
+      **Baseline probe found a live gap**: signups OPEN + legacy policy allowing ANY
+      authenticated INSERT → SQL rewritten to wipe all policies first (DO block).
+- [x] **Commit 4 — feat: auth session + /admin login** (`23847f7`) — useSession + login card.
+      Verified: bad creds error, real login, session survives reload, sign-out clears.
+- [x] **Commit 5 — feat: add-tournament form** (`069ab12`) — TournamentForm + tournamentWrites
+      (0-rows guard) + refreshTournaments. Verified: rule errors render; dup warning on
+      QuakeCon 2008/QL/CTF; live insert #1928 → visible in /events, name lowercased; cleaned.
+      Gotcha fixed: babel-helper syntax flips the CJS rules file to ESM (build error) —
+      rewrote with Object.assign/forEach + guard comment; consumers default-import.
+- [x] **Commit 6 — feat: edit/delete from the browser** (`6c3be8c`) — pencil column (authed,
+      desktop), EventEditDialog (row picker for team events, add-row, dialog re-derives event
+      by key). Verified incl. pre-SQL negative path ("No row was updated — write rejected").
+- [x] **HANDOFF → Bruno**: SQL pasted, signups disabled. ✔ done same session.
+- [x] **Verification (post-handoff)**: `probe-rls.js --full` **8/8 PASS** (anon
+      insert/update/delete rejected, public signup rejected, admin insert/update/delete
+      allowed, row count restored). UI E2E against live RLS: add #1928 → edit ($777→$999 +
+      2nd place) → two-step delete → 1,385 events restored; sign-out removes pencils.
+- [x] **Commit 7 — fix: sign-out zombie sessions** (`9ace29b`) — found during E2E: signOut()
+      on a server-revoked session errors without clearing the persisted token (tab stranded
+      signed-in). Handler force-clears sb-*-auth-token + reloads. Both paths verified.
+- [x] **Commit 8 — docs**: CLAUDE.md (overview, stack, structure incl. scripts/, write-access
+      model, auth flow, known issues renumbered, quirks), roadmap §3 SHIPPED + decision log,
+      this review.
+- [x] Final: `npm run build` green (268.91 kB gz, +5.3 kB over feature 2). No deploy — gate.
 
 ## Review
 
-(to fill at session end)
+Built roadmap feature 3 in seven code commits + docs, all verified against the live dev
+preview and the live Supabase project. **Not deployed** — awaiting "ship it".
+
+The probe-first approach paid for itself before any UI existed: the baseline run exposed that
+production was one scripted signup away from arbitrary inserts (open signups + a legacy
+any-authenticated INSERT policy). The setup SQL now nukes every existing policy before
+creating the four intended ones, and the probe is the standing regression tool for the
+roadmap's verification requirement (insert AND update AND delete, both roles, plus signup).
+
+Incidents handled mid-session, both worth remembering:
+- Bruno rotated ADMIN_PASSWORD in .env.local but the dashboard-side change didn't land —
+  resolved by setting auth to the .env.local value via the admin API (the secrets file is the
+  contract; his password never entered the transcript).
+- My own mid-session password updates revoked the preview's server-side session, which exposed
+  the supabase-js zombie-sign-out bug (commit 7) — sign-out silently no-ops on a
+  revoked/expired session, stranding the tab. Real-world trigger: dashboard password rotation
+  with a site tab open.
+
+Deviations from the roadmap's letter: none of substance — the design (auth method, RLS shape,
+client key model, full-CRUD-on-browser-surface, both riders) shipped as specced.

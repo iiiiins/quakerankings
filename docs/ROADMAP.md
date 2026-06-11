@@ -76,7 +76,31 @@ and `npm run build`. Deployed to production 2026-06-11 after Bruno's "ship it" (
   assigned (prize pool, era, competitiveness — Bruno's actual criteria). Cheap, and it's the
   standing answer to every "this ranking is rigged" thread.
 
-### 3. Admin data-entry, full CRUD (~2 sessions)
+### 3. Admin data-entry, full CRUD (~2 sessions) — ✅ SHIPPED 2026-06-11 (pending deploy)
+
+Built and verified in one session (commits `f1eb7b5`…`9ace29b`); CLAUDE.md updated the same
+session. The design below held; what the build added/learned:
+
+- **The baseline probe found a live gap**: signups were OPEN (Supabase default) and a legacy
+  RLS policy let ANY authenticated user INSERT — anyone could have scripted signup→insert.
+  `scripts/setup-admin.sql` therefore drops ALL existing policies (DO block over pg_policies)
+  before creating the intended four; Bruno disabled signups in the dashboard the same day.
+- Tooling: `create-admin-user.js` (idempotent, service key, emits the SQL with the uid baked
+  in), `probe-rls.js` (anon insert/update/delete + public-signup probes; `--full` adds
+  signed-in CRUD on service-key marker rows — never touches real data). **Probe result 8/8**
+  post-setup; blocked UPDATE/DELETE surface as 0-affected-rows, which both the probe and the
+  UI write service treat as rejection, not success.
+- UI: `/admin` (login + add form, no nav tab), pencil column on /events when signed in
+  (desktop only), edit dialog edits raw rows (team events get a row picker + add-row), every
+  write refreshes the shared cache. Full CRUD E2E'd against live RLS (add #1928 → edit prize
+  777→999 + add 2nd → two-step delete → 1,385 events restored).
+- Riders landed: env vars (`.env` public config — closed known issue #1) and the shared
+  validation module (`src/lib/tournamentRules.js`, CJS; the import script consumes it — 9-case
+  invalid CSV verified). Gotcha: the file must avoid babel-helper syntax (spread/for-of) or
+  CRA flips it to ESM and the build breaks.
+- Fix along the way: `signOut()` on a session revoked elsewhere (password rotation) errors
+  without clearing the persisted token — handler force-clears + reloads.
+- Not deployed — Bruno's "ship it" gate.
 
 The auth/RLS design, agreed in-session:
 
@@ -165,3 +189,8 @@ The auth/RLS design, agreed in-session:
   multi-game cases); roadmap's team-row fact fully handled (243 groups merged, 1,385 events).
   Feature 3 note: the admin "find event → edit" flow can reuse `groupEvents` + the browser
   surface as planned, but edits target the underlying *rows* — the browser groups them.
+- 2026-06-11 — Feature 3 built (env vars, shared validation, auth, full CRUD, RLS setup +
+  probes). Pre-setup probe exposed open signups + a legacy any-authenticated-INSERT policy —
+  the setup SQL now wipes all policies first; post-setup probe 8/8. Verification requirement
+  satisfied: logged-out insert AND update AND delete all rejected (update/delete via the
+  0-affected-rows signal), public signup rejected, admin CRUD allowed and E2E'd through the UI.
