@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shareable rankings — 3-step walkthrough mock (feature A)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap');
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f4f3ee;
+  --color-border-tertiary: rgba(0,0,0,0.15);
+  --color-border-primary: rgba(0,0,0,0.4);
+  --color-text-secondary: #5f5e5a;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --border-radius-lg: 12px;
+}
+body { max-width: 720px; margin: 2rem auto; padding: 0 16px; font-family: system-ui, sans-serif; color: #1a1a1a; }
+button { font: inherit; background: transparent; border: 0.5px solid var(--color-border-primary); border-radius: 8px; cursor: pointer; }
+.qr-tab { font-size: 13px; padding: 6px 14px; }
+.qr-tab.on { background: var(--color-background-secondary); border-color: #555; font-weight: 600; }
+.qr-chip { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 999px; background: #2e2c1f; color: #ffff72; border: 0.5px solid #4a4730; margin: 2px 3px 2px 0; }
+.qr-th { font-size: 11px; padding: 6px 8px; text-align: center; color: #ddd; font-weight: 500; }
+.qr-td { font-size: 12px; padding: 6px 8px; text-align: center; color: #ccc; border-top: 0.5px solid #2c2c2c; }
+.qr-set-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #ddd; padding: 3px 0; }
+.qr-box { width: 14px; height: 14px; border: 1px solid #888; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: #90caf9; }
+.qr-num { font-size: 11px; color: #eee; background: #3a3a3a; border-radius: 4px; padding: 2px 7px; min-width: 30px; text-align: center; }
+</style>
+</head>
+<body>
+<h1 style="font-size:18px; font-weight:600;">Feature A — shareable rankings, end-result walkthrough</h1>
+<p style="font-size:13px; color:var(--color-text-secondary);">Mock produced 2026-06-11 (pre-redesign). Serves two purposes: the UX spec for feature A, and the fidelity bar the redesign should beat.</p>
+
+<div style="display:flex; gap:8px; margin:0 0 10px;">
+  <button class="qr-tab on" id="tab1" onclick="go(1)">1 · Customize</button>
+  <button class="qr-tab" id="tab2" onclick="go(2)">2 · Share</button>
+  <button class="qr-tab" id="tab3" onclick="go(3)">3 · They open it</button>
+</div>
+<p id="caption" style="font-size:13px; color:var(--color-text-secondary); margin:0 0 12px; min-height:38px; line-height:1.5;">The visitor tunes the formula in the gear menu, exactly like today — the leaderboard recomputes live. New behind the scenes: the URL and this browser quietly remember the formula.</p>
+
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 10px;">
+  <div style="display:flex; align-items:center; gap:8px; background: var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius: 8px 8px 0 0; padding:7px 10px;">
+    <span style="width:9px;height:9px;border-radius:50%;background:#e24b4a;display:inline-block;"></span>
+    <span style="width:9px;height:9px;border-radius:50%;background:#ef9f27;display:inline-block;"></span>
+    <span style="width:9px;height:9px;border-radius:50%;background:#639922;display:inline-block;"></span>
+    <span id="urlbar" style="flex:1; font-family:var(--font-mono); font-size:11px; color:var(--color-text-secondary); background:var(--color-background-secondary); border-radius:6px; padding:4px 10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">iiiiins.github.io/quakerankings/#/</span>
+  </div>
+
+  <div style="position:relative; background:#121212; border-radius: 0 0 8px 8px; padding:14px 14px 18px; min-height:430px; overflow:hidden;">
+
+    <div id="banner" style="display:none; align-items:center; gap:10px; background:#1f2733; border:0.5px solid #2e4a6b; border-radius:8px; padding:8px 12px; margin-bottom:12px;">
+      <i class="ti ti-link" style="font-size:16px; color:#90caf9;" aria-hidden="true"></i>
+      <div style="flex:1;">
+        <div style="font-size:12px; color:#cfe4ff; font-weight:500;">You're viewing a shared custom ranking</div>
+        <div style="margin-top:3px;"><span class="qr-chip">Years 2003–2013</span><span class="qr-chip">LAN only</span><span class="qr-chip">Duel only</span><span class="qr-chip">Tiers 1–3</span><span class="qr-chip">100 / 50 / 25 / 10</span></div>
+      </div>
+      <button style="font-size:11px; padding:4px 10px; color:#90caf9; border-color:#2e4a6b;">Keep this formula</button>
+      <button style="font-size:11px; padding:4px 10px; color:#bbb; border-color:#444;">Reset to default</button>
+    </div>
+
+    <div style="text-align:center; color:#fff; font-size:15px; letter-spacing:1px; font-weight:500; margin:2px 0 10px;">QUAKE PLAYER RANKINGS</div>
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:6px;">
+      <span style="background:#90caf9; color:#000; font-size:11px; font-weight:500; border-radius:4px; padding:5px 14px;">HOME</span>
+      <span style="background:#90caf9; color:#000; font-size:11px; font-weight:500; border-radius:4px; padding:5px 14px;">ADVANCED STATS</span>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:8px; position:relative;">
+      <i class="ti ti-share-3" id="shareIcon" style="font-size:19px; color:#bbb; cursor:pointer;" aria-label="Share this ranking"></i>
+      <i class="ti ti-settings" id="gearIcon" style="font-size:19px; color:#bbb; cursor:pointer;" aria-label="Settings"></i>
+
+      <div id="settingsPop" style="position:absolute; top:26px; right:0; z-index:5; background:#2a2a2a; border:0.5px solid #444; border-radius:8px; padding:12px 14px; width:230px;">
+        <div style="font-size:12px; color:#fff; font-weight:500; margin-bottom:6px;">Points configuration</div>
+        <div class="qr-set-row"><span class="qr-box"><i class="ti ti-check" aria-hidden="true"></i></span>FIRST <span class="qr-num" style="margin-left:auto;">100</span></div>
+        <div class="qr-set-row"><span class="qr-box"><i class="ti ti-check" aria-hidden="true"></i></span>SECOND <span class="qr-num" style="margin-left:auto;">50</span></div>
+        <div style="border-top:0.5px solid #444; margin:8px 0;"></div>
+        <div style="font-size:12px; color:#fff; font-weight:500; margin-bottom:6px;">Filters</div>
+        <div class="qr-set-row"><span class="qr-box"><i class="ti ti-check" aria-hidden="true"></i></span>LAN only</div>
+        <div class="qr-set-row"><span class="qr-box"></span>TDM <span style="color:#777; font-size:11px;">(hidden)</span></div>
+        <div class="qr-set-row"><span class="qr-box"></span>Tier 4 · Tier 5 <span style="color:#777; font-size:11px;">(hidden)</span></div>
+        <div class="qr-set-row" style="margin-top:4px;">Years<div style="flex:1; height:3px; background:#555; border-radius:2px; position:relative; margin:0 4px;"><span style="position:absolute; left:25%; top:-4px; width:11px; height:11px; border-radius:50%; background:#90caf9;"></span><span style="position:absolute; left:62%; top:-4px; width:11px; height:11px; border-radius:50%; background:#90caf9;"></span></div><span style="font-size:11px; color:#bbb;">2003–2013</span></div>
+      </div>
+
+      <div id="sharePop" style="display:none; position:absolute; top:26px; right:0; z-index:5; background:#2a2a2a; border:0.5px solid #444; border-radius:8px; padding:12px 14px; width:300px;">
+        <div style="font-size:12px; color:#fff; font-weight:500; margin-bottom:8px;"><i class="ti ti-share-3" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Share this ranking</div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <span style="flex:1; font-family:var(--font-mono); font-size:10px; color:#9fd0ff; background:#1c1c1c; border:0.5px solid #444; border-radius:6px; padding:6px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">iiiiins.github.io/quakerankings/#/?r=y2003-2013.lan.duel.t1-3.p100-50-25-10</span>
+          <button id="copyBtn" onclick="copied()" style="font-size:11px; padding:5px 10px; color:#90caf9; border-color:#446; white-space:nowrap;"><i class="ti ti-copy" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Copy</button>
+        </div>
+        <div style="margin-top:8px;"><span class="qr-chip">Years 2003–2013</span><span class="qr-chip">LAN only</span><span class="qr-chip">Duel only</span><span class="qr-chip">Tiers 1–3</span></div>
+        <div style="font-size:11px; color:#999; margin-top:8px; line-height:1.5;">The whole formula lives in the link — no account, nothing stored on a server. This browser also remembers it for your next visit.</div>
+      </div>
+    </div>
+
+    <div style="font-size:11px; color:#999; margin:0 0 6px;">Showing 214 players in 387 tournaments (1,538 filtered out of 1,925)</div>
+    <table style="width:100%; border-collapse:collapse; background:#1e1e1e; border-radius:8px; overflow:hidden;">
+      <thead>
+        <tr style="background:#2a2a2a;">
+          <th class="qr-th">Rank</th><th class="qr-th" style="text-align:left;">Player</th>
+          <th class="qr-th" style="background:#ffd700; color:#000;">1st</th>
+          <th class="qr-th" style="background:#94938b; color:#000;">2nd</th>
+          <th class="qr-th" style="background:#e9c18a; color:#000;">Top4</th>
+          <th class="qr-th" style="background:#9c6820; color:#000;">Top8</th>
+          <th class="qr-th">Points</th>
+        </tr>
+      </thead>
+      <tbody style="font-variant-numeric: tabular-nums;">
+        <tr><td class="qr-td">1</td><td class="qr-td" style="text-align:left; font-family:'Orbitron',sans-serif; font-weight:900; font-size:15px; color:#ffff72;">cooller</td><td class="qr-td" style="background:#3b3602;">14</td><td class="qr-td" style="background:#2a2a2a;">11</td><td class="qr-td" style="background:#362d21;">9</td><td class="qr-td" style="background:#352008;">3</td><td class="qr-td" style="color:#fff;">2120</td></tr>
+        <tr><td class="qr-td">2</td><td class="qr-td" style="text-align:left; font-family:'Orbitron',sans-serif; font-weight:900; font-size:15px; color:#ffff72;">cypher</td><td class="qr-td" style="background:#3b3602;">13</td><td class="qr-td" style="background:#2a2a2a;">7</td><td class="qr-td" style="background:#362d21;">6</td><td class="qr-td" style="background:#352008;">4</td><td class="qr-td" style="color:#fff;">1985</td></tr>
+        <tr><td class="qr-td">3</td><td class="qr-td" style="text-align:left; font-family:'Orbitron',sans-serif; font-weight:900; font-size:15px; color:#ffff72;">rapha</td><td class="qr-td" style="background:#3b3602;">11</td><td class="qr-td" style="background:#2a2a2a;">8</td><td class="qr-td" style="background:#362d21;">7</td><td class="qr-td" style="background:#352008;">2</td><td class="qr-td" style="color:#fff;">1730</td></tr>
+        <tr><td class="qr-td">4</td><td class="qr-td" style="text-align:left; font-family:'Orbitron',sans-serif; font-weight:900; font-size:15px; color:#ffff72;">av3k</td><td class="qr-td" style="background:#3b3602;">7</td><td class="qr-td" style="background:#2a2a2a;">9</td><td class="qr-td" style="background:#362d21;">8</td><td class="qr-td" style="background:#352008;">5</td><td class="qr-td" style="color:#fff;">1410</td></tr>
+        <tr><td class="qr-td">5</td><td class="qr-td" style="text-align:left; font-family:'Orbitron',sans-serif; font-weight:900; font-size:15px; color:#ffff72;">toxjq</td><td class="qr-td" style="background:#3b3602;">8</td><td class="qr-td" style="background:#2a2a2a;">5</td><td class="qr-td" style="background:#362d21;">5</td><td class="qr-td" style="background:#352008;">4</td><td class="qr-td" style="color:#fff;">1190</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+var caps = {
+  1: "The visitor tunes the formula in the gear menu, exactly like today — the leaderboard recomputes live. New behind the scenes: the URL and this browser quietly remember the formula.",
+  2: "New share button next to the gear. One click and the entire formula is a link, ready to paste on X or Discord. Nothing is stored on any server — the URL is the formula.",
+  3: "Anyone opening the link sees the leaderboard computed with that exact formula, plus a banner showing what's customized. One click keeps it or resets to the default site."
+};
+var urls = {
+  1: "iiiiins.github.io/quakerankings/#/",
+  2: "iiiiins.github.io/quakerankings/#/?r=y2003-2013.lan.duel.t1-3.p100-50-25-10",
+  3: "iiiiins.github.io/quakerankings/#/?r=y2003-2013.lan.duel.t1-3.p100-50-25-10"
+};
+function go(n) {
+  for (var i = 1; i <= 3; i++) document.getElementById("tab" + i).classList.toggle("on", i === n);
+  document.getElementById("caption").textContent = caps[n];
+  document.getElementById("urlbar").textContent = urls[n];
+  document.getElementById("settingsPop").style.display = n === 1 ? "block" : "none";
+  document.getElementById("sharePop").style.display = n === 2 ? "block" : "none";
+  document.getElementById("banner").style.display = n === 3 ? "flex" : "none";
+  document.getElementById("shareIcon").style.color = n === 2 ? "#90caf9" : "#bbb";
+  document.getElementById("gearIcon").style.color = n === 1 ? "#90caf9" : "#bbb";
+}
+function copied() {
+  var b = document.getElementById("copyBtn");
+  b.innerHTML = '<i class="ti ti-check" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Copied';
+  setTimeout(function () { b.innerHTML = '<i class="ti ti-copy" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Copy'; }, 1500);
+}
+document.getElementById("shareIcon").onclick = function () { go(2); };
+document.getElementById("gearIcon").onclick = function () { go(1); };
+</script>
+</body>
+</html>
