@@ -98,3 +98,14 @@ an admin data-entry page, and a public "submit a tournament" form (features B1/B
   **fixed Phase-2 target**. Phase 1 complete.
 - Phase 2 deviations from the mock (append below):
   - Share icon in the header is a designed slot for feature A — not shipped until feature A exists.
+- 2026-06-11 — **Phase 2 implemented** (commits `49fcba2`→`f1b1ddb`): theme.js + slimmed App.css
+  (2 font imports, zero emotion-hash selectors), compact header, podium, filter toolbar, hybrid
+  table, mobile chip-rail + bottom-sheet + one-row list, PlayerPage hero (nested ThemeProvider
+  removed — it was overriding the app theme), AdvancedStats chart panel, themed settings popover.
+  Verified: desktop 1366px + mobile 375px against the mock, prod build clean, console clean.
+  Additional deviations:
+  - Sticky table header deferred (MUI stickyHeader sticks to the scroll container, not the page;
+    needs a layout decision not worth blocking on).
+  - "Participations" column label renamed to "Events" (mock wording); sort key unchanged.
+  - PlayerPage/AdvancedStats keep their copy-paste structure per the no-restructure constraint.
+  - **Deploy pending Bruno's review** of the live dev build.

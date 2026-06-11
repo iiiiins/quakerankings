@@ -10,7 +10,7 @@ Quake Player Rankings is a single-page React app that aggregates competitive Qua
 
 - **React 19.0** + **react-scripts 5.0.1** (Create React App). React 19 with CRA 5 is unofficial — `.npmrc` has `legacy-peer-deps=true` so `npm install` resolves.
 - **Routing**: `react-router-dom` 7.x using `HashRouter`. Deploy path is `https://iiiiins.github.io/quakerankings/#/...`. Three routes only.
-- **UI**: `@mui/material` 6.3 + `@mui/icons-material` 6.3, dark theme via `createTheme({ palette: { mode: "dark" } })`. Emotion is the MUI peer dep.
+- **UI**: `@mui/material` 6.3 + `@mui/icons-material` 6.3. Full custom theme in `src/theme.js` (2026-06-11 redesign: ember `#e05a1f` primary on warm gunmetal surfaces, Rajdhani UI type, component styleOverrides); design-system classes (medal headers/lanes, podium, plates, mobile rows) live in `App.css`. The fixed visual target is `docs/mocks/direction-hybrid.html` — compare against it before changing styles (full brief: `docs/REDESIGN.md`). Emotion is the MUI peer dep.
 - **Backend**: Supabase (`@supabase/supabase-js` 2.47) — a single `Tournaments` table read with the anonymous role. URL + anon JWT are hardcoded in `src/services/supabaseClient.js`.
 - **Charts**: `chart.js` 4.x + `react-chartjs-2` 5.x. Only `Line` is used; scales/elements registered at the top of `AdvancedStats.js`.
 - **Analytics**: `react-ga4` with GA property `G-X11M9568HY`, initialized at module load in `App.js`; `AnalyticsTracker` fires a pageview on each route change.
@@ -21,13 +21,16 @@ Quake Player Rankings is a single-page React app that aggregates competitive Qua
 ```
 src/
 ├── index.js                       createRoot mount under <StrictMode>
-├── App.js                         theme, header/footer, settings popover, <Routes>; owns scoring config
-├── App.css                        global styles — 8 Google Fonts imports (Orbitron is the brand face)
+├── App.js                         header (wordmark/NavTabs/gear), footer, settings popover, <Routes>; owns scoring config
+├── App.css                        2 font imports (Rajdhani + Orbitron) + page atmosphere + design-system classes
+├── theme.js                       the MUI theme — ember palette, typography, component styleOverrides
 ├── AnalyticsTracker.js            GA pageview on each navigation (useLocation effect)
 ├── components/
 │   ├── PlayerList.js              "/" route. Fetches all tournaments once, computes ranks client-side,
-│   │                              renders leaderboard with sort/filter/search, LAN-only + Power Ranking
-│   │                              toggles, scroll-to-bottom pager (+100 rows)
+│   │                              renders top-3 podium + leaderboard with sort/filter/search, LAN-only +
+│   │                              Power Ranking plates, scroll-to-bottom pager (+100 rows). Below 900px
+│   │                              (useMediaQuery) it renders the mobile podium + chip rail + bottom-sheet
+│   │                              Drawer + one-row player list instead of the table
 │   ├── PlayerPage.js              "/players/:playerName". Per-player history; runs its own filtered
 │   │                              supabase .or() query against the URL slug
 │   ├── AdvancedStats.js           "/charts" route. Player picker + chart.js <Line> of points over time;
@@ -99,19 +102,17 @@ The working source was lost locally in 2025; deploys had been going straight to 
 
 ## Known issues / tech debt
 
-Remaining after the 2026-06-11 fix batch (year cap, weight-fallback mismatch, Diabotical dropdown gap, debug text/log spam, favicon/manifest, medal-header `class=`, Participations sort arrow — all fixed and deployed that day).
+Remaining after the 2026-06-11 fix batch (year cap, weight-fallback mismatch, Diabotical dropdown gap, debug text/log spam, favicon/manifest, medal-header `class=`, Participations sort arrow — all fixed and deployed that day) and the 2026-06-11 redesign (which additionally removed the emotion-hash selectors, serif fallbacks, fixed pixel layouts, and PlayerPage's nested ThemeProvider, and made all three pages responsive).
 
 1. **~200-line copy-paste between `PlayerList` and `AdvancedStats`**: the entire fetch + scoring loop + `handleSort` + `columnKeyMap`. In AdvancedStats the table-sort half of that copy (`handleSort`, `sortBy`, `sortOrder`, `columnKeyMap`) plus `loadMore`/`visiblePlayers` are vestigial — no table or scroll pager exists on the charts page.
 2. **Dead state blocks**: both list pages carry an unused `settings` object (full defaults, `setSettings` never called) and unused `topTournamentsLimit`/`topTournamentsFilter` state shadowed by the hardcoded 25; `AdvancedStats` additionally has unused `playerIndex`, `players` (post-set), and `getRandomColor`. `App.js` imports `fetchPlayers` which resolves to `undefined` (the function is commented out in the service) and never calls it.
 3. **AdvancedStats double-initializes the chart selection**: two effects both react to `filteredPlayers` and both call `setSelectedPlayers(...slice(0, 5))`; the processed one wins. Under Power Ranking it also truncates `player.tournaments` to the top 25, so charts only plot those.
-4. **PlayerPage wraps its own `ThemeProvider` + `CssBaseline`** inside App's — redundant nesting.
-5. **Config hardcoded**: Supabase anon JWT in `supabaseClient.js` and GA ID in `App.js` — move both to env vars. Write-safety was verified 2026-06-11: an anon insert probe returns 401, so the public key is read-only as intended.
-6. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case was fixed).
+4. **Config hardcoded**: Supabase anon JWT in `supabaseClient.js` and GA ID in `App.js` — move both to env vars. Write-safety was verified 2026-06-11: an anon insert probe returns 401, so the public key is read-only as intended.
+5. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case was fixed).
 
 ## Local dev quirks
 
 - `.npmrc` — `legacy-peer-deps=true`, required for React 19 against CRA 5's peer deps.
 - `.env.development.local` (gitignored, create it yourself): `PUBLIC_URL=/quakerankings` so dev serves at the same path as GitHub Pages.
-- `App.css` targets two emotion-generated class names (`.css-kmnzss`, `.css-zpntfe-MuiTableCell-root`). These hashes are not stable across MUI/emotion upgrades — expect those two rules to silently stop applying after dependency bumps.
 - Dev server emits two `Watchpack Error (initial scan): EINVAL` lines for `D:\Recovery` / `D:\System Volume Information` on Windows — Watchpack scans the drive root and chokes on system folders. Compile and HMR are unaffected.
 - ~23 transitive-dep deprecation warnings during `npm install` — standard for `react-scripts` 5.
