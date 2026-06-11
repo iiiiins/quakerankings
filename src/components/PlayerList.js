@@ -30,6 +30,8 @@ import quake4Logo from "../logos/quake4_logo.png";
 import quakeLiveLogo from "../logos/quakelive_logo.png";
 import quakeChampionsLogo from "../logos/quakechampions_logo.png";
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 const PlayerList = ({
   pointsConfig,
   pointsVisibility,
@@ -51,7 +53,7 @@ const PlayerList = ({
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedGame, setSelectedGame] = useState("All");
   const [selectedMode, setSelectedMode] = useState("All");
-  const [yearRange, setYearRange] = useState([1996, 2025]);
+  const [yearRange, setYearRange] = useState([1996, CURRENT_YEAR]);
   const [topTournamentsLimit, setTopTournamentsLimit] = useState(25);
   const [topTournamentsFilter, setTopTournamentsFilter] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -435,7 +437,7 @@ useEffect(() => {
               onChange={handleYearRangeChange}
               valueLabelDisplay="auto"
               min={1996}
-              max={2025}
+              max={CURRENT_YEAR}
               step={1}
             />
           </Box>

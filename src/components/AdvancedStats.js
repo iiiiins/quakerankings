@@ -41,6 +41,8 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 
 
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 const AdvancedStats = ({
   pointsConfig,
   pointsVisibility,
@@ -64,7 +66,7 @@ const AdvancedStats = ({
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedGame, setSelectedGame] = useState("All");
   const [selectedMode, setSelectedMode] = useState("All");
-  const [yearRange, setYearRange] = useState([1996, 2025]);
+  const [yearRange, setYearRange] = useState([1996, CURRENT_YEAR]);
   const [topTournamentsLimit, setTopTournamentsLimit] = useState(25);
   const [topTournamentsFilter, setTopTournamentsFilter] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -635,7 +637,7 @@ const getRandomColor = () =>
               onChange={handleYearRangeChange}
               valueLabelDisplay="auto"
               min={1996}
-              max={2025}
+              max={CURRENT_YEAR}
               step={1}
             />
           </Box>

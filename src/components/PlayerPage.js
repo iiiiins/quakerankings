@@ -33,6 +33,8 @@ const darkTheme = createTheme({
   },
 });
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 const PlayerPage = ({
   pointsConfig,
   pointsVisibility,
@@ -51,7 +53,7 @@ const PlayerPage = ({
   const [selectedGame, setSelectedGame] = useState("None");
   const [selectedMode, setSelectedMode] = useState("None");
   const [lanOnly, setLanOnly] = useState(false);
-  const [yearRange, setYearRange] = useState([1996, 2025]);
+  const [yearRange, setYearRange] = useState([1996, CURRENT_YEAR]);
   //console.log("player page called");
   //console.log("Points Config:", pointsConfig);
   //console.log("Points Visibility:", pointsVisibility);
@@ -484,7 +486,7 @@ const PlayerPage = ({
               onChange={(e, newValue) => setYearRange(newValue)}
               valueLabelDisplay="auto"
               min={1996}
-              max={2025}
+              max={CURRENT_YEAR}
             />
           </Box>
         </Box>
