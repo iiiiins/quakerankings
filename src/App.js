@@ -5,6 +5,7 @@ import PlayerPage from "./components/PlayerPage";
 import AdvancedStats from "./components/AdvancedStats";
 import EventsBrowser from "./components/EventsBrowser";
 import Methodology from "./components/Methodology";
+import AdminPage from "./components/AdminPage";
 import ReactGA from "react-ga4";
 ReactGA.initialize(process.env.REACT_APP_GA_ID);
 
@@ -260,6 +261,8 @@ const App = () => {
               <Route path="/events" element={<EventsBrowser />} />
               {/* Methodology */}
               <Route path="/methodology" element={<Methodology />} />
+              {/* Admin (no nav tab — direct URL; security lives in RLS) */}
+              <Route path="/admin" element={<AdminPage />} />
               {/* Stats Page */}
               <Route
                 path="/charts"

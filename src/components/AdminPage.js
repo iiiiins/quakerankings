@@ -1,0 +1,99 @@
+import React, { useState } from "react";
+import { Container, Paper, Typography, TextField, Button } from "@mui/material";
+import { supabase } from "../services/supabaseClient";
+import useSession from "../hooks/useSession";
+
+// Single-user admin: login gate + data entry. Security lives entirely in RLS
+// (uid-scoped write policies + signups disabled) — shipping this UI in the
+// public bundle is fine by design; see docs/roadmap.md §3.
+const AdminPage = () => {
+  const { session, loading } = useSession();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState(null);
+  const [signingIn, setSigningIn] = useState(false);
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setSigningIn(true);
+    setAuthError(null);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setAuthError(error.message);
+    setSigningIn(false);
+  };
+
+  if (loading) return null;
+
+  if (!session) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <div className="admin-page">
+          <h2 className="method-title">Admin</h2>
+          <Paper elevation={0} className="game-section admin-login-card">
+            <div className="game-section-head">
+              <Typography component="h3" className="game-section-title">
+                Sign in
+              </Typography>
+            </div>
+            <form className="admin-login" onSubmit={handleLogin}>
+              <span className="filter-label">Email</span>
+              <TextField
+                size="small"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                fullWidth
+              />
+              <span className="filter-label">Password</span>
+              <TextField
+                size="small"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                fullWidth
+              />
+              {authError && <div className="admin-error">{authError}</div>}
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={signingIn || !email || !password}
+              >
+                Sign in
+              </Button>
+            </form>
+          </Paper>
+        </div>
+      </Container>
+    );
+  }
+
+  return (
+    <Container disableGutters maxWidth={false}>
+      <div className="admin-page">
+        <div className="admin-head">
+          <h2 className="method-title">Admin</h2>
+          <span className="admin-user">{session.user.email}</span>
+          <Button
+            variant="text"
+            color="primary"
+            className="tab-idle"
+            onClick={() => supabase.auth.signOut()}
+          >
+            Sign out
+          </Button>
+        </div>
+        <Typography component="p" className="admin-hint">
+          Add a tournament below. To correct or delete one, find it in the
+          events browser — every row gets an edit control while you're signed
+          in.
+        </Typography>
+        {/* Add-tournament form lands here (next commit) */}
+      </div>
+    </Container>
+  );
+};
+
+export default AdminPage;
