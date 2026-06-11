@@ -26,7 +26,8 @@ const SettingsMenu = ({
   setModeWeights,
   modeVisibility,
   setModeVisibility,
-
+  minEventsForPpe,
+  setMinEventsForPpe,
 }) => {
   const handlePointsChange = (placement, value) => {
     //console.log(`Updating pointsConfig for ${placement}:`, value);
@@ -228,6 +229,24 @@ const SettingsMenu = ({
           )}
         </Box>
       ))}
+      <Divider style={{ margin: "10px 0" }} />
+
+      {/* Points per Event */}
+      <Typography variant="h6" gutterBottom>
+        Points per Event
+      </Typography>
+      <Box className="settings-boxes" display="flex" alignItems="center" mb={0}>
+        <Typography variant="body2">Min events</Typography>
+        <TextField
+          type="number"
+          size="small"
+          value={minEventsForPpe}
+          onChange={(e) =>
+            setMinEventsForPpe(parseInt(e.target.value, 10) || 0)
+          }
+          style={{ marginLeft: "10px", width: "78px" }}
+        />
+      </Box>
     </Box>
   );
 };

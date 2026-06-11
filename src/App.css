@@ -469,6 +469,16 @@ a:active {
   background: linear-gradient(90deg, #e05a1f, #f5c518);
 }
 
+/* points-per-event column */
+.MuiTableCell-root.ppe-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ppe-cell .ppe-dash {
+  color: #6e6859;
+}
+
 .loadhint {
   text-align: center;
   color: #6e6859;

@@ -121,6 +121,10 @@ const App = () => {
     "WIP": 100,
     "DBT": 100,
   });
+
+  // Points/Event is only shown for players with at least this many events
+  const [minEventsForPpe, setMinEventsForPpe] = useState(15);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const handleSettingsClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -185,6 +189,8 @@ const App = () => {
                   setModeVisibility={setModeVisibility}
                   modeWeights={modeWeights}
                   setModeWeights={setModeWeights}
+                  minEventsForPpe={minEventsForPpe}
+                  setMinEventsForPpe={setMinEventsForPpe}
                 />
               </Popover>
             </Box>
@@ -203,6 +209,7 @@ const App = () => {
                     tierVisibility={tierVisibility}
                     modeWeights={modeWeights}
                     modeVisibility={modeVisibility}
+                    minEventsForPpe={minEventsForPpe}
                   />
                 }
               />

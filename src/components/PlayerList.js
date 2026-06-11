@@ -60,6 +60,7 @@ const columnKeyMap = {
   "2nd": "placements.second",
   Top4: "placements.top4",
   Top8: "placements.top8",
+  Ppe: "ppe",
   Points: "points",
   Player: "player",
   Rank: "Rank",
@@ -74,6 +75,13 @@ const sortPlayers = (list, column, order) => {
       return dir * a.player.localeCompare(b.player);
     }
 
+    // Players under the min-events threshold have no Points/Event value —
+    // they always sort last, in either direction
+    if (key === "ppe" && (a.ppe == null || b.ppe == null)) {
+      if (a.ppe == null && b.ppe == null) return 0;
+      return a.ppe == null ? 1 : -1;
+    }
+
     let valA, valB;
     if (column === "games" || column === "modes") {
       valA = a[column] ? a[column].split(", ").length : 0;
@@ -86,6 +94,14 @@ const sortPlayers = (list, column, order) => {
   });
 };
 
+const formatPpe = (ppe) =>
+  ppe == null
+    ? "—"
+    : ppe.toLocaleString("en-US", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
+
 const PlayerList = ({
   pointsConfig,
   pointsVisibility,
@@ -95,6 +111,7 @@ const PlayerList = ({
   tierVisibility,
   modeWeights,
   modeVisibility,
+  minEventsForPpe,
 }) => {
   const [sortBy, setSortBy] = useState("Points");
   const [sortOrder, setSortOrder] = useState("desc");
@@ -126,6 +143,7 @@ const PlayerList = ({
         tierVisibility,
         modeWeights,
         modeVisibility,
+        minEventsForPpe,
       }),
     [
       tournamentList,
@@ -142,6 +160,7 @@ const PlayerList = ({
       tierVisibility,
       modeWeights,
       modeVisibility,
+      minEventsForPpe,
     ]
   );
 
@@ -391,25 +410,31 @@ const PlayerList = ({
 
       {isMobile ? (
         <div className="ph-list">
-          {(searchQuery ? visiblePlayers : visiblePlayers.filter((p) => p.Rank > 3)).map(
-            (player) => (
-              <Link
-                key={player.player}
-                className="ph-row"
-                to={`/players/${player.player}`}
-              >
-                <span className="rk">{String(player.Rank).padStart(2, "0")}</span>
-                <span className="nm">{player.player}</span>
-                <span className="dots">
-                  <span className="d-g"><i />{player.placements?.first || 0}</span>
-                  <span className="d-s"><i />{player.placements?.second || 0}</span>
-                  <span className="d-b"><i />{player.placements?.top4 || 0}</span>
-                  <span className="d-c"><i />{player.placements?.top8 || 0}</span>
-                </span>
-                <span className="pt">{(player.points || 0).toLocaleString("en-US")}</span>
-              </Link>
-            )
-          )}
+          {/* top 3 live on the podium — only hide them from the list in the default points order */}
+          {(searchQuery || sortBy !== "Points" || sortOrder !== "desc"
+            ? visiblePlayers
+            : visiblePlayers.filter((p) => p.Rank > 3)
+          ).map((player) => (
+            <Link
+              key={player.player}
+              className="ph-row"
+              to={`/players/${player.player}`}
+            >
+              <span className="rk">{String(player.Rank).padStart(2, "0")}</span>
+              <span className="nm">{player.player}</span>
+              <span className="dots">
+                <span className="d-g"><i />{player.placements?.first || 0}</span>
+                <span className="d-s"><i />{player.placements?.second || 0}</span>
+                <span className="d-b"><i />{player.placements?.top4 || 0}</span>
+                <span className="d-c"><i />{player.placements?.top8 || 0}</span>
+              </span>
+              <span className="pt">
+                {sortBy === "Ppe"
+                  ? formatPpe(player.ppe)
+                  : (player.points || 0).toLocaleString("en-US")}
+              </span>
+            </Link>
+          ))}
         </div>
       ) : (
       <TableContainer component={Paper} elevation={0} className="board">
@@ -498,6 +523,15 @@ const PlayerList = ({
                   Events
                 </TableSortLabel>
               </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortBy === "Ppe"}
+                  direction={sortBy === "Ppe" ? sortOrder : "asc"}
+                  onClick={() => handleSort("Ppe")}
+                >
+                  Pts/Event
+                </TableSortLabel>
+              </TableCell>
               <TableCell className="th-right">
                 <TableSortLabel
                   active={sortBy === "Points"}
@@ -512,7 +546,7 @@ const PlayerList = ({
           <TableBody>
             {filteredPlayers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center">
+                <TableCell colSpan={11} align="center">
                   No results found
                 </TableCell>
               </TableRow>
@@ -565,6 +599,13 @@ const PlayerList = ({
                       {player.placements?.top8 || 0}
                     </TableCell>
                     <TableCell>{player.participations || 0}</TableCell>
+                    <TableCell className="ppe-cell">
+                      {player.ppe == null ? (
+                        <span className="ppe-dash">—</span>
+                      ) : (
+                        formatPpe(player.ppe)
+                      )}
+                    </TableCell>
                     <TableCell className="points-cell" align="right">
                       <span className="pwrap">
                         {(player.points || 0).toLocaleString("en-US")}
@@ -632,6 +673,19 @@ const PlayerList = ({
                     {mode}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+            <span className="filter-label">Sort by</span>
+            <FormControl size="small" fullWidth>
+              <Select
+                value={sortBy === "Ppe" ? "Ppe" : "Points"}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setSortOrder("desc");
+                }}
+              >
+                <MenuItem value="Points">Points</MenuItem>
+                <MenuItem value="Ppe">Points per event</MenuItem>
               </Select>
             </FormControl>
             <span className="filter-label">
