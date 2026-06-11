@@ -12,14 +12,10 @@ import {
   Typography,
   TableSortLabel,
   FormControl,
-  InputLabel,
   Select,
   TextField,
   MenuItem,
-  Box,
   Slider,
-  FormControlLabel,
-  Checkbox,
 } from "@mui/material";
 import { fetchListTournaments } from "../services/fetchPlayersByGame";
 import diaboticalLogo from "../logos/diabotical_logo.png";
@@ -392,21 +388,49 @@ useEffect(() => {
     setFilteredPlayers(searchedPlayers);
   };
 
+  const maxPoints = players.length > 0 ? players[0].points : 0;
+  const podiumPlayers =
+    players.length >= 3 ? [players[1], players[0], players[2]] : [];
+
   return (
-    <Container>
-      <TableContainer component={Paper}>
-        <Typography variant="h4" align="center" gutterBottom></Typography>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          padding="16px"
-        >
-          <FormControl style={{ minWidth: "200px" }}>
-            <InputLabel>Filter by Game</InputLabel>
+    <Container disableGutters maxWidth={false}>
+      {/* Podium — top 3 under the current filters/formula */}
+      {podiumPlayers.length === 3 && (
+        <div className="podium">
+          {podiumPlayers.map((p) => (
+            <div key={p.player} className={`pcard p${p.Rank}`}>
+              <div className="pmedal">{p.Rank}</div>
+              <div className="pname">
+                <Link to={`/players/${p.player}`}>{p.player}</Link>
+              </div>
+              <div className="ppoints">{(p.points || 0).toLocaleString("en-US")}</div>
+              <div className="plabel">points · {p.participations || 0} events</div>
+              <div className="plogos">
+                {p.games.split(", ").map((game) =>
+                  gameLogos[game] ? (
+                    <img key={game} src={gameLogos[game]} alt={game} title={game} />
+                  ) : null
+                )}
+              </div>
+              <div className="pmedals">
+                <span className="pm-g">{p.placements?.first || 0}<i>1ST</i></span>
+                <span className="pm-s">{p.placements?.second || 0}<i>2ND</i></span>
+                <span className="pm-b">{p.placements?.top4 || 0}<i>T4</i></span>
+                <span className="pm-c">{p.placements?.top8 || 0}<i>T8</i></span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="filter-bar">
+        <div className="filter-field">
+          <span className="filter-label">Game</span>
+          <FormControl size="small" style={{ minWidth: "150px" }}>
             <Select
               value={selectedGame}
               onChange={(e) => setSelectedGame(e.target.value)}
+              renderValue={(v) => (v === "All" ? "All games" : v)}
             >
               {games.map((game) => (
                 <MenuItem key={game} value={game}>
@@ -415,9 +439,11 @@ useEffect(() => {
               ))}
             </Select>
           </FormControl>
+        </div>
 
-          <FormControl style={{ minWidth: "200px" }}>
-            <InputLabel>Filter by Mode</InputLabel>
+        <div className="filter-field">
+          <span className="filter-label">Mode</span>
+          <FormControl size="small" style={{ minWidth: "110px" }}>
             <Select
               value={selectedMode}
               onChange={(e) => setSelectedMode(e.target.value)}
@@ -429,9 +455,11 @@ useEffect(() => {
               ))}
             </Select>
           </FormControl>
+        </div>
 
-          <Box width="300px" className="year-range">
-            <Typography gutterBottom>Filter by Year</Typography>
+        <div className="filter-field years-field">
+          <span className="filter-label">Years</span>
+          <div className="yearline">
             <Slider
               value={yearRange}
               onChange={handleYearRangeChange}
@@ -440,52 +468,57 @@ useEffect(() => {
               max={CURRENT_YEAR}
               step={1}
             />
-          </Box>
+            <span className="yearval">
+              {yearRange[0]}–{yearRange[1]}
+            </span>
+          </div>
+        </div>
 
-          <Box padding="16px" display="flex" justifyContent="center">
-            <TextField
-              label="Search Player"
-              variant="outlined"
-              value={searchQuery}
-              onChange={handleSearch}
-              style={{ width: "300px" }}
-            />
-          </Box>
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={lanOnly}
-                onChange={(e) => setLanOnly(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="LAN Only"
+        <div className="filter-field search-field">
+          <span className="filter-label">Search</span>
+          <TextField
+            size="small"
+            placeholder="Search player…"
+            variant="outlined"
+            value={searchQuery}
+            onChange={handleSearch}
+            fullWidth
           />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={powerRanking}
-                onChange={(e) => setPowerRanking(e.target.checked)}
-                color="primary"
-                title="Show only the top 25 tournaments for each player"
-              />
-              
-            }
-            label="POWER RANKING"
+        </div>
+
+        <div className="toggle-plates">
+          <button
+            type="button"
+            className={`plate${lanOnly ? " on" : ""}`}
+            onClick={() => setLanOnly(!lanOnly)}
+            title="Only LAN tournaments"
+          >
+            <span className="led" />
+            LAN Only
+          </button>
+          <button
+            type="button"
+            className={`plate${powerRanking ? " on" : ""}`}
+            onClick={() => setPowerRanking(!powerRanking)}
             title="Show only the top 25 tournaments for each player"
-          />
-        </Box>
+          >
+            <span className="led" />
+            Power Ranking
+          </button>
+        </div>
+      </div>
 
-        {/* Summary Message */}
-        <Typography variant="subtitle1" align="left" gutterBottom>
-          Showing {filteredPlayers.length} players in{" "}
-          {totalTournaments - filteredTournaments} tournaments (
-          {filteredTournaments} tournaments filtered out of {totalTournaments})
-        </Typography>
+      {/* Summary Message */}
+      <Typography component="div" className="summary-line">
+        <b>{filteredPlayers.length.toLocaleString("en-US")}</b> players ·{" "}
+        <b>{(totalTournaments - filteredTournaments).toLocaleString("en-US")}</b>{" "}
+        tournaments · {filteredTournaments.toLocaleString("en-US")} filtered
+      </Typography>
+
+      <TableContainer component={Paper} elevation={0} className="board">
 
         <Table>
-          <TableHead className="table-header">
+          <TableHead>
             <TableRow>
               <TableCell>
                 <TableSortLabel
@@ -496,7 +529,7 @@ useEffect(() => {
                   Rank
                 </TableSortLabel>
               </TableCell>
-              <TableCell>
+              <TableCell className="th-left">
                 <TableSortLabel
                   active={sortBy === "player"}
                   direction={sortBy === "player" ? sortOrder : "asc"}
@@ -511,19 +544,19 @@ useEffect(() => {
                   direction={sortBy === "games" ? sortOrder : "asc"}
                   onClick={() => handleSort("games")}
                 >
-                  Games Played
+                  Games
                 </TableSortLabel>
               </TableCell>
-              <TableCell className="modes-header">
+              <TableCell className="th-left">
                 <TableSortLabel
                   active={sortBy === "modes"}
                   direction={sortBy === "modes" ? sortOrder : "asc"}
                   onClick={() => handleSort("modes")}
                 >
-                  Modes Played
+                  Modes
                 </TableSortLabel>
               </TableCell>
-              <TableCell className="gold-header" align="right">
+              <TableCell className="gold-header">
                 <TableSortLabel
                   active={sortBy === "1st"}
                   direction={sortBy === "1st" ? sortOrder : "asc"}
@@ -532,7 +565,7 @@ useEffect(() => {
                   1st
                 </TableSortLabel>
               </TableCell>
-              <TableCell className="silver-header" align="right">
+              <TableCell className="silver-header">
                 <TableSortLabel
                   active={sortBy === "2nd"}
                   direction={sortBy === "2nd" ? sortOrder : "asc"}
@@ -541,34 +574,34 @@ useEffect(() => {
                   2nd
                 </TableSortLabel>
               </TableCell>
-              <TableCell className="bronze-header" align="right">
+              <TableCell className="bronze-header">
                 <TableSortLabel
                   active={sortBy === "Top4"}
                   direction={sortBy === "Top4" ? sortOrder : "asc"}
                   onClick={() => handleSort("Top4")}
                 >
-                  Top4
+                  Top 4
                 </TableSortLabel>
               </TableCell>
-              <TableCell className="copper-header" align="right">
+              <TableCell className="copper-header">
                 <TableSortLabel
                   active={sortBy === "Top8"}
                   direction={sortBy === "Top8" ? sortOrder : "asc"}
                   onClick={() => handleSort("Top8")}
                 >
-                  Top8
+                  Top 8
                 </TableSortLabel>
               </TableCell>
-              <TableCell align="right">
+              <TableCell>
                 <TableSortLabel
                   active={sortBy === "participations"}
                   direction={sortBy === "participations" ? sortOrder : "asc"}
                   onClick={() => handleSort("participations")}
                 >
-                  Participations
+                  Events
                 </TableSortLabel>
               </TableCell>
-              <TableCell align="right">
+              <TableCell className="th-right">
                 <TableSortLabel
                   active={sortBy === "Points"}
                   direction={sortOrder}
@@ -582,73 +615,83 @@ useEffect(() => {
           <TableBody>
             {filteredPlayers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={10} align="center">
                   No results found
                 </TableCell>
               </TableRow>
             ) : (
-              visiblePlayers.map((player) => (
-                <TableRow key={player.player}>
-                  <TableCell>{player.Rank}</TableCell>
-                  <TableCell className="players-list">
-                    <Link to={`/players/${player.player}`}>
-                      {player.player}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="games-list" align="right">
-                    {player.games.split(", ").map((game) =>
-                      gameLogos[game] ? (
-                        <img
-                          key={game}
-                          src={gameLogos[game]}
-                          alt={game}
-                          title={game}
+              visiblePlayers.map((player) => {
+                const modesArr = player.modes ? player.modes.split(", ") : [];
+                return (
+                  <TableRow
+                    key={player.player}
+                    className={player.Rank <= 3 ? `row-${player.Rank}` : undefined}
+                  >
+                    <TableCell className="rank-cell">
+                      {String(player.Rank).padStart(2, "0")}
+                    </TableCell>
+                    <TableCell className="players-list">
+                      <Link to={`/players/${player.player}`}>
+                        {player.player}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="games-list">
+                      {player.games.split(", ").map((game) =>
+                        gameLogos[game] ? (
+                          <img
+                            key={game}
+                            src={gameLogos[game]}
+                            alt={game}
+                            title={game}
+                          />
+                        ) : null
+                      )}
+                    </TableCell>
+                    <TableCell className="modes-list">
+                      {modesArr.slice(0, 2).join(" / ") || "N/A"}
+                      {modesArr.length > 2 && (
+                        <span className="modes-more" title={player.modes}>
+                          +{modesArr.length - 2}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="gold-placement">
+                      {player.placements?.first || 0}
+                    </TableCell>
+                    <TableCell className="silver-placement">
+                      {player.placements?.second || 0}
+                    </TableCell>
+                    <TableCell className="bronze-placement">
+                      {player.placements?.top4 || 0}
+                    </TableCell>
+                    <TableCell className="copper-placement">
+                      {player.placements?.top8 || 0}
+                    </TableCell>
+                    <TableCell>{player.participations || 0}</TableCell>
+                    <TableCell className="points-cell" align="right">
+                      <span className="pwrap">
+                        {(player.points || 0).toLocaleString("en-US")}
+                        <span
+                          className="pbar"
                           style={{
-                            width: "30px",
-                            height: "30px",
-                            marginRight: "5px",
+                            width: `${Math.max(
+                              8,
+                              Math.round(((player.points || 0) / (maxPoints || 1)) * 100)
+                            )}%`,
                           }}
                         />
-                      ) : null
-                    )}
-                  </TableCell>
-                  <TableCell className="modes-list" align="right">{player.modes || "N/A"}</TableCell>
-                  <TableCell
-                    className="numbers-list gold-placement"
-                    align="right"
-                  >
-                    {player.placements?.first || 0}
-                  </TableCell>
-                  <TableCell
-                    className="numbers-list silver-placement"
-                    align="right"
-                  >
-                    {player.placements?.second || 0}
-                  </TableCell>
-                  <TableCell
-                    className="numbers-list bronze-placement"
-                    align="right"
-                  >
-                    {player.placements?.top4 || 0}
-                  </TableCell>
-                  <TableCell
-                    className="numbers-list copper-placement"
-                    align="right"
-                  >
-                    {player.placements?.top8 || 0}
-                  </TableCell>
-                  <TableCell className="numbers-list" align="right">
-                    {player.participations || 0}
-                  </TableCell>
-                  <TableCell className="numbers-list" align="right">
-                    {player.points || 0}
-                  </TableCell>
-                </TableRow>
-              ))
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </TableContainer>
+      {visiblePlayers.length < filteredPlayers.length && (
+        <div className="loadhint">Scroll — next 100 load automatically</div>
+      )}
     </Container>
   );
 };

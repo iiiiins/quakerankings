@@ -456,7 +456,12 @@ a:active {
   text-align: right;
 }
 
+.MuiTableCell-root.th-left { text-align: left; }
+.MuiTableCell-root.th-left .MuiTableSortLabel-root { justify-content: flex-start; }
+.MuiTableCell-root.th-right { text-align: right; }
+
 .pbar {
+  display: block;
   height: 3px;
   border-radius: 2px;
   margin-top: 3px;
