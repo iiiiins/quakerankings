@@ -12,7 +12,14 @@ entry (full CRUD), not just the existing sheet+script pipeline.
 
 ## Committed features, in order
 
-### 1. Leaderboard upgrades + foundation (~1 session)
+### 1. Leaderboard upgrades + foundation (~1 session) — ✅ SHIPPED 2026-06-11
+
+All three pieces landed (commits `772d97b` refactor, `28f53b4` PPE, `5d60ef5` formula memory);
+CLAUDE.md updated the same session. Build-time decisions: PPE shows a muted dash below the
+min-events threshold and always sorts last; mobile got a Sort-by select (Points | Points per
+event) in the bottom sheet, with the row value showing PPE while PPE-sorted; localStorage key
+is `qpr.formula.v1`. Known trade-off: the 11-column table horizontally scrolls between 900 and
+~1110px viewports. Not yet deployed — deploy with `npm run deploy` when ready.
 
 Three pieces, one session — they all touch the same code.
 
@@ -135,3 +142,7 @@ The auth/RLS design, agreed in-session:
   memory) rides along in session 1.
 - 2026-06-11 — Comparison page kept tier 2 with the "Compare careers" framing after discussing
   the no-match-data concern; prize-pool weighting rejected (tiers already encode it).
+- 2026-06-11 — Bruno: PPE only for players with ≥ N events, N default 15 and adjustable in the
+  settings menu (kills one-event wonders). Implemented in `computeRankings` (`minEventsForPpe`).
+- 2026-06-11 — Feature 1 shipped (extraction + PPE + formula memory). Session model held:
+  three atomic commits, each verified in the dev preview before landing.

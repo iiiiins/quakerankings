@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Regenerated 2026-06-11 from a full source read. Every claim below was verified against the code on that date.
+Regenerated 2026-06-11 from a full source read; updated the same day after the leaderboard-upgrades session (roadmap feature 1). Every claim below was verified against the code on that date.
 
 ## Overview
 
-Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts.
+Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset; the formula persists across visits in localStorage. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts.
 
 ## Stack
 
@@ -26,21 +26,27 @@ src/
 ├── theme.js                       the MUI theme — ember palette, typography, component styleOverrides
 ├── AnalyticsTracker.js            GA pageview on each navigation (useLocation effect)
 ├── components/
-│   ├── PlayerList.js              "/" route. Fetches all tournaments once, computes ranks client-side,
-│   │                              renders top-3 podium + leaderboard with sort/filter/search, LAN-only +
-│   │                              Power Ranking plates, scroll-to-bottom pager (+100 rows). Below 900px
+│   ├── PlayerList.js              "/" route. Renders top-3 podium + leaderboard (sort/filter/search,
+│   │                              LAN-only + Power Ranking plates, Pts/Event column, scroll-to-bottom
+│   │                              pager +100 rows) from useTournaments + computeRankings; search/sort
+│   │                              are derived memos on top of the ranked list. Below 900px
 │   │                              (useMediaQuery) it renders the mobile podium + chip rail + bottom-sheet
-│   │                              Drawer + one-row player list instead of the table
+│   │                              Drawer (filters + Sort-by select) + one-row player list instead
 │   ├── PlayerPage.js              "/players/:playerName". Per-player history; runs its own filtered
 │   │                              supabase .or() query against the URL slug
-│   ├── AdvancedStats.js           "/charts" route. Player picker + chart.js <Line> of points over time;
-│   │                              ~200 lines copy-pasted from PlayerList (see Known issues)
-│   └── SettingsMenu.js            controlled form in the gear popover; four sections (Points, Games,
-│                                  Tier, Mode), each row = visibility checkbox + weight input
+│   ├── AdvancedStats.js           "/charts" route. Player picker + chart.js <Line> of points over time,
+│   │                              fed by the same useTournaments + computeRankings pipeline
+│   └── SettingsMenu.js            controlled form in the gear popover; five sections (Points, Games,
+│                                  Tier, Mode — rows = visibility checkbox + weight input — and
+│                                  Points per Event with the min-events threshold)
+├── hooks/
+│   └── useTournaments.js          shared fetch hook; module-level cache = one table fetch per session
+├── lib/
+│   ├── computeRankings.js         the pure scoring/filter/rank pipeline both list pages consume
+│   └── formulaStorage.js          load/save the scoring config, versioned key qpr.formula.v1
 ├── services/
 │   ├── supabaseClient.js          hardcoded Supabase URL + anon JWT, exports the client
-│   └── fetchPlayersByGame.js      exports fetchListTournaments (used) and fetchTotalTournaments (never
-│                                  imported — dead). A large fetchPlayers() sits commented out in /* */
+│   └── fetchPlayersByGame.js      fetchListTournaments — full Tournaments table, [] on error
 └── logos/                         per-game PNGs + footer X/Twitch logos
 ```
 
@@ -73,18 +79,19 @@ points(placement) = base[placement] × tierWeight/100 × gameWeight/100 × modeW
 
 - Defaults: base = {1st: 100, 2nd: 50, Top4: 25, Top8: 10}; tier weights = {1: 100, 2: 60, 3: 35, 4: 20, 5: 10}; all game and mode weights = 100.
 - Visibility toggles remove a placement bucket / game / tier / mode from scoring entirely.
-- **Power Ranking**: per player, keep only the top-25 tournaments by points and recompute points/placements/participations. The 25 is hardcoded at the `slice` call sites.
+- **Power Ranking**: per player, keep only the top-25 tournaments by points and recompute points/placements/participations (`POWER_RANKING_LIMIT` in `computeRankings.js`). The kept top-25 also replaces `player.tournaments`, so AdvancedStats charts plot exactly the events the power points come from.
+- **Points per event** (`player.ppe`): `points / participations`, computed in `computeRankings` only for players with at least `minEventsForPpe` events (default 15, adjustable in the settings menu); below the threshold it is `null` — rendered as a muted dash and always sorted last in either direction. Desktop: sortable Pts/Event column between Events and Points. Mobile: Sort-by select (Points | Points per event) in the bottom sheet; the row's trailing value shows PPE while PPE-sorted, and the top-3 rejoin the list whenever the order isn't the default points ranking.
 - PlayerPage computes the same formula written as `(base × tierW × gameW × modeW) / 1000000` — mathematically equivalent; don't "fix" one to match the other without reading both. It rounds to 1 decimal where the list pages round to integers.
 - PlayerPage extras: average placement (1st=1, 2nd=2, Top4=3.5, Top8=6.5), grand finals = 1st+2nd count, grand-final win rate = 1sts / grand finals.
 
 ## State architecture
 
-`App` owns the **scoring configuration** (8 objects: `pointsConfig`/`pointsVisibility`, `gameWeights`/`gameVisibility`, `tierWeights`/`tierVisibility`, `modeWeights`/`modeVisibility`) and passes values + setters to `<SettingsMenu>` (the only edit point) and values to all three pages, which genuinely consume them.
+`App` owns the **scoring configuration** (8 objects: `pointsConfig`/`pointsVisibility`, `gameWeights`/`gameVisibility`, `tierWeights`/`tierVisibility`, `modeWeights`/`modeVisibility`, plus `minEventsForPpe`) and passes values + setters to `<SettingsMenu>` (the only edit point) and values to the pages that consume them. The whole set persists via `lib/formulaStorage.js` (**formula memory**): saved to localStorage on every change, loaded at page load with each stored section spread over its defaults (so formulas saved before a new game/mode/setting still load), versioned key `qpr.formula.v1` — bump it to invalidate stale shapes. Corrupt or unavailable storage falls back to defaults silently.
 
-**Filter state is per-page, not shared.** App also declares `players`, `selectedGame`, `selectedMode`, `yearRange`, `lanOnly`, `powerRanking` and passes them as props — but the pages don't even destructure those props; each declares its own `useState` copies. The App-level copies (and its orphan `setPowerRanking`) are dead. Changing a filter on one page does not affect another.
+**Filter state is per-page, not shared.** Each list page declares its own `selectedGame`, `selectedMode`, `yearRange`, `lanOnly`, `powerRanking`; changing a filter on one page does not affect another.
 
 Data flow per page:
-- `PlayerList` and `AdvancedStats` each call `fetchListTournaments()` (full table) once on mount, then re-run the same in-memory scoring loop on every dependency change.
+- `PlayerList` and `AdvancedStats` read the table through `useTournaments()` (module-level cache — one Supabase fetch per session, shared across pages; empty/error results aren't cached so a later mount retries) and run `computeRankings(tournaments, config)` in a `useMemo`. PlayerList layers search + column sort on top as derived memos, so sort survives searches and settings changes; `Rank` is always the points-desc rank regardless of the displayed order.
 - `PlayerPage` builds its own filtered Supabase query per visit.
 
 Routes (all under `HashRouter`): `/` → PlayerList, `/charts` → AdvancedStats, `/players/:playerName` → PlayerPage. In-app nav in `App.js` uses `window.location.hash = "#/..."` rather than `useNavigate()` — works, but bypasses the router lifecycle.
@@ -102,13 +109,11 @@ The working source was lost locally in 2025; deploys had been going straight to 
 
 ## Known issues / tech debt
 
-Remaining after the 2026-06-11 fix batch (year cap, weight-fallback mismatch, Diabotical dropdown gap, debug text/log spam, favicon/manifest, medal-header `class=`, Participations sort arrow — all fixed and deployed that day) and the 2026-06-11 redesign (which additionally removed the emotion-hash selectors, serif fallbacks, fixed pixel layouts, and PlayerPage's nested ThemeProvider, and made all three pages responsive).
+Remaining after the 2026-06-11 fix batch (year cap, weight-fallback mismatch, Diabotical dropdown gap, debug text/log spam, favicon/manifest, medal-header `class=`, Participations sort arrow — all fixed and deployed that day), the 2026-06-11 redesign (emotion-hash selectors, serif fallbacks, fixed pixel layouts, PlayerPage's nested ThemeProvider removed; all three pages responsive), and the 2026-06-11 foundation extraction (which resolved the former #1–#3: the ~200-line PlayerList/AdvancedStats copy-paste, the dead state blocks/imports, and the AdvancedStats chart double-init — all replaced by `useTournaments` + `computeRankings`).
 
-1. **~200-line copy-paste between `PlayerList` and `AdvancedStats`**: the entire fetch + scoring loop + `handleSort` + `columnKeyMap`. In AdvancedStats the table-sort half of that copy (`handleSort`, `sortBy`, `sortOrder`, `columnKeyMap`) plus `loadMore`/`visiblePlayers` are vestigial — no table or scroll pager exists on the charts page.
-2. **Dead state blocks**: both list pages carry an unused `settings` object (full defaults, `setSettings` never called) and unused `topTournamentsLimit`/`topTournamentsFilter` state shadowed by the hardcoded 25; `AdvancedStats` additionally has unused `playerIndex`, `players` (post-set), and `getRandomColor`. `App.js` imports `fetchPlayers` which resolves to `undefined` (the function is commented out in the service) and never calls it.
-3. **AdvancedStats double-initializes the chart selection**: two effects both react to `filteredPlayers` and both call `setSelectedPlayers(...slice(0, 5))`; the processed one wins. Under Power Ranking it also truncates `player.tournaments` to the top 25, so charts only plot those.
-4. **Config hardcoded**: Supabase anon JWT in `supabaseClient.js` and GA ID in `App.js` — move both to env vars. Write-safety was verified 2026-06-11: an anon insert probe returns 401, so the public key is read-only as intended.
-5. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case was fixed).
+1. **Config hardcoded**: Supabase anon JWT in `supabaseClient.js` and GA ID in `App.js` — move both to env vars. Write-safety was verified 2026-06-11: an anon insert probe returns 401, so the public key is read-only as intended.
+2. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case stays silent).
+3. **Narrow-desktop horizontal scroll**: with the Pts/Event column the table needs ~1060px; between 900px (the mobile breakpoint) and ~1110px viewports it scrolls horizontally inside the board (MUI `overflow-x: auto`) instead of fully fitting.
 
 ## Local dev quirks
 
