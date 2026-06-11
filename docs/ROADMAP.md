@@ -76,7 +76,7 @@ and `npm run build`. Deployed to production 2026-06-11 after Bruno's "ship it" (
   assigned (prize pool, era, competitiveness — Bruno's actual criteria). Cheap, and it's the
   standing answer to every "this ranking is rigged" thread.
 
-### 3. Admin data-entry, full CRUD (~2 sessions) — ✅ SHIPPED 2026-06-11 (pending deploy)
+### 3. Admin data-entry, full CRUD (~2 sessions) — ✅ SHIPPED 2026-06-11
 
 Built and verified in one session (commits `f1eb7b5`…`9ace29b`); CLAUDE.md updated the same
 session. The design below held; what the build added/learned:
@@ -100,7 +100,8 @@ session. The design below held; what the build added/learned:
   CRA flips it to ESM and the build breaks.
 - Fix along the way: `signOut()` on a session revoked elsewhere (password rotation) errors
   without clearing the persisted token — handler force-clears + reloads.
-- Not deployed — Bruno's "ship it" gate.
+- Deployed to production 2026-06-11 after Bruno's "ship it" (bundle `98ad6618`; live bundle
+  grep-verified: admin UI/validation/edit-dialog tokens present, service key absent).
 
 The auth/RLS design, agreed in-session:
 

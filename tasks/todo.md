@@ -52,7 +52,9 @@ Session 2026-06-11. The auth/RLS design was fixed in the roadmap; two dashboard-
 ## Review
 
 Built roadmap feature 3 in seven code commits + docs, all verified against the live dev
-preview and the live Supabase project. **Not deployed** — awaiting "ship it".
+preview and the live Supabase project. Deployed 2026-06-11 after Bruno's "ship it":
+pre-deploy checks passed, main pushed, bundle `98ad6618` published and grep-verified live
+(10/10 tokens incl. service-key-absent check).
 
 The probe-first approach paid for itself before any UI existed: the baseline run exposed that
 production was one scripted signup away from arbitrary inserts (open signups + a legacy
