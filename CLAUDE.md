@@ -90,7 +90,7 @@ Routes (all under `HashRouter`): `/` → PlayerList, `/charts` → AdvancedStats
 
 - `npm start` — dev server at `http://localhost:3000/quakerankings/` (path prefix comes from `PUBLIC_URL` in `.env.development.local`).
 - `npm run build` — CRA production build into `build/`; `homepage` in `package.json` roots assets under `/quakerankings/`.
-- `npm run deploy` — `predeploy` builds, then `gh-pages -d build` pushes to the `gh-pages` branch. `gh-pages@6.3` was installed 2026-06-11; the build step is verified, but no deploy has been run through it yet — the first real deploy is the remaining proof.
+- `npm run deploy` — `predeploy` builds, then `gh-pages -d build` pushes to the `gh-pages` branch. Pipeline restored and exercised 2026-06-11 (first deploy since Jan 25 2025), verified against the live site.
 - Production URL: `https://iiiiins.github.io/quakerankings/`.
 
 ## Recovery story (why the history looks like this)
@@ -99,24 +99,19 @@ The working source was lost locally in 2025; deploys had been going straight to 
 
 ## Known issues / tech debt
 
-In rough priority order. All verified 2026-06-11.
+Remaining after the 2026-06-11 fix batch (year cap, weight-fallback mismatch, Diabotical dropdown gap, debug text/log spam, favicon/manifest, medal-header `class=`, Participations sort arrow — all fixed and deployed that day).
 
-1. **Weight fallback differs across pages.** List pages use `?? 100` (a weight set to 0 stays 0); PlayerPage uses `|| 100` (a 0 weight silently becomes 100). PlayerPage also checks visibility without the `?? true` fallback the list pages use, so an unknown game/tier/mode key is included on lists but excluded on PlayerPage.
-2. **~200-line copy-paste between `PlayerList` and `AdvancedStats`**: the entire fetch + scoring loop + `handleSort` + `columnKeyMap`. In AdvancedStats the table-sort half of that copy (`handleSort`, `sortBy`, `sortOrder`, `columnKeyMap`) plus `loadMore`/`visiblePlayers` are vestigial — no table or scroll pager exists on the charts page.
-3. **Dead state blocks**: both list pages carry an unused `settings` object (full defaults, `setSettings` never called) and unused `topTournamentsLimit`/`topTournamentsFilter` state shadowed by the hardcoded 25; `AdvancedStats` additionally has unused `playerIndex`, `players` (post-set), and `getRandomColor`. `App.js` imports `fetchPlayers` which resolves to `undefined` (the function is commented out in the service) and never calls it.
-4. **PlayerPage's Game dropdown is missing Diabotical** — list pages include it; Diabotical tournaments can't be isolated on a player page.
-5. **AdvancedStats double-initializes the chart selection**: two effects both react to `filteredPlayers` and both call `setSelectedPlayers(...slice(0, 5))`; the processed one wins. Under Power Ranking it also truncates `player.tournaments` to the top 25, so charts only plot those.
-6. **Visible debug text in production**: the charts-page summary line literally renders "CHARTS PAGE Showing N players…". Live `console.log`s fire in `AdvancedStats` (supabase payload, chart updates) and on every `PlayerPage` load (placement sums, per-tournament points). Most other logging is commented out.
-7. **Small render bugs**: the four medal header cells in `PlayerList` use `class=` instead of `className=` (works in DOM, React warns); the Participations sort label checks `sortBy === "Participations"` but sorts `"participations"`, so its active arrow never lights.
-8. **PlayerPage wraps its own `ThemeProvider` + `CssBaseline`** inside App's — redundant nesting.
-9. **Secrets/config hardcoded**: Supabase anon JWT in `supabaseClient.js` (anon-key-in-client is the intended Supabase pattern, but it means access control rides entirely on RLS — confirm RLS is enabled on `Tournaments`); GA ID in `App.js`. Move both to env vars.
-10. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings".
+1. **~200-line copy-paste between `PlayerList` and `AdvancedStats`**: the entire fetch + scoring loop + `handleSort` + `columnKeyMap`. In AdvancedStats the table-sort half of that copy (`handleSort`, `sortBy`, `sortOrder`, `columnKeyMap`) plus `loadMore`/`visiblePlayers` are vestigial — no table or scroll pager exists on the charts page.
+2. **Dead state blocks**: both list pages carry an unused `settings` object (full defaults, `setSettings` never called) and unused `topTournamentsLimit`/`topTournamentsFilter` state shadowed by the hardcoded 25; `AdvancedStats` additionally has unused `playerIndex`, `players` (post-set), and `getRandomColor`. `App.js` imports `fetchPlayers` which resolves to `undefined` (the function is commented out in the service) and never calls it.
+3. **AdvancedStats double-initializes the chart selection**: two effects both react to `filteredPlayers` and both call `setSelectedPlayers(...slice(0, 5))`; the processed one wins. Under Power Ranking it also truncates `player.tournaments` to the top 25, so charts only plot those.
+4. **PlayerPage wraps its own `ThemeProvider` + `CssBaseline`** inside App's — redundant nesting.
+5. **Config hardcoded**: Supabase anon JWT in `supabaseClient.js` and GA ID in `App.js` — move both to env vars. Write-safety was verified 2026-06-11: an anon insert probe returns 401, so the public key is read-only as intended.
+6. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case was fixed).
 
 ## Local dev quirks
 
 - `.npmrc` — `legacy-peer-deps=true`, required for React 19 against CRA 5's peer deps.
 - `.env.development.local` (gitignored, create it yourself): `PUBLIC_URL=/quakerankings` so dev serves at the same path as GitHub Pages.
-- `public/` contains only `index.html`, but it references `%PUBLIC_URL%/manifest.json` and `favicon.ico` — browser logs a 404 for each plus a `Manifest: Syntax error` (it parses the SPA fallback HTML as JSON). Harmless.
 - `App.css` targets two emotion-generated class names (`.css-kmnzss`, `.css-zpntfe-MuiTableCell-root`). These hashes are not stable across MUI/emotion upgrades — expect those two rules to silently stop applying after dependency bumps.
 - Dev server emits two `Watchpack Error (initial scan): EINVAL` lines for `D:\Recovery` / `D:\System Volume Information` on Windows — Watchpack scans the drive root and chokes on system folders. Compile and HMR are unaffected.
 - ~23 transitive-dep deprecation warnings during `npm install` — standard for `react-scripts` 5.
