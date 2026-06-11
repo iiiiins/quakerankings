@@ -1,7 +1,11 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Container, Paper, Typography, TextField, Button } from "@mui/material";
 import { supabase } from "../services/supabaseClient";
 import useSession from "../hooks/useSession";
+import { refreshTournaments } from "../hooks/useTournaments";
+import { insertTournament } from "../services/tournamentWrites";
+import TournamentForm from "./TournamentForm";
 
 // Single-user admin: login gate + data entry. Security lives entirely in RLS
 // (uid-scoped write policies + signups disabled) — shipping this UI in the
@@ -13,6 +17,8 @@ const AdminPage = () => {
   const [authError, setAuthError] = useState(null);
   const [signingIn, setSigningIn] = useState(false);
 
+  const [lastAdded, setLastAdded] = useState(null);
+
   const handleLogin = async (event) => {
     event.preventDefault();
     setSigningIn(true);
@@ -20,6 +26,14 @@ const AdminPage = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setAuthError(error.message);
     setSigningIn(false);
+  };
+
+  const handleAdd = async (row) => {
+    const { id, error } = await insertTournament(row);
+    if (error) return { error };
+    refreshTournaments();
+    setLastAdded({ id, name: row.Event_Name, year: row.Year });
+    return {};
   };
 
   if (loading) return null;
@@ -86,11 +100,24 @@ const AdminPage = () => {
           </Button>
         </div>
         <Typography component="p" className="admin-hint">
-          Add a tournament below. To correct or delete one, find it in the
-          events browser — every row gets an edit control while you're signed
-          in.
+          Add a tournament below. To correct or delete one, find it in the{" "}
+          <Link to="/events">events browser</Link> — every row gets an edit
+          control while you're signed in.
         </Typography>
-        {/* Add-tournament form lands here (next commit) */}
+        <Paper elevation={0} className="game-section">
+          <div className="game-section-head">
+            <Typography component="h3" className="game-section-title">
+              Add tournament
+            </Typography>
+          </div>
+          {lastAdded && (
+            <div className="admin-success">
+              Added #{lastAdded.id} — {lastAdded.name} ({lastAdded.year}).{" "}
+              <Link to="/events">See it in the browser</Link>
+            </div>
+          )}
+          <TournamentForm submitLabel="Add tournament" onSubmit={handleAdd} />
+        </Paper>
       </div>
     </Container>
   );

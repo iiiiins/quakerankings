@@ -1149,6 +1149,61 @@ footer a.method-link:hover {
   margin: 0 0 14px !important;
 }
 
+.admin-success {
+  color: #f5c518;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.admin-warn {
+  color: #f5c518;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* tournament form — 4-col grid, placements split gold/silver/bronze/copper */
+.tform {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px 12px;
+  padding-bottom: 10px;
+}
+
+.tform .tfield {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tform .f-name {
+  grid-column: span 2;
+}
+
+.tform .f-span {
+  grid-column: 1 / -1;
+}
+
+.tform .f-lan .plate {
+  align-self: flex-start;
+}
+
+.tform-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-danger {
+  color: #ff6b4a !important;
+}
+
+@media (max-width: 899px) {
+  .tform {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ---------- charts ---------- */
 .chart-panel {
   background: #14120e;

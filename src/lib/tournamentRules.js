@@ -1,6 +1,11 @@
 // Shared tournament validation rules — the single source for what a valid
 // Tournaments row is. Consumed by the admin form (webpack) AND by
 // scripts/import-tournaments.js (plain node), hence CommonJS.
+//
+// KEEP THIS FILE FREE OF SYNTAX THAT NEEDS BABEL HELPERS (object spread,
+// for-of, etc.): CRA's babel injects helper *imports* for those, which flips
+// the file to ESM for webpack and kills module.exports ("module has no
+// exports" build error). Object.assign + forEach are safe.
 
 const GAMES = [
   "Quake World",
@@ -50,11 +55,13 @@ function validateRow(row) {
 // Player names are stored lowercase in Supabase — PlayerPage equality queries
 // depend on it.
 function normalizeRow(row) {
-  const out = { ...row, Event_Name: (row.Event_Name || "").trim() };
-  for (const p of PLACEMENTS) {
+  const out = Object.assign({}, row, {
+    Event_Name: (row.Event_Name || "").trim(),
+  });
+  PLACEMENTS.forEach((p) => {
     const v = (row[p] || "").trim().toLowerCase();
     out[p] = v === "" ? null : v;
-  }
+  });
   return out;
 }
 
