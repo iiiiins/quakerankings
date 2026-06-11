@@ -20,9 +20,10 @@ Three pieces, one session — they all touch the same code.
   leaderboard. Today per-event points exist only as per-row values on PlayerPage; there is no
   aggregate anywhere. This adds the missing axis to the GOAT debate: efficiency vs longevity
   (the 300-event grinder vs the prime monster who averaged 12 a tournament).
-  - Build-time decision: a raw PPE sort surfaces one-event wonders (1 event, 1 title = huge
-    average). Convention is a minimum-events threshold on that sort — pick the threshold (or
-    consciously reject one) during implementation.
+  - Decided 2026-06-11 (Bruno): PPE is only computed for players with a **minimum number of
+    events — default 15, adjustable via a new field in the settings menu**. This kills the
+    one-event-wonder problem (1 event, 1 title = huge average). Implementation detail: below
+    the threshold the column shows a dash and the player sorts last under a PPE sort.
   - Mobile: the one-row list is dense (rank · name · medals · points). PPE as a sort option in
     the bottom sheet at minimum; whether it displaces a visible element is a build-time call.
 - **Formula memory (A-lite)**: persist the 8 scoring-config objects (`App.js` state) to
