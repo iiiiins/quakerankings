@@ -1,15 +1,15 @@
 # CLAUDE.md
 
-Regenerated 2026-06-11 from a full source read; updated the same day after the leaderboard-upgrades session (roadmap feature 1). Every claim below was verified against the code on that date.
+Regenerated 2026-06-11 from a full source read; updated the same day after the leaderboard-upgrades session (roadmap feature 1) and again after the tournament-browser session (feature 2). Every claim below was verified against the code on that date.
 
 ## Overview
 
-Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset; the formula persists across visits in localStorage. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts.
+Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset; the formula persists across visits in localStorage. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts. A tournament browser at `/events` lists the full dataset as grouped events (filters, podium links, prize pools), and a methodology page (footer link) is the standing "how the ranking works" answer.
 
 ## Stack
 
 - **React 19.0** + **react-scripts 5.0.1** (Create React App). React 19 with CRA 5 is unofficial — `.npmrc` has `legacy-peer-deps=true` so `npm install` resolves.
-- **Routing**: `react-router-dom` 7.x using `HashRouter`. Deploy path is `https://iiiiins.github.io/quakerankings/#/...`. Three routes only.
+- **Routing**: `react-router-dom` 7.x using `HashRouter`. Deploy path is `https://iiiiins.github.io/quakerankings/#/...`. Five routes.
 - **UI**: `@mui/material` 6.3 + `@mui/icons-material` 6.3. Full custom theme in `src/theme.js` (2026-06-11 redesign: ember `#e05a1f` primary on warm gunmetal surfaces, Rajdhani UI type, component styleOverrides); design-system classes (medal headers/lanes, podium, plates, mobile rows) live in `App.css`. The fixed visual target is `docs/mocks/direction-hybrid.html` — compare against it before changing styles (full brief: `docs/REDESIGN.md`). Emotion is the MUI peer dep.
 - **Backend**: Supabase (`@supabase/supabase-js` 2.47) — a single `Tournaments` table read with the anonymous role. URL + anon JWT are hardcoded in `src/services/supabaseClient.js`.
 - **Charts**: `chart.js` 4.x + `react-chartjs-2` 5.x. Only `Line` is used; scales/elements registered at the top of `AdvancedStats.js`.
@@ -36,6 +36,12 @@ src/
 │   │                              supabase .or() query against the URL slug
 │   ├── AdvancedStats.js           "/charts" route. Player picker + chart.js <Line> of points over time,
 │   │                              fed by the same useTournaments + computeRankings pipeline
+│   ├── EventsBrowser.js           "/events" route. Filterable grouped-event table (game/tier/year/LAN
+│   │                              + name search, sortable year/event/tier/prize, medal podium columns
+│   │                              linking to player pages, scroll pager). Mobile: chip rail +
+│   │                              bottom sheet + two-line rows. Scoring-config independent — no props
+│   ├── Methodology.js             "/methodology" route (footer link). Static how-it-works cards +
+│   │                              live result/event counts from useTournaments
 │   └── SettingsMenu.js            controlled form in the gear popover; five sections (Points, Games,
 │                                  Tier, Mode — rows = visibility checkbox + weight input — and
 │                                  Points per Event with the min-events threshold)
@@ -43,6 +49,8 @@ src/
 │   └── useTournaments.js          shared fetch hook; module-level cache = one table fetch per session
 ├── lib/
 │   ├── computeRankings.js         the pure scoring/filter/rank pipeline both list pages consume
+│   ├── groupEvents.js             pure rows→events grouping for the browser (see Data model note)
+│   ├── gameLogos.js               the Game-string → logo PNG map (PlayerList + EventsBrowser)
 │   └── formulaStorage.js          load/save the scoring config, versioned key qpr.formula.v1
 ├── services/
 │   ├── supabaseClient.js          hardcoded Supabase URL + anon JWT, exports the client
@@ -63,9 +71,12 @@ One row per tournament. Columns read by the app:
 | `Tier` | number 1–5 | 1 = most prestigious |
 | `Year` | number | |
 | `LAN` | boolean | |
+| `Prizepool` | number \| null | display-only (never a formula input); ~94% coverage (1,801/1,925 rows, verified 2026-06-11) |
 | `1st` … `8th` | string \| null | one player name per slot |
 
 Rows missing `Game`, `Mode`, `Tier`, or `Year` are skipped with a `console.error`. Placement buckets: 1st, 2nd, Top4 (= 3rd+4th), Top8 (= 5th–8th).
+
+**Multi-row events**: team modes store one row per player group under the same `Event_Name`+`Year`+`Game`+`Mode` (e.g. a CTF event = one row per roster slot, the union of rows giving every player on each placing team). `lib/groupEvents.js` merges those into single events for the browser — placement buckets union the names (rows ordered by `id`), tier = min, LAN = OR, prizepool = max non-null. The group key deliberately includes `Game`+`Mode`: the same `Event_Name`+`Year` legitimately spans modes/games (18/3 cases — QuakeCon divisions), which are separate competitions. 1,925 rows → 1,385 events (verified 2026-06-11).
 
 PlayerPage queries with `eq` on the **lowercased** URL slug (`1st.eq.<name>`); Postgres `eq` is case-sensitive, so this only matches if DB names are stored lowercase. Client-side comparisons lowercase both sides.
 
@@ -88,13 +99,14 @@ points(placement) = base[placement] × tierWeight/100 × gameWeight/100 × modeW
 
 `App` owns the **scoring configuration** (8 objects: `pointsConfig`/`pointsVisibility`, `gameWeights`/`gameVisibility`, `tierWeights`/`tierVisibility`, `modeWeights`/`modeVisibility`, plus `minEventsForPpe`) and passes values + setters to `<SettingsMenu>` (the only edit point) and values to the pages that consume them. The whole set persists via `lib/formulaStorage.js` (**formula memory**): saved to localStorage on every change, loaded at page load with each stored section spread over its defaults (so formulas saved before a new game/mode/setting still load), versioned key `qpr.formula.v1` — bump it to invalidate stale shapes. Corrupt or unavailable storage falls back to defaults silently.
 
-**Filter state is per-page, not shared.** Each list page declares its own `selectedGame`, `selectedMode`, `yearRange`, `lanOnly`, `powerRanking`; changing a filter on one page does not affect another.
+**Filter state is per-page, not shared.** Each list page declares its own `selectedGame`, `selectedMode`/`selectedTier`, `yearRange`, `lanOnly` (PlayerList also `powerRanking`); changing a filter on one page does not affect another.
 
 Data flow per page:
 - `PlayerList` and `AdvancedStats` read the table through `useTournaments()` (module-level cache — one Supabase fetch per session, shared across pages; empty/error results aren't cached so a later mount retries) and run `computeRankings(tournaments, config)` in a `useMemo`. PlayerList layers search + column sort on top as derived memos, so sort survives searches and settings changes; `Rank` is always the points-desc rank regardless of the displayed order.
+- `EventsBrowser` and `Methodology` use the same hook but run `groupEvents` instead — they show raw data and take **no scoring-config props**; the settings gear doesn't affect them.
 - `PlayerPage` builds its own filtered Supabase query per visit.
 
-Routes (all under `HashRouter`): `/` → PlayerList, `/charts` → AdvancedStats, `/players/:playerName` → PlayerPage. In-app nav in `App.js` uses `window.location.hash = "#/..."` rather than `useNavigate()` — works, but bypasses the router lifecycle.
+Routes (all under `HashRouter`): `/` → PlayerList, `/events` → EventsBrowser, `/charts` → AdvancedStats, `/methodology` → Methodology (footer link, not a tab), `/players/:playerName` → PlayerPage. In-app nav in `App.js` uses `window.location.hash = "#/..."` rather than `useNavigate()` — works, but bypasses the router lifecycle; NavTabs marks Home active on `/players/*` too (pre-existing behavior, kept).
 
 ## Build & deploy
 
@@ -113,7 +125,7 @@ Remaining after the 2026-06-11 fix batch (year cap, weight-fallback mismatch, Di
 
 1. **Config hardcoded**: Supabase anon JWT in `supabaseClient.js` and GA ID in `App.js` — move both to env vars. Write-safety was verified 2026-06-11: an anon insert probe returns 401, so the public key is read-only as intended.
 2. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case stays silent).
-3. **Narrow-desktop horizontal scroll**: with the Pts/Event column the table needs ~1060px; between 900px (the mobile breakpoint) and ~1110px viewports it scrolls horizontally inside the board (MUI `overflow-x: auto`) instead of fully fitting.
+3. **Narrow-desktop horizontal scroll**: with the Pts/Event column the leaderboard needs ~1060px; between 900px (the mobile breakpoint) and ~1110px viewports it scrolls horizontally inside the board (MUI `overflow-x: auto`) instead of fully fitting. The events table has the same trade-off at ~1150px content width (its name/podium columns are capped by inner `max-width` divs — without those, table auto-layout would stretch it past 1800px).
 
 ## Local dev quirks
 

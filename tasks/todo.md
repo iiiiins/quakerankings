@@ -30,30 +30,51 @@ verifiable commits. (Feature 1's plan/review: git `650f4fa`…`b4704ef`.)
 
 ## Plan
 
-- [ ] **Commit 1 — feat: tournament browser at /events**
-  - [ ] `src/lib/groupEvents.js` — pure rows→events grouping per the merge rules above.
-  - [ ] `src/lib/gameLogos.js` — extracted map; PlayerList switches to importing it.
-  - [ ] `src/components/EventsBrowser.js` — filters/search/sort/scroll-pager (PlayerList
+- [x] **Commit 1 — feat: tournament browser at /events** (`9aaac5d`)
+  - [x] `src/lib/groupEvents.js` — pure rows→events grouping per the merge rules above.
+  - [x] `src/lib/gameLogos.js` — extracted map; PlayerList switches to importing it.
+  - [x] `src/components/EventsBrowser.js` — filters/search/sort/scroll-pager (PlayerList
         patterns), desktop table + mobile rows/sheet.
-  - [ ] `App.js` — `/events` route + Events tab (NavTabs → path-driven, 3 tabs; Home stays
+  - [x] `App.js` — `/events` route + Events tab (NavTabs → path-driven, 3 tabs; Home stays
         active-looking on player pages as today).
-  - [ ] `App.css` — events-browser section (ev-name/ev-podium/prize-cell/lan-tag/mobile rows).
-  - [ ] Verify in dev preview: 1,385 events & summary line; QuakeCon 2008 CTF (6 rows) merged
-        with full roster podium; QuakeCon 2008 Duel separate; filters (game/tier/year/LAN) +
-        search; sort year/tier/prize incl. prize-blanks-last; podium links → player pages;
-        prize dashes visible; mobile 375px rail/sheet/rows; console clean.
-- [ ] **Commit 2 — feat: methodology page**
-  - [ ] `src/components/Methodology.js` — cards: the idea / formula + defaults / tiers (prize
-        pool, era, competitiveness — and why prize pool is NOT a formula input) / placement
-        buckets + team modes / filters & extras (LAN, Power Ranking, PPE≥15) / the data + 
-        corrections CTA (discord).
-  - [ ] `App.js` — `/methodology` route + footer link; `App.css` — method-* classes.
-  - [ ] Verify: renders at /methodology, footer link works from all pages, /events link inside
-        works, live count shows, mobile readable, console clean.
-- [ ] **Commit 3 — docs**: CLAUDE.md (routes, structure, data-model Prizepool column, grouping
-      semantics), roadmap §2 → SHIPPED + decision log, review section here.
-- [ ] Final: `npm run build` passes. No deploy — Bruno tries it first ("ship it" gate).
+  - [x] `App.css` — events-browser section (ev-name/ev-podium/prize-cell/lan-tag/mobile rows).
+  - [x] Verified in dev preview: 1,385 events & summary; QuakeCon 2008 CTF (6 rows) merged
+        with full roster podium while QuakeCon 2008 Duel stayed separate; game (QW→47) /
+        tier (QW+T1→2) / year (≤2005→127, all sums = 1,385) / LAN (293) filters; search;
+        sort year/tier/prize incl. blanks-last both directions; podium link → player page
+        end-to-end (cypher); prize dashes; mobile 375px rail/sheet/rows no overflow; console
+        clean; leaderboard regression (1,690/1,925 unchanged after gameLogos extraction).
+- [x] **Commit 2 — feat: methodology page** (`f3da4ca`)
+  - [x] `src/components/Methodology.js` — cards: formula + defaults / tiers (prize pool, era,
+        competitiveness — and why prize pool is NOT a formula input) / placement buckets +
+        team modes / filters & extras (LAN, Power Ranking, PPE≥15) / the data + corrections
+        CTA (discord).
+  - [x] `App.js` — `/methodology` route + footer link; `App.css` — method-* classes.
+  - [x] Verified: renders, footer link navigates from home, /events links work, live counts
+        (1,925 / 1,385) show, mobile + desktop screenshots clean, console clean.
+- [x] **Commit 3 — docs**: CLAUDE.md (overview, routes, structure, data-model Prizepool +
+      grouping note, state arch, known issue #3 extended), roadmap §2 → SHIPPED + decision
+      log, this review.
+- [x] Final: `npm run build` passes (+3.45 kB JS / +463 B CSS gzipped). No deploy — Bruno
+      tries it first ("ship it" gate).
 
 ## Review
 
-(to fill at session end)
+Built roadmap feature 2 in three commits: tournament browser (`9aaac5d`), methodology page
+(`f3da4ca`), docs (this commit). Every step verified against the live dev preview; production
+build green. **Not deployed** — awaiting Bruno's hands-on check.
+
+Decisions that diverge from the roadmap's literal text, all data-driven and documented:
+- Group key includes Game+Mode (probe: name+year alone would merge QuakeCon divisions into one
+  podium soup). 1,925 rows → 1,385 events; all 243 team multi-row groups merge correctly.
+- No mode filter (roadmap listed game/tier/year/LAN); mode is a visible column, filter is a
+  one-line add if wanted.
+- Top8 names left off the table for width — they remain visible on player pages.
+- Methodology is a footer link, not a 4th tab (rider-page prominence).
+
+Two real bugs caught by preview verification, both table-layout:
+- Auto-layout sized columns to max-content → 1,804px table; fixed with inner max-width divs on
+  the name/podium cells (250px/178px).
+- Adjacent nowrap links with no whitespace formed one unbreakable inline run → 8-name rosters
+  overflowed invisibly (42px row, content bleeding); fixed with a trailing space inside the
+  separator span (soft-wrap point). Lesson: inline wrapping needs whitespace break points.

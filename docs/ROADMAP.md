@@ -44,7 +44,20 @@ Three pieces, one session — they all touch the same code.
   - After this lands, CLAUDE.md's copy-paste / dead-state sections are stale — update them in
     the same session.
 
-### 2. Tournament browser (~1–1.5 sessions)
+### 2. Tournament browser (~1–1.5 sessions) — ✅ SHIPPED 2026-06-11 (pending deploy)
+
+Landed in commits `9aaac5d` (browser) + `f3da4ca` (methodology rider); CLAUDE.md updated the
+same session. Build-time decisions: the group key is **`Event_Name|Year|Game|Mode`**, not the
+literal name+year below — a live probe found 18 name+year groups spanning multiple modes and 3
+spanning games (QuakeCon divisions = separate competitions); the wider key still merges all 243
+team multi-row groups → **1,385 events** from 1,925 rows. Merge rules: placement buckets union
+rosters (rows by id), tier = min, LAN = OR, prize = max non-null. Filters per spec + event-name
+search; no mode filter (one-line add if wanted); Top8 names omitted from the table for width
+(player pages have them). Desktop columns capped with inner max-width divs so team rosters wrap
+instead of stretching the table. Methodology lives at `/methodology` via a **footer link**
+("How the ranking works"), not a 4th tab; it shows live dataset counts. Verified against the
+dev preview (counts, merges, filters, sorts incl. prize-blanks-last, links, mobile, console)
+and `npm run build`; **not yet deployed** — Bruno's "ship it" gate.
 
 - New `/events` route: a filterable list of all ~1,925 tournaments — game / tier / year / LAN
   filters (reuse the filter-toolbar patterns), podium chips linking to player pages, prize-pool
@@ -146,3 +159,8 @@ The auth/RLS design, agreed in-session:
   settings menu (kills one-event wonders). Implemented in `computeRankings` (`minEventsForPpe`).
 - 2026-06-11 — Feature 1 shipped (extraction + PPE + formula memory). Session model held:
   three atomic commits, each verified in the dev preview before landing.
+- 2026-06-11 — Feature 2 built (browser + methodology). Group key widened to include Game+Mode
+  after a data probe showed name+year merges distinct competitions (18 multi-mode / 3
+  multi-game cases); roadmap's team-row fact fully handled (243 groups merged, 1,385 events).
+  Feature 3 note: the admin "find event → edit" flow can reuse `groupEvents` + the browser
+  surface as planned, but edits target the underlying *rows* — the browser groups them.
