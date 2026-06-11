@@ -108,4 +108,6 @@ an admin data-entry page, and a public "submit a tournament" form (features B1/B
     needs a layout decision not worth blocking on).
   - "Participations" column label renamed to "Events" (mock wording); sort key unchanged.
   - PlayerPage/AdvancedStats keep their copy-paste structure per the no-restructure constraint.
-  - **Deploy pending Bruno's review** of the live dev build.
+  - ~~Deploy pending Bruno's review~~ — approved and **deployed 2026-06-11** (`npm run deploy`,
+    bundle `main.feab9bae.js`); live site verified serving the new bundle with redesign tokens
+    (ember palette, podium/chip-rail markup, Rajdhani + metal gradients in the CSS). Phase 2 done.
