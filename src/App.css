@@ -413,10 +413,10 @@ a:active {
 }
 
 /* medal headers — painted metal gradients (design identity) */
-.MuiTableCell-root.gold-header   { background: linear-gradient(180deg, #f5c518, #a07800); }
-.MuiTableCell-root.silver-header { background: linear-gradient(180deg, #c8ccd4, #7e838c); }
-.MuiTableCell-root.bronze-header { background: linear-gradient(180deg, #e2a35e, #9c6420); }
-.MuiTableCell-root.copper-header { background: linear-gradient(180deg, #b06a1e, #6e3d0e); }
+.MuiTableCell-root.gold-header   { background: linear-gradient(180deg, #f5c518, #a07800); color: #181200; }
+.MuiTableCell-root.silver-header { background: linear-gradient(180deg, #c8ccd4, #7e838c); color: #14161a; }
+.MuiTableCell-root.bronze-header { background: linear-gradient(180deg, #e2a35e, #9c6420); color: #1c1206; }
+.MuiTableCell-root.copper-header { background: linear-gradient(180deg, #b06a1e, #6e3d0e); color: #190e02; }
 
 .gold-header .MuiTableSortLabel-root,
 .gold-header .MuiTableSortLabel-root:hover,
@@ -475,7 +475,7 @@ a:active {
   white-space: nowrap;
 }
 
-.ppe-cell .ppe-dash {
+.ppe-dash {
   color: #6e6859;
 }
 
@@ -871,6 +871,156 @@ a.ph-row {
   .site-tabs { margin-left: 0; gap: 5px; }
   .site-tabs .MuiButton-root { padding: 4px 10px; font-size: 10.5px; }
   .summary-line { font-size: 11px !important; padding: 4px 2px 8px; }
+}
+
+/* ---------- events browser ---------- */
+.MuiTableCell-root.ev-year {
+  width: 56px;
+  font-weight: 700;
+  color: #a39c8d;
+  letter-spacing: 0.04em;
+}
+
+.MuiTableCell-root.ev-name {
+  text-align: left;
+  color: #ece8df;
+  font-weight: 700;
+  font-size: 14.5px;
+  min-width: 190px;
+}
+
+/* block wrappers cap column width in the auto-layout table — without them,
+   multi-name podium cells and long event names stretch the table past the page */
+.ev-name .ev-namewrap {
+  max-width: 250px;
+}
+
+.ev-podium .ev-names {
+  max-width: 178px;
+  margin: 0 auto;
+}
+
+.lan-tag {
+  color: #e05a1f;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border: 1px solid rgba(224, 90, 31, 0.35);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 7px;
+  white-space: nowrap;
+}
+
+.MuiTableCell-root.ev-mode {
+  color: #a39c8d;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.MuiTableCell-root.prize-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* podium name cells — multiple names per cell on team events, wrap allowed */
+.MuiTableCell-root.ev-podium {
+  white-space: normal;
+  min-width: 120px;
+  line-height: 1.6;
+}
+
+.ev-podium a {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 10px rgba(255, 255, 114, 0.14);
+  white-space: nowrap;
+}
+
+.ev-podium a:hover {
+  text-shadow: 0 0 16px rgba(255, 255, 114, 0.5);
+}
+
+.ev-podium .ev-sep {
+  color: #6e6859;
+  margin: 0 2px 0 5px;
+}
+
+/* mobile event rows (<900px) */
+.ev-list {
+  margin-top: 2px;
+}
+
+.ev-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ev-row .ev-glogo {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+}
+
+.ev-row .ev-main {
+  min-width: 0;
+}
+
+.ev-row .ev-mname {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ece8df;
+}
+
+.ev-row .ev-msub {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #6e6859;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+
+.ev-row .ev-mwin {
+  margin-left: auto;
+  flex-shrink: 0;
+  max-width: 42%;
+  text-align: right;
+}
+
+.ev-row .ev-mwin a {
+  display: block;
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 10px rgba(255, 255, 114, 0.16);
+  line-height: 1.7;
+}
+
+.ev-empty {
+  text-align: center;
+  color: #6e6859;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 34px 0;
 }
 
 /* ---------- charts ---------- */

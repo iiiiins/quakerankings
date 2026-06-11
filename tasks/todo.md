@@ -1,63 +1,59 @@
-# Feature 1 — Leaderboard upgrades + foundation (roadmap.md §1)
+# Feature 2 — Tournament browser + methodology rider (roadmap.md §2)
 
-Session 2026-06-11. One committed feature, three pieces, staged as three verifiable commits.
+Session 2026-06-11. One committed feature: `/events` browser + `/methodology` page, staged as
+verifiable commits. (Feature 1's plan/review: git `650f4fa`…`b4704ef`.)
+
+## Decisions (made this session, from a live data probe)
+
+- **Group key is `Event_Name|Year|Game|Mode`**, not the roadmap's literal `Event_Name+Year`.
+  Probe (1,925 rows, anon query): 18 name+year groups span multiple *modes* (QuakeCon 2008 Duel
+  vs CTF are different competitions) and 3 span multiple *games* — pure name+year would merge
+  distinct podiums. The wider key still fully handles the roadmap's team-mode fact: 243
+  multi-row groups merge (115× 2v2, 49× TDM, rest CTF/WIP/SAC/DBT/CA/Duel), → **1,385 events**.
+- Merge rules for multi-row events (rows ordered by id for stability): placement buckets union
+  non-null names, deduped — 1st, 2nd, Top4 (=3rd+4th), Top8 (=5th–8th); tier = min (2 groups
+  vary), prizepool = max non-null (3 vary), LAN = OR (never varies).
+- Browser is **scoring-config independent** — raw data, no props from App's formula state.
+- Filters per roadmap: game / tier / year / LAN, plus event-name search. No mode filter
+  (one-line add later if wanted); mode stays visible as a column.
+- Desktop columns: Year · Event (+LAN tag) · Game · Mode · Tier · Prize · 1st · 2nd · Top 4 —
+  medal headers/lanes reused from the leaderboard. Top8 omitted for width (visible on player
+  pages). Sortable: Year (default desc), Event, Tier, Prize (blanks last both directions, same
+  rule as PPE). Prize blanks → muted dash (94% coverage, 1,801/1,925 rows confirmed).
+- Mobile (<900px): chip rail + bottom sheet (search/game/tier/years/LAN), two-line event rows
+  (logo · name + year·mode·tier·prize sub-line · winner links right).
+- Methodology: static content page in design-system cards; live event/tournament count via
+  `useTournaments`; linked from the **footer** ("How the ranking works") — rider page, not a
+  4th tab. Events gets the 3rd header tab (Home · Events · Advanced Stats).
+- Tiny extraction riding along: `gameLogos` map → `src/lib/gameLogos.js` (PlayerList imports it;
+  EventsBrowser needs the same map).
 
 ## Plan
 
-- [x] **Roadmap edit (user ask)**: PPE only for players with ≥ N events, N default 15, adjustable
-      in settings menu. → done in docs/roadmap.md before coding.
-- [x] **Commit 1 — refactor: foundation extraction** (`772d97b`, behavior-identical)
-  - [x] `src/lib/computeRankings.js` — pure scoring/filter/rank function shared by both pages.
-        Power-ranking divergence unified: tournaments truncated to top 25 (AdvancedStats
-        behavior — charts must match power points; PlayerList ignores it downstream).
-  - [x] `src/hooks/useTournaments.js` — shared fetch hook, module-level cache (one fetch per
-        session; empty/error results not cached).
-  - [x] PlayerList: hook + useMemo compute; search/sort as derived memos; dead state deleted.
-  - [x] AdvancedStats: hook + useMemo compute; vestigial table-sort/pager/dead state deleted;
-        chart double-init fixed (single processed-players memo + one selection effect).
-  - [x] App.js: dead filter states + props + fetchPlayers import removed.
-  - [x] services/fetchPlayersByGame.js: only fetchListTournaments remains; [] on error.
-  - [x] Verified: same totals (1,690 players / 1,925 tournaments), podium, sort asc/desc,
-        search, Power Ranking (cap 25, recomputed placements), charts top-5 + painted canvas,
-        zero console errors.
-- [x] **Commit 2 — feat: points-per-event column** (`28f53b4`)
-  - [x] computeRankings: `ppe = points/participations`, null below `minEventsForPpe`.
-  - [x] App: `minEventsForPpe` state (default 15) → SettingsMenu + PlayerList.
-  - [x] SettingsMenu: "Points per Event" section, "Min events" number input.
-  - [x] Desktop: sortable Pts/Event between Events and Points; muted dash; nulls last both
-        directions; colSpan 11.
-  - [x] Mobile: Sort-by select (Points | Points per event) in sheet; trailing value = PPE when
-        PPE-sorted; top-3 rejoin list when order isn't default.
-  - [x] Verified: math (rapha 4650/160=29.1 ✓), dash at 11 events, threshold 50 live-drops
-        fatal1ty/winz, asc starts 1.2 with no dashes first, mobile sort fatal1ty 37.4 first.
-- [x] **Commit 3 — feat: formula memory (A-lite)** (`5d60ef5`)
-  - [x] `src/lib/formulaStorage.js` — versioned key `qpr.formula.v1`, try/catch load/save.
-  - [x] App: lazy-init from stored (per-section spread over defaults), save-on-change effect.
-  - [x] Verified: minEvents 40 + Q3 weight 50 survive reload into form AND scoring; corrupt
-        JSON → defaults, page alive, valid blob re-saved.
-- [x] **Commit 4 — docs**: CLAUDE.md (structure, scoring/PPE, state arch + persistence, known
-      issues #1–#3 closed, new #3 narrow-desktop scroll), roadmap feature 1 SHIPPED + decision
-      log, this review.
-- [x] Final: `npm run build` passes — bundle −900 B gzipped vs before the session.
+- [ ] **Commit 1 — feat: tournament browser at /events**
+  - [ ] `src/lib/groupEvents.js` — pure rows→events grouping per the merge rules above.
+  - [ ] `src/lib/gameLogos.js` — extracted map; PlayerList switches to importing it.
+  - [ ] `src/components/EventsBrowser.js` — filters/search/sort/scroll-pager (PlayerList
+        patterns), desktop table + mobile rows/sheet.
+  - [ ] `App.js` — `/events` route + Events tab (NavTabs → path-driven, 3 tabs; Home stays
+        active-looking on player pages as today).
+  - [ ] `App.css` — events-browser section (ev-name/ev-podium/prize-cell/lan-tag/mobile rows).
+  - [ ] Verify in dev preview: 1,385 events & summary line; QuakeCon 2008 CTF (6 rows) merged
+        with full roster podium; QuakeCon 2008 Duel separate; filters (game/tier/year/LAN) +
+        search; sort year/tier/prize incl. prize-blanks-last; podium links → player pages;
+        prize dashes visible; mobile 375px rail/sheet/rows; console clean.
+- [ ] **Commit 2 — feat: methodology page**
+  - [ ] `src/components/Methodology.js` — cards: the idea / formula + defaults / tiers (prize
+        pool, era, competitiveness — and why prize pool is NOT a formula input) / placement
+        buckets + team modes / filters & extras (LAN, Power Ranking, PPE≥15) / the data + 
+        corrections CTA (discord).
+  - [ ] `App.js` — `/methodology` route + footer link; `App.css` — method-* classes.
+  - [ ] Verify: renders at /methodology, footer link works from all pages, /events link inside
+        works, live count shows, mobile readable, console clean.
+- [ ] **Commit 3 — docs**: CLAUDE.md (routes, structure, data-model Prizepool column, grouping
+      semantics), roadmap §2 → SHIPPED + decision log, review section here.
+- [ ] Final: `npm run build` passes. No deploy — Bruno tries it first ("ship it" gate).
 
 ## Review
 
-Shipped roadmap feature 1 in four commits: docs/plan (`650f4fa`), foundation extraction
-(`772d97b`, −1,027/+427 lines), PPE column (`28f53b4`), formula memory (`5d60ef5`). Every step
-verified against the live dev preview before committing; production build green.
-
-Deviations from pure parity, all deliberate and surfaced:
-- Column sort now persists through searches and settings changes (was: search silently reset
-  the order while the header arrow lied). Falls out of the derived-state architecture.
-- Power Ranking now truncates `player.tournaments` everywhere (was: only AdvancedStats) — the
-  two pages disagreed; picked the chart-consistent behavior, no PlayerList-visible effect.
-- `fetchListTournaments` returns `[]` on error (was: a wrong-shaped object that logged three
-  bogus "Invalid tournament entry" errors downstream).
-- One Supabase fetch per session via module cache (was: one per page mount).
-
-New trade-off accepted: 11 columns ≈ 1060px, so 900–1110px viewports scroll the board
-horizontally (MUI overflow-x). Noted in CLAUDE.md known issues.
-
-Deployed 2026-06-11 after Bruno's hands-on check ("ship it"): pre-deploy checks passed, main
-pushed (`58fe0cf`), `npm run deploy` published bundle `f94633fc`, live index.html + bundle
-grep verified (Pts/Event, qpr.formula.v1, Points per event, minEventsForPpe all present).
+(to fill at session end)

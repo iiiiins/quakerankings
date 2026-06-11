@@ -22,13 +22,7 @@ import {
 } from "@mui/material";
 import useTournaments from "../hooks/useTournaments";
 import computeRankings from "../lib/computeRankings";
-import diaboticalLogo from "../logos/diabotical_logo.png";
-import quakeWorldLogo from "../logos/quakeworld_logo.png";
-import quake2Logo from "../logos/quake2_logo.png";
-import quake3Logo from "../logos/quake3_logo.png";
-import quake4Logo from "../logos/quake4_logo.png";
-import quakeLiveLogo from "../logos/quakelive_logo.png";
-import quakeChampionsLogo from "../logos/quakechampions_logo.png";
+import gameLogos from "../lib/gameLogos";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -44,16 +38,6 @@ const games = [
 ];
 
 const modes = ["All", "Duel", "2v2", "TDM", "CTF", "CA", "SAC", "WIP", "DBT"];
-
-const gameLogos = {
-  Diabotical: diaboticalLogo,
-  "Quake World": quakeWorldLogo,
-  "Quake 2": quake2Logo,
-  "Quake 3": quake3Logo,
-  "Quake 4": quake4Logo,
-  "Quake Live": quakeLiveLogo,
-  "Quake Champions": quakeChampionsLogo,
-};
 
 const columnKeyMap = {
   "1st": "placements.first",

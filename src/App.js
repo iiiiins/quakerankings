@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, useLocation } from "react-router-d
 import PlayerList from "./components/PlayerList";
 import PlayerPage from "./components/PlayerPage";
 import AdvancedStats from "./components/AdvancedStats";
+import EventsBrowser from "./components/EventsBrowser";
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-X11M9568HY");
 
@@ -26,26 +27,26 @@ import AnalyticsTracker from "./AnalyticsTracker";
 
 // Nav tabs live in their own component so useLocation runs inside <Router>
 const NavTabs = () => {
-  const location = useLocation();
-  const onCharts = location.pathname === "/charts";
+  const { pathname } = useLocation();
+  const tabs = [
+    // Home stays highlighted on player detail pages, as before
+    { label: "Home", hash: "#/", active: pathname === "/" || pathname.startsWith("/players") },
+    { label: "Events", hash: "#/events", active: pathname === "/events" },
+    { label: "Advanced Stats", hash: "#/charts", active: pathname === "/charts" },
+  ];
   return (
     <nav className="site-tabs">
-      <Button
-        variant={onCharts ? "text" : "contained"}
-        color="primary"
-        className={onCharts ? "tab-idle" : ""}
-        onClick={() => (window.location.hash = "#/")}
-      >
-        Home
-      </Button>
-      <Button
-        variant={onCharts ? "contained" : "text"}
-        color="primary"
-        className={onCharts ? "" : "tab-idle"}
-        onClick={() => (window.location.hash = "#/charts")}
-      >
-        Advanced Stats
-      </Button>
+      {tabs.map((tab) => (
+        <Button
+          key={tab.label}
+          variant={tab.active ? "contained" : "text"}
+          color="primary"
+          className={tab.active ? "" : "tab-idle"}
+          onClick={() => (window.location.hash = tab.hash)}
+        >
+          {tab.label}
+        </Button>
+      ))}
     </nav>
   );
 };
@@ -254,6 +255,8 @@ const App = () => {
                   />
                 }
               />
+              {/* Tournament Browser */}
+              <Route path="/events" element={<EventsBrowser />} />
               {/* Stats Page */}
               <Route
                 path="/charts"
