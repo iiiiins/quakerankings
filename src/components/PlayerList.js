@@ -146,7 +146,7 @@ useEffect(() => {
 
   //CALCULATE PLAYERS AND FILTERED TOURNAMENTS AT EVERY CHANGE
   useEffect(() => {
-    if(!tournamentList) return;
+    if(!tournamentList || tournamentList.length === 0) return;
     
     const TOP_TOURNAMENTS_LIMIT = 25; // Default to 25 top tournaments
     const fetchAndCalculate = async () => {
@@ -523,7 +523,7 @@ useEffect(() => {
                   Modes Played
                 </TableSortLabel>
               </TableCell>
-              <TableCell class="gold-header" align="right">
+              <TableCell className="gold-header" align="right">
                 <TableSortLabel
                   active={sortBy === "1st"}
                   direction={sortBy === "1st" ? sortOrder : "asc"}
@@ -532,7 +532,7 @@ useEffect(() => {
                   1st
                 </TableSortLabel>
               </TableCell>
-              <TableCell class="silver-header" align="right">
+              <TableCell className="silver-header" align="right">
                 <TableSortLabel
                   active={sortBy === "2nd"}
                   direction={sortBy === "2nd" ? sortOrder : "asc"}
@@ -541,7 +541,7 @@ useEffect(() => {
                   2nd
                 </TableSortLabel>
               </TableCell>
-              <TableCell class="bronze-header" align="right">
+              <TableCell className="bronze-header" align="right">
                 <TableSortLabel
                   active={sortBy === "Top4"}
                   direction={sortBy === "Top4" ? sortOrder : "asc"}
@@ -550,7 +550,7 @@ useEffect(() => {
                   Top4
                 </TableSortLabel>
               </TableCell>
-              <TableCell class="copper-header" align="right">
+              <TableCell className="copper-header" align="right">
                 <TableSortLabel
                   active={sortBy === "Top8"}
                   direction={sortBy === "Top8" ? sortOrder : "asc"}
@@ -561,8 +561,8 @@ useEffect(() => {
               </TableCell>
               <TableCell align="right">
                 <TableSortLabel
-                  active={sortBy === "Participations"}
-                  direction={sortBy === "Participations" ? sortOrder : "asc"}
+                  active={sortBy === "participations"}
+                  direction={sortBy === "participations" ? sortOrder : "asc"}
                   onClick={() => handleSort("participations")}
                 >
                   Participations

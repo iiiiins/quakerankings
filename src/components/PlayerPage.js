@@ -114,17 +114,17 @@ const PlayerPage = ({
       // Filter out tournaments based on visibility settings
       const filteredTournaments = tournaments.filter((tournament) => {
         // Exclude tournaments with unchecked game visibility
-        if (!gameVisibility[tournament.Game]) {
+        if (!(gameVisibility[tournament.Game] ?? true)) {
           return false;
         }
 
         // Exclude tournaments with unchecked mode visibility
-        if (!modeVisibility[tournament.Mode]) {
+        if (!(modeVisibility[tournament.Mode] ?? true)) {
           return false;
         }
 
         // Exclude tournaments with unchecked tier visibility
-        if (!tierVisibility[tournament.Tier]) {
+        if (!(tierVisibility[tournament.Tier] ?? true)) {
           return false;
         }
 
@@ -222,8 +222,6 @@ const PlayerPage = ({
         newStats.totalPlacements > 0
           ? (totalPlacementSum / newStats.totalPlacements).toFixed(2)
           : "N/A";
-      console.log("total placements =", newStats.totalPlacements);
-      console.log("total placement sum =", totalPlacementSum);
       newStats.grandFinalWinRate =
         newStats.grandFinals > 0
           ? ((newStats.firstPlaces / newStats.grandFinals) * 100).toFixed(2) +
@@ -260,9 +258,9 @@ const PlayerPage = ({
         );
 
         if (playerPlacement) {
-          const tierWeight = tierWeights[tournament.Tier] || 100;
-          const gameWeight = gameWeights[tournament.Game] || 100;
-          const modeWeight = modeWeights[tournament.Mode] || 100;
+          const tierWeight = tierWeights[tournament.Tier] ?? 100;
+          const gameWeight = gameWeights[tournament.Game] ?? 100;
+          const modeWeight = modeWeights[tournament.Mode] ?? 100;
         
           switch (playerPlacement[0]) {
             case "1st":
@@ -290,9 +288,7 @@ const PlayerPage = ({
               points = 0;
           }
         
-          console.log("Calculated Points:", points);
           totalPoints += points;
-          console.log("Updated Total Points:", totalPoints);
         }
 
 
@@ -448,6 +444,7 @@ const PlayerPage = ({
               <MenuItem value="Quake 4">Quake 4</MenuItem>
               <MenuItem value="Quake Live">Quake Live</MenuItem>
               <MenuItem value="Quake Champions">Quake Champions</MenuItem>
+              <MenuItem value="Diabotical">Diabotical</MenuItem>
             </Select>
           </FormControl>
           <FormControl>

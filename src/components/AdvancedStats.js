@@ -144,7 +144,6 @@ const AdvancedStats = ({
   useEffect(() => {
   const getFullList = async() => {
     const tournamentList = await fetchListTournaments();
-    console.log("supabase data", tournamentList)
     setTournamentList(tournamentList);
   }
   getFullList();
@@ -313,13 +312,12 @@ const getRandomColor = () =>
 
   useEffect(() => {
     updateChartData(selectedToggle);
-    console.log("updating chart data, power ranking is ", powerRanking);
   }, [selectedToggle, selectedPlayers]);
 
 
   //CALCULATE PLAYERS AND FILTERED TOURNAMENTS AT EVERY CHANGE
   useEffect(() => {
-    if(!tournamentList) return;
+    if(!tournamentList || tournamentList.length === 0) return;
     
     const TOP_TOURNAMENTS_LIMIT = 25; // Default to 25 top tournaments
     const fetchAndCalculate = async () => {
@@ -464,7 +462,6 @@ const getRandomColor = () =>
       
       
       if (powerRanking) {
-        console.log("Calculating power rankings...");
         players.forEach((player) => {
           // Sort tournaments by points
           player.tournaments.sort((a, b) => b.points - a.points);
@@ -708,7 +705,6 @@ const getRandomColor = () =>
 
         {/* Summary Message */}
         <Typography variant="subtitle1" align="left" gutterBottom>
-          CHARTS PAGE
           Showing {filteredPlayers.length} players in{" "}
           {totalTournaments - filteredTournaments} tournaments (
           {filteredTournaments} tournaments filtered out of {totalTournaments})

@@ -1,0 +1,15 @@
+{
+  "short_name": "Quake Rankings",
+  "name": "Quake Player Rankings",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "320x320",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "browser",
+  "theme_color": "#000000",
+  "background_color": "#121212"
+}
