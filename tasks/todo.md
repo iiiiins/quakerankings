@@ -50,15 +50,40 @@ preview; NO deploy without Bruno's "ship it".
 
 ## Steps
 
-- [ ] 1. `lib/computeRecords.js` + `computeRecords.test.js` → verify: suite green,
-      full `npm test` green (shareCodec 22 untouched). Commit.
-- [ ] 2. `components/RecordsPage.js` + App.js route/tab/props + App.css records
-      classes + mobile tab rail → verify: dev preview desktop (numbers spot-checked
-      vs /events data, gear toggles recompute live) + 380px mobile (cards stack,
-      tab rail scrolls, no overflow). Commit.
-- [ ] 3. CLAUDE.md + docs/ROADMAP.md updates (records shipped section + nav decision
-      for features 7–9). Commit.
+- [x] 1. `lib/computeRecords.js` + `computeRecords.test.js` → verified: 12 cases green,
+      full `npm test` 34/34 (shareCodec 22 untouched). Commit `6ea064e`.
+- [x] 2. `components/RecordsPage.js` + App.js route/tab/props + App.css records
+      classes + mobile tab rail → verified on dev preview (see Review). Commit `c352b76`.
+- [x] 3. CLAUDE.md + docs/ROADMAP.md updates (BUILT status + nav decision for
+      features 7–9). Commit (docs).
 
 ## Review
 
-(to fill at session end)
+Built and verified 2026-06-12. **NOT deployed** — Bruno tries it first, deploy on "ship it".
+
+What was verified (dev preview, `.claude/launch.json` dev config):
+- Desktop 1280: all seven cards render real data in the design language; spot checks
+  matched known history (cypher 117 titles / 314 events, rapha 23 tier-1 majors of 89
+  titles, clawz winning QWC 2017 Duel $340k, QWC 2017 SAC $660k with team winners + "+1"
+  cap, hell 2000→2024 = 25 yrs inclusive). Records tab active state ✓.
+- The twist, live: hiding Quake 3 via the gear dropped its titles-by-game row AND
+  cypher's titles went 117 → 110 (events 314 → 300); restore brought 117 back. Hiding
+  the 2nd bucket flipped GF conversion to the "needs both 1st and 2nd visible" note;
+  restore brought fearz 15/16 = 93.8% back. localStorage residue cleared after.
+- Mobile 375: 1-col cards, tab rail overflow-x auto (4 tabs fit; will scroll when
+  feature 8 adds Compare), document width 375 = no horizontal overflow, prize winner
+  lines wrap between names. Console: zero errors/warnings across the session.
+- `npm test` 34/34 (computeRecords 12 + shareCodec 22) and `npm run build` both green.
+
+Bugs found-and-fixed during verification (both in the new code):
+1. `.rec-main` missing `flex: 1` — titles-by-game / prize values floated mid-card
+   instead of the right edge.
+2. Mobile min-content blowout (doc 401px @ 375 viewport): winner links rendered with NO
+   whitespace between them (one unbreakable 212px run) and grid items default to
+   min-width auto, so one card widened the whole track. Fixed at the source — literal
+   spaces around separators are the wrap points — plus `min-width: 0` on grid items as
+   the structural guard.
+
+Decisions Bruno may want to revisit when trying it: MIN_GRAND_FINALS = 10 (the min-N
+guard value), top-5 list length, career span counted inclusively (2000→2024 = 25 yrs),
+and the GF-needs-both-buckets line. All are one-line changes in lib/computeRecords.js.

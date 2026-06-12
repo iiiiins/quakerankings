@@ -93,6 +93,11 @@ B2-full expensive. Decision logged 2026-06-12.
 
 ### 6. Records page (~1 session) — player-depth opener
 
+> **Status: BUILT 2026-06-12** — verified against the dev preview (desktop 1280 + mobile 375,
+> live gear-toggle recompute, 12-case jest suite green alongside the shareCodec 22), commits
+> `6ea064e`…(docs). NOT deployed — awaiting Bruno's try + "ship it". Nav decision settled
+> (AskUserQuestion): **4th header tab + scrollable mobile tab rail** — features 7–9 follow it.
+
 - `/records`: most titles (overall + per game), tier-1 title counts, grand-final conversion
   (min-N guard), longest career span, most events attended, biggest prize-pool events won
   (prize stays display-only data).
@@ -172,8 +177,10 @@ B2-full expensive. Decision logged 2026-06-12.
   visual target `docs/mocks/direction-hybrid.html`.
 - Player names are stored lowercase (`tournamentRules.normalizeRow` on every write path);
   `eq` queries depend on it.
-- Header tabs are near capacity — feature 6 decides the nav pattern for new pages (tab vs
-  footer vs a "More" affordance), and features 7–9 follow it.
+- Nav pattern **decided at feature 6** (Bruno, AskUserQuestion): new top-level pages get a
+  header tab; below 900px the tab rail scrolls horizontally (hidden scrollbar, chip-rail
+  pattern) instead of wrapping. Features 7–9 follow it — feature 8's Compare tab fits at no
+  layout cost.
 - One feature per implementation session; if a session drifts or runs long, stop and hand off
   fresh.
 
@@ -222,6 +229,19 @@ B2-full expensive. Decision logged 2026-06-12.
   visitor clicking Reset on someone's link loses their tuning — viewing never destroys,
   the explicit click does. Supersedes the feature-4 entry's "restores the visitor's
   stored formula".
+- 2026-06-12 — **Feature 6 build decisions** (within the locked roadmap constraints): nav =
+  4th header tab "Records" + scrollable mobile tab rail (Bruno's pick over plain-4th-tab /
+  More-menu / footer link — the rail makes the pattern hold for features 7–9); records run
+  computeRankings with NEUTRAL filters (gear config only — home filters and Power Ranking
+  stay per-page by design; the page has no filter UI at all); seven top-5 cards; GF
+  conversion guards at **min 10 grand finals** and reads "undefined" when the 1st or 2nd
+  bucket is hidden (the stat needs both); career span is inclusive (last − first + 1); the
+  prize card filters groupEvents by game/tier/mode visibility and prizepool stays
+  display-only; ties break by points (the formula's own currency) then name; pure
+  `lib/computeRecords.js` + 12-case suite through the real pipeline. Found while verifying:
+  flex/grid min-content blowout on mobile (winner links rendered with no whitespace = one
+  unbreakable run; grid items needed min-width 0) — fixed at the source, spaces are the
+  wrap points.
 - 2026-06-12 — **Feature 5 build decisions** (within the locked roadmap constraints):
   honeypot enforced at the DB (INSERT policy's WITH CHECK rejects a filled trap — bot rows
   are never stored; the client also fakes success without calling the API, so form bots
