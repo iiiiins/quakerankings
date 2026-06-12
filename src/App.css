@@ -572,6 +572,34 @@ a:active {
   color: #6e6859;
 }
 
+.share-card-preview {
+  display: block;
+  width: 100%;
+  border: 1px solid #2e2922;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.share-card-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  border: 1px solid #2e2922;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  color: #6e6859;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.share-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .shared-banner {
   display: flex;
   align-items: center;
