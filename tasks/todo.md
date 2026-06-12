@@ -128,3 +128,16 @@ to the strip (verified live: e50+sppe link → adopt → strip shows "PPE min 50
 correctly absent). Also verified: no strip on defaults, chips track gear edits, reset
 restores storage to defaults, LAN toggle doesn't summon it, clean console after marker.
 Tests 22/22, build green. NOT deployed.
+
+## Follow-up 3 (same session): shared-banner Reset = the default site
+
+Bruno's repro: open your own share link, click Reset → only the sort visibly reset. Root
+cause: Reset restored the visitor's STORED formula, and a sharer's stored formula == the
+shared one (formula memory saved it while they tuned it). Fix (`dbc7a4c`): shared Reset
+now factory-defaults the formula (persisted) + remounts the board (filters/sort default)
+— one click to the vanilla site, as the mock's caption promised. Accepted trade-off
+(logged in roadmap): a tuned visitor clicking Reset on someone's link loses their tuning;
+viewing never destroys it, only this explicit click. Verified on Bruno's exact link
+(gq2_69.hmduel-ctf.sppe, adopted first to simulate the sharer): one Reset → no banner, no
+strip, storage factory (Q2=100, Duel/CTF visible, minEvents 15), points order, full
+counts, clean URL, clean console. Tests 22/22, build green. NOT deployed.

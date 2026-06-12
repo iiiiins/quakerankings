@@ -196,3 +196,10 @@ B2-full expensive. Decision logged 2026-06-12.
   codec ("default iff encodes to bare v1"). Filters/sort excluded (visible in their own
   controls). Precedence: shared banner > custom strip > none; adopt hands over from one to
   the other.
+- 2026-06-12 — **Shared-banner Reset semantics corrected** (Bruno's repro: sharer's stored
+  formula == the shared one, so "restore stored" looked like only-the-sort reset). Reset
+  now = the default SITE in one click (factory formula persisted + board remount clearing
+  the link's filters/sort), per the mock's locked caption. Accepted trade-off: a tuned
+  visitor clicking Reset on someone's link loses their tuning — viewing never destroys,
+  the explicit click does. Supersedes the feature-4 entry's "restores the visitor's
+  stored formula".
