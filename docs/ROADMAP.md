@@ -40,7 +40,8 @@ all four player-depth candidates committed; order = sharing → submissions → 
    that is now the nav pattern for features 7–9), seven top-5 record cards recomputing
    under the visitor's formula (gear weights + visibility; GF min-10 guard, inclusive
    spans, prize list display-only), page-local LAN Only plate, `lib/computeRecords.js` +
-   13-case suite. Commits `6ea064e`…`45cba7e`; deployed bundle `1b6566f3`, verified live
+   13-case suite. Commits `6ea064e`…`acb6b3b`; deployed bundle `4d4d8e6e` (supersedes
+   `1b6566f3` same day — prize-card winners uncapped on Bruno's catch), verified live
    2026-06-12 (hash + 13 feature markers in the served bundle/CSS).
 
 ## Committed features, in order
@@ -235,6 +236,10 @@ B2-full expensive. Decision logged 2026-06-12.
   visitor clicking Reset on someone's link loses their tuning — viewing never destroys,
   the explicit click does. Supersedes the feature-4 entry's "restores the visitor's
   stored formula".
+- 2026-06-12 — **Prize-card winners uncapped** (Bruno's catch post-ship): the records page
+  names EVERY winner of a prize event — a "+n" cutoff reads as a slight on a page meant to
+  honor them; lines wrap between names on mobile. Titles-by-game keeps its co-leader cap
+  (it only guards freak ties). Redeployed as bundle `4d4d8e6e`.
 - 2026-06-12 — **Records LAN Only plate** (Bruno's ask after trying the build): one
   page-local toggle on /records, reusing the home board's plate; flips player records (via
   computeRankings' lanOnly) AND the prize list (computeRecords). Deliberately amends the

@@ -61,7 +61,10 @@ preview; NO deploy without Bruno's "ship it".
 
 Built and verified 2026-06-12. **SHIPPED same day on Bruno's "ship it"**: pre-deploy
 checks passed, main pushed (`45cba7e`), `npm run deploy` → bundle `1b6566f3` verified
-live (hash + 13 feature markers in the served bundle/CSS).
+live (hash + 13 feature markers in the served bundle/CSS). Post-ship catch (Bruno):
+prize-card winners uncapped — full rosters named, wrapping on mobile (`acb6b3b`,
+redeployed as bundle `4d4d8e6e`, hash verified live; xron and winz restored to their
+QWC/DH 2017 rows).
 
 What was verified (dev preview, `.claude/launch.json` dev config):
 - Desktop 1280: all seven cards render real data in the design language; spot checks
