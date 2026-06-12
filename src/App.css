@@ -1453,6 +1453,140 @@ footer a.method-link:hover {
   overflow: hidden;
 }
 
+/* admin review queue */
+.sub-empty {
+  color: #6e6859;
+  font-size: 13.5px;
+  margin: 0 0 10px;
+}
+
+.sub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sub-item {
+  padding: 10px 14px 12px;
+  background: #1b1813;
+  border: 1px solid #2e2922;
+  border-radius: 8px;
+}
+
+.sub-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sub-type {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.sub-type.fix {
+  color: #e05a1f;
+  border-color: rgba(224, 90, 31, 0.55);
+  background: rgba(224, 90, 31, 0.1);
+}
+
+.sub-type.new {
+  color: #f5c518;
+  border-color: rgba(245, 197, 24, 0.45);
+  background: rgba(245, 197, 24, 0.08);
+}
+
+.sub-title {
+  color: #ece8df;
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.sub-meta {
+  color: #6e6859;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.sub-note {
+  color: #a39c8d;
+  font-size: 13.5px;
+  font-style: italic;
+  margin: 7px 0 0;
+}
+
+.sub-summary {
+  color: #a39c8d;
+  font-size: 13px;
+  margin: 7px 0 0;
+}
+
+.sub-warn {
+  color: #ff6b4a;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 7px 0 0;
+}
+
+.sub-same {
+  color: #6e6859;
+  font-size: 13px;
+  margin: 7px 0 0;
+}
+
+.sub-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.diff-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.diff-field {
+  flex-shrink: 0;
+  width: 64px;
+  color: #6e6859;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.diff-old {
+  color: #6e6859;
+  text-decoration: line-through;
+}
+
+.diff-arrow {
+  color: #6e6859;
+}
+
+.diff-new {
+  color: #e05a1f;
+  font-weight: 700;
+}
+
+.sub-item .tform-actions {
+  margin-top: 10px;
+}
+
 /* ---------- charts ---------- */
 .chart-panel {
   background: #14120e;

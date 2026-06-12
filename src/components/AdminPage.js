@@ -6,6 +6,7 @@ import useSession from "../hooks/useSession";
 import { refreshTournaments } from "../hooks/useTournaments";
 import { insertTournament } from "../services/tournamentWrites";
 import TournamentForm from "./TournamentForm";
+import SubmissionQueue from "./SubmissionQueue";
 
 // Single-user admin: login gate + data entry. Security lives entirely in RLS
 // (uid-scoped write policies + signups disabled) — shipping this UI in the
@@ -115,10 +116,12 @@ const AdminPage = () => {
         </div>
         {authError && <div className="admin-error">{authError}</div>}
         <Typography component="p" className="admin-hint">
-          Add a tournament below. To correct or delete one, find it in the{" "}
+          Review community submissions below, or add a tournament yourself. To
+          correct or delete one directly, find it in the{" "}
           <Link to="/events">events browser</Link> — every row gets an edit
           control while you're signed in.
         </Typography>
+        <SubmissionQueue />
         <Paper elevation={0} className="game-section">
           <div className="game-section-head">
             <Typography component="h3" className="game-section-title">
