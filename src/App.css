@@ -996,8 +996,23 @@ a.ph-row {
 @media (max-width: 899px) {
   .wordmark { font-size: 12.5px; letter-spacing: 2px; }
   .site-header { gap: 10px; padding: 12px 0 10px; }
-  .site-tabs { margin-left: 0; gap: 5px; }
-  .site-tabs .MuiButton-root { padding: 4px 10px; font-size: 10.5px; }
+  /* tab rail scrolls instead of wrapping (chip-rail pattern) — the decided
+     nav model for new pages: features 7–9 add tabs here at no layout cost */
+  .site-tabs {
+    margin-left: 0;
+    gap: 5px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .site-tabs::-webkit-scrollbar { display: none; }
+  .site-tabs .MuiButton-root {
+    padding: 4px 10px;
+    font-size: 10.5px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
   .summary-line { font-size: 11px !important; padding: 4px 2px 8px; }
 }
 
@@ -1224,6 +1239,190 @@ footer a.method-link {
 
 footer a.method-link:hover {
   color: #e05a1f;
+}
+
+/* ---------- records ---------- */
+.rec-page {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.rec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 18px 0;
+}
+
+.rec-grid .game-section {
+  margin: 0;
+  padding: 16px 18px 12px;
+  /* grid items default to min-width auto — without this, one card's
+     min-content (a long event name or winner run) widens the whole track
+     past narrow viewports */
+  min-width: 0;
+}
+
+.rec-wide {
+  grid-column: 1 / -1;
+}
+
+.rec-note {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #6e6859;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rec-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rec-row:last-child {
+  border-bottom: none;
+}
+
+.rec-rank {
+  flex-shrink: 0;
+  min-width: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6e6859;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.rec-row.lead .rec-rank {
+  color: #f5c518;
+  text-shadow: 0 0 10px rgba(245, 197, 24, 0.4);
+}
+
+.rec-name {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: 0.06em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 10px rgba(255, 255, 114, 0.16);
+  white-space: nowrap;
+}
+
+.rec-name:hover {
+  text-shadow: 0 0 16px rgba(255, 255, 114, 0.5);
+}
+
+.rec-sep {
+  color: #6e6859;
+}
+
+.rec-more {
+  color: #e05a1f;
+  font-size: 11px;
+  border: 1px solid rgba(224, 90, 31, 0.35);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.rec-sub {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #6e6859;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.rec-val {
+  flex-shrink: 0;
+  min-width: 44px;
+  text-align: right;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.rec-val i {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #6e6859;
+  letter-spacing: 0.08em;
+  margin-left: 3px;
+}
+
+.rec-row.lead .rec-val {
+  color: #f5c518;
+  text-shadow: 0 0 12px rgba(245, 197, 24, 0.25);
+}
+
+.rec-glogo {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+}
+
+.rec-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.rec-main .rec-names {
+  display: block;
+}
+
+.rec-main .rec-event {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ece8df;
+}
+
+.rec-main .rec-gsub {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #6e6859;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+
+.rec-gsub .rec-name {
+  font-size: 11px;
+}
+
+.rec-empty {
+  text-align: center;
+  color: #6e6859;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 18px 0 14px;
+}
+
+@media (max-width: 899px) {
+  .rec-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 /* ---------- admin ---------- */

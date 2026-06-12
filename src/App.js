@@ -4,6 +4,7 @@ import PlayerList from "./components/PlayerList";
 import PlayerPage from "./components/PlayerPage";
 import AdvancedStats from "./components/AdvancedStats";
 import EventsBrowser from "./components/EventsBrowser";
+import RecordsPage from "./components/RecordsPage";
 import Methodology from "./components/Methodology";
 import AdminPage from "./components/AdminPage";
 import ReactGA from "react-ga4";
@@ -51,6 +52,7 @@ const NavTabs = () => {
     // Home stays highlighted on player detail pages, as before
     { label: "Home", hash: "#/", active: pathname === "/" || pathname.startsWith("/players") },
     { label: "Events", hash: "#/events", active: pathname === "/events" },
+    { label: "Records", hash: "#/records", active: pathname === "/records" },
     { label: "Advanced Stats", hash: "#/charts", active: pathname === "/charts" },
   ];
   return (
@@ -363,6 +365,24 @@ const App = () => {
               />
               {/* Tournament Browser */}
               <Route path="/events" element={<EventsBrowser />} />
+              {/* Records — recompute under the visitor's formula (gear only,
+                  no home filters), so they take the same scoring props */}
+              <Route
+                path="/records"
+                element={
+                  <RecordsPage
+                    pointsConfig={pointsConfig}
+                    pointsVisibility={pointsVisibility}
+                    gameWeights={gameWeights}
+                    gameVisibility={gameVisibility}
+                    tierWeights={tierWeights}
+                    tierVisibility={tierVisibility}
+                    modeWeights={modeWeights}
+                    modeVisibility={modeVisibility}
+                    minEventsForPpe={minEventsForPpe}
+                  />
+                }
+              />
               {/* Methodology */}
               <Route path="/methodology" element={<Methodology />} />
               {/* Admin (no nav tab — direct URL; security lives in RLS) */}
