@@ -229,6 +229,13 @@ B2-full expensive. Decision logged 2026-06-12.
   visitor clicking Reset on someone's link loses their tuning — viewing never destroys,
   the explicit click does. Supersedes the feature-4 entry's "restores the visitor's
   stored formula".
+- 2026-06-12 — **Records LAN Only plate** (Bruno's ask after trying the build): one
+  page-local toggle on /records, reusing the home board's plate; flips player records (via
+  computeRankings' lanOnly) AND the prize list (computeRecords). Deliberately amends the
+  feature-6 "page owns no filter state" line — the state is page-local view state, never the
+  home board's, and the gear/share contract is untouched. Data note: the biggest ONLINE
+  prize pool in the dataset is $900, so the LAN top-5 prize list only visibly changes if
+  the data does.
 - 2026-06-12 — **Feature 6 build decisions** (within the locked roadmap constraints): nav =
   4th header tab "Records" + scrollable mobile tab rail (Bruno's pick over plain-4th-tab /
   More-menu / footer link — the rail makes the pattern hold for features 7–9); records run

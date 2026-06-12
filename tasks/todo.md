@@ -87,3 +87,15 @@ Bugs found-and-fixed during verification (both in the new code):
 Decisions Bruno may want to revisit when trying it: MIN_GRAND_FINALS = 10 (the min-N
 guard value), top-5 list length, career span counted inclusively (2000→2024 = 25 yrs),
 and the GF-needs-both-buckets line. All are one-line changes in lib/computeRecords.js.
+
+### Addendum (same session): LAN Only plate — Bruno's ask
+
+- One page-local toggle (home-board plate reused) above the grid; flips player records
+  (computeRankings lanOnly) and the prize list (computeRecords lanOnly). Deliberately
+  amends the "page owns no filter state" line — page-local view state only, home filters
+  still never leak, gear/share contract untouched. Suite 35/35 (new LAN case pins both
+  layers).
+- Verified live: LAN-only most-titles flips cypher 117 → rapha 30 and restores; prize
+  top-5 identical in both states, CONFIRMED CORRECT against the data (biggest online
+  prize pool in the dataset = $900 — everything bigger is LAN). Mobile 375 no overflow,
+  console clean. Commit `0e2aef8`.
