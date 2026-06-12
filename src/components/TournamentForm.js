@@ -54,6 +54,7 @@ const TournamentForm = ({
   onSubmit,
   onDelete,
   onCancel,
+  children = null, // extra grid fields (suggest mode: note/handle/honeypot)
 }) => {
   const isEdit = Boolean(initialRow);
   const [fields, setFields] = useState(() =>
@@ -226,6 +227,8 @@ const TournamentForm = ({
           />
         </div>
       ))}
+
+      {children}
 
       {errors.length > 0 && (
         <div className="admin-error f-span">
