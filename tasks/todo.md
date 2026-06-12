@@ -47,28 +47,28 @@ can't DDL), then probe + e2e verification run.
 
 ## Steps
 
-- [ ] 1. `scripts/setup-submissions.sql` (table + revoke/grants + RLS policies,
-       idempotent, admin uid hardcoded to match setup-admin.sql) + extend
-       `scripts/probe-rls.js` (anon submission INSERT ok / non-pending rejected /
-       honeypot rejected / caps enforced / SELECT-UPDATE-DELETE rejected; --full:
-       admin SELECT/UPDATE/DELETE on a marker submission; cleanup + count restored).
-       Commit. (Probes can't run until the SQL is pasted.)
-- [ ] 2. Plumbing: `src/services/submissions.js` (submitSuggestion — no .select(),
-       anon has no SELECT grant; rowFromPayload; fetchPendingSubmissions;
-       setSubmissionStatus) + TournamentForm `children` slot (extra fields render
-       inside the grid; no behavior change for existing callers). Commit.
-- [ ] 3. Public UI: `src/components/SuggestDialog.js` (correction prefill via
-       initialRow, row picker for team events, note/handle/honeypot fields, success
-       state) + EventsBrowser entry points (suggest icon column when signed out,
-       desktop + mobile rows; "Submit a tournament" in the summary line) + App.css.
-       Verify in preview (validation, prefill, picker, honeypot offscreen, caps;
-       submit fails with table-missing error — expected pre-paste). Commit.
-- [ ] 4. Admin queue: `src/components/SubmissionQueue.js` (pending list, NEW/FIX
-       badges, note/handle display, diff view for corrections, payload validation
-       gate, approve→tournamentWrites→mark approved / reject) + AdminPage wiring +
-       App.css. Verify render in preview (fetch error pre-paste is honest). Commit.
-- [ ] 5. `npm test` (shareCodec 22) + `npm run build` green. → **HANDOFF: Bruno
-       pastes scripts/setup-submissions.sql** in Dashboard → SQL Editor.
+- [x] 1. `scripts/setup-submissions.sql` + probe-rls.js extension — commit `60b616c`.
+       (Probes not yet run — table doesn't exist until the paste.)
+- [x] 2. Plumbing: `src/services/submissions.js` + TournamentForm `children` slot —
+       commit `5e99ccd`.
+- [x] 3. Public UI: SuggestDialog + EventsBrowser entry points + CSS — commit
+       `0ae9c78`. Verified in preview (desktop 1280 + mobile 375): suggest icon on
+       all rows signed-out, dialog prefills the row (250 FPS Season 2), team-event
+       picker (Church Of Quake SAC Draft, 4 rows), validation ("missing
+       Event_Name"), dup warning + "Add anyway" in new mode, note maxLength 500,
+       honeypot offscreen (x < -5000), submit reaches the API (404 pre-paste,
+       rendered honestly). Bonus fix: message-less Supabase errors (bare {} body)
+       rendered "[object Object]" in the shared form — now a readable fallback.
+- [x] 4. Admin queue: SubmissionQueue + AdminPage wiring + CSS — commit `b977f2c`.
+       Verified with an injected admin session (minted via auth REST into a temp
+       file, deleted after; password kept out of the transcript): Review queue +
+       Add tournament sections render, pre-paste fetch error shown honestly
+       ('relation "public.Submissions" does not exist'); signed-in /events = 100
+       pencils / 0 suggest entries; sign-out restores suggest. Console clean after
+       marker both states.
+- [x] 5. `npm test` 22/22 + `npm run build` green (+2.3 kB JS, +0.3 kB CSS).
+       → **HANDOFF (waiting on Bruno): paste scripts/setup-submissions.sql** in
+       Dashboard → SQL Editor.
 - [ ] 6. Post-paste: `node scripts/probe-rls.js --full` (all probes green). E2E in
        preview: signed-out submit (one correction w/ diff-able edits, one new) →
        sign in → queue shows both, diff correct → approve correction (row visibly
