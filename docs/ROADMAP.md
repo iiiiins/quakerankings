@@ -36,6 +36,12 @@ all four player-depth candidates committed; order = sharing → submissions → 
    approve/reject, probe-rls.js extended to 20 probes (the standing regression). Commits
    `60b616c`…`679fb1a`; deployed bundle `7266b6fa`, verified live 2026-06-12 (hash + nine
    feature markers in the served bundle/CSS).
+6. **Records page** — `/records` as the 4th header tab (+ the scrollable mobile tab rail
+   that is now the nav pattern for features 7–9), seven top-5 record cards recomputing
+   under the visitor's formula (gear weights + visibility; GF min-10 guard, inclusive
+   spans, prize list display-only), page-local LAN Only plate, `lib/computeRecords.js` +
+   13-case suite. Commits `6ea064e`…`45cba7e`; deployed bundle `1b6566f3`, verified live
+   2026-06-12 (hash + 13 feature markers in the served bundle/CSS).
 
 ## Committed features, in order
 
@@ -93,10 +99,10 @@ B2-full expensive. Decision logged 2026-06-12.
 
 ### 6. Records page (~1 session) — player-depth opener
 
-> **Status: BUILT 2026-06-12** — verified against the dev preview (desktop 1280 + mobile 375,
-> live gear-toggle recompute, 12-case jest suite green alongside the shareCodec 22), commits
-> `6ea064e`…(docs). NOT deployed — awaiting Bruno's try + "ship it". Nav decision settled
-> (AskUserQuestion): **4th header tab + scrollable mobile tab rail** — features 7–9 follow it.
+> **Status: SHIPPED 2026-06-12** — bundle `1b6566f3` verified live (see Shipped section).
+> Nav decision settled (AskUserQuestion): **4th header tab + scrollable mobile tab rail** —
+> features 7–9 follow it. Post-build addition on Bruno's ask: page-local LAN Only plate
+> (decision log). Suite 35/35 (computeRecords 13 + shareCodec 22).
 
 - `/records`: most titles (overall + per game), tier-1 title counts, grand-final conversion
   (min-N guard), longest career span, most events attended, biggest prize-pool events won

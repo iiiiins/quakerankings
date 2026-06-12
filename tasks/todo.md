@@ -59,7 +59,9 @@ preview; NO deploy without Bruno's "ship it".
 
 ## Review
 
-Built and verified 2026-06-12. **NOT deployed** — Bruno tries it first, deploy on "ship it".
+Built and verified 2026-06-12. **SHIPPED same day on Bruno's "ship it"**: pre-deploy
+checks passed, main pushed (`45cba7e`), `npm run deploy` → bundle `1b6566f3` verified
+live (hash + 13 feature markers in the served bundle/CSS).
 
 What was verified (dev preview, `.claude/launch.json` dev config):
 - Desktop 1280: all seven cards render real data in the design language; spot checks
