@@ -43,10 +43,10 @@ const PlayerList = ({
   onFiltersChange,
   initialFilters,
 }) => {
-  const [sortBy, setSortBy] = useState("Points");
+  // initialFilters carries a share link's filters (+ ranking sort); App
+  // remounts this component (key bump) whenever they must re-derive
+  const [sortBy, setSortBy] = useState(initialFilters?.sortBy ?? "Points");
   const [sortOrder, setSortOrder] = useState("desc");
-  // initialFilters carries a share link's filters; App remounts this
-  // component (key bump) whenever they must re-derive
   const [selectedGame, setSelectedGame] = useState(initialFilters?.selectedGame ?? "All");
   const [selectedMode, setSelectedMode] = useState(initialFilters?.selectedMode ?? "All");
   const [yearRange, setYearRange] = useState(initialFilters?.yearRange ?? [YEAR_MIN, CURRENT_YEAR]);
@@ -111,11 +111,28 @@ const PlayerList = ({
     setLoadMore(100);
   }, [players]);
 
-  // Mirror the filter state up for the header share popover — filters stay
-  // owned here (per-page state), App only ever reads the snapshot.
+  // Mirror the filter + sort state up for the header share popover — it all
+  // stays owned here (per-page state), App only ever reads the snapshot.
   useEffect(() => {
-    onFiltersChange?.({ selectedGame, selectedMode, yearRange, lanOnly, powerRanking });
-  }, [onFiltersChange, selectedGame, selectedMode, yearRange, lanOnly, powerRanking]);
+    onFiltersChange?.({
+      selectedGame,
+      selectedMode,
+      yearRange,
+      lanOnly,
+      powerRanking,
+      sortBy,
+      sortOrder,
+    });
+  }, [
+    onFiltersChange,
+    selectedGame,
+    selectedMode,
+    yearRange,
+    lanOnly,
+    powerRanking,
+    sortBy,
+    sortOrder,
+  ]);
 
   useEffect(() => {
     const handleScroll = () => {

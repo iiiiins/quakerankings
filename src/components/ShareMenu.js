@@ -2,15 +2,21 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Divider, Typography } from "@mui/material";
 import useTournaments from "../hooks/useTournaments";
 import computeRankings from "../lib/computeRankings";
-import { encodeShareState, summarizeShareState } from "../lib/shareCodec";
+import sortPlayers from "../lib/sortPlayers";
+import {
+  encodeShareState,
+  decodeShareParam,
+  summarizeShareState,
+} from "../lib/shareCodec";
 import renderShareCard from "../lib/renderShareCard";
 
 // Content of the header share popover: the share link for the current
 // formula + home filters, the customization chips, and the top-10 card
 // (canvas PNG — download / clipboard). The link is built on demand from live
-// state; the address bar is never rewritten. The top-10 is recomputed here
-// through the same pure pipeline the board uses, so card and board can't
-// disagree.
+// state; the address bar is never rewritten. Chips and card render the
+// CANONICAL state — encode then decode — so they show exactly what a link
+// opener will see (an un-encoded sort, e.g. by 2nd place, falls back to the
+// points order rather than putting a board on the card the link can't open).
 const ShareMenu = ({ config, filters }) => {
   const inputRef = useRef(null);
   const cardCanvasRef = useRef(null);
@@ -18,28 +24,39 @@ const ShareMenu = ({ config, filters }) => {
   const [cardUrl, setCardUrl] = useState(null);
   const [cardMsg, setCardMsg] = useState(null); // null | "copied" | error text
 
-  const link = `${window.location.origin}${window.location.pathname}#/?f=${encodeShareState(
-    config,
-    filters
-  )}`;
-  const chips = useMemo(() => summarizeShareState(config, filters), [config, filters]);
+  const encoded = encodeShareState(config, filters);
+  const link = `${window.location.origin}${window.location.pathname}#/?f=${encoded}`;
+  const linkState = useMemo(() => decodeShareParam(encoded), [encoded]);
+  const chips = useMemo(
+    () => summarizeShareState(linkState.config, linkState.filters),
+    [linkState]
+  );
 
   const tournaments = useTournaments();
   const { players, filteredCount, totalTournaments } = useMemo(
-    () => computeRankings(tournaments, { ...filters, ...config }),
-    [tournaments, filters, config]
+    () => computeRankings(tournaments, { ...linkState.filters, ...linkState.config }),
+    [tournaments, linkState]
+  );
+  const ranked = useMemo(
+    () => sortPlayers(players, linkState.filters.sortBy, linkState.filters.sortOrder),
+    [players, linkState]
   );
   const countsLine = `${players.length.toLocaleString("en-US")} players · ${(
     totalTournaments - filteredCount
   ).toLocaleString("en-US")} tournaments scored`;
 
   useEffect(() => {
-    if (!players.length) {
+    if (!ranked.length) {
       setCardUrl(null);
       return undefined;
     }
     let alive = true;
-    renderShareCard({ players, chips, countsLine }).then((canvas) => {
+    renderShareCard({
+      players: ranked,
+      chips,
+      countsLine,
+      sortBy: linkState.filters.sortBy,
+    }).then((canvas) => {
       if (!alive) return;
       cardCanvasRef.current = canvas;
       setCardUrl(canvas.toDataURL("image/png"));
@@ -47,7 +64,7 @@ const ShareMenu = ({ config, filters }) => {
     return () => {
       alive = false;
     };
-  }, [players, chips, countsLine]);
+  }, [ranked, chips, countsLine, linkState]);
 
   const handleCopy = async () => {
     try {
@@ -123,7 +140,7 @@ const ShareMenu = ({ config, filters }) => {
       <Typography variant="h6" gutterBottom>
         Top-10 card
       </Typography>
-      {players.length ? (
+      {ranked.length ? (
         <>
           {cardUrl ? (
             <img className="share-card-preview" src={cardUrl} alt="Top-10 share card preview" />

@@ -22,6 +22,8 @@ const PLACEMENT_COLS = [
   ["top8", "T8", "#b06a1e"],
 ];
 
+import { formatPpe } from "./sortPlayers";
+
 const truncate = (ctx, text, maxWidth) => {
   if (ctx.measureText(text).width <= maxWidth) return text;
   let t = text;
@@ -48,7 +50,13 @@ const pill = (ctx, text, x, y) => {
   return w;
 };
 
-export default async function renderShareCard({ players, chips, countsLine }) {
+// players must arrive pre-sorted (ShareMenu applies the link's sort via
+// lib/sortPlayers); sortBy only switches the trailing metric + header label.
+export default async function renderShareCard({ players, chips, countsLine, sortBy = "Points" }) {
+  const isPpe = sortBy === "Ppe";
+  const metricOf = (p) => (isPpe ? p.ppe : p.points);
+  const metricText = (p) =>
+    isPpe ? formatPpe(p.ppe) : (p.points || 0).toLocaleString("en-US");
   // Orbitron/Rajdhani are already loaded by the page CSS; this awaits the
   // specific weights so the canvas never draws with a fallback font.
   try {
@@ -105,7 +113,7 @@ export default async function renderShareCard({ players, chips, countsLine }) {
   ctx.font = "700 17px Rajdhani, sans-serif";
   ctx.fillStyle = EMBER;
   ctx.textAlign = "right";
-  ctx.fillText("TOP 10 · CUSTOM FORMULA", RIGHT, 56);
+  ctx.fillText(isPpe ? "TOP 10 · BY PTS/EVENT" : "TOP 10 · CUSTOM FORMULA", RIGHT, 56);
   if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
 
   // ---- chips row (what's customized)
@@ -136,7 +144,9 @@ export default async function renderShareCard({ players, chips, countsLine }) {
     ctx.lineTo(RIGHT, yTop + rowH - 0.5);
     ctx.stroke();
 
-    const rank = i + 1;
+    // the points-desc Rank, like the board's Rank column — under a PPE sort
+    // the medal numbers travel with their players (03, 01, 05…)
+    const rank = p.Rank ?? i + 1;
     ctx.font = "700 19px Rajdhani, sans-serif";
     ctx.textAlign = "right";
     if (rank === 1) {
@@ -169,18 +179,21 @@ export default async function renderShareCard({ players, chips, countsLine }) {
       px += 90;
     });
 
-    const maxPoints = top10[0]?.points || 1;
-    const barW = Math.max(10, Math.round((p.points / maxPoints) * 220));
-    const barGrad = ctx.createLinearGradient(RIGHT - barW, 0, RIGHT, 0);
-    barGrad.addColorStop(0, EMBER);
-    barGrad.addColorStop(1, "#f5c518");
-    ctx.fillStyle = barGrad;
-    ctx.fillRect(RIGHT - barW, yTop + 33, barW, 3);
+    const maxMetric = metricOf(top10[0]) || 1;
+    const value = metricOf(p);
+    if (value) {
+      const barW = Math.max(10, Math.round((value / maxMetric) * 220));
+      const barGrad = ctx.createLinearGradient(RIGHT - barW, 0, RIGHT, 0);
+      barGrad.addColorStop(0, EMBER);
+      barGrad.addColorStop(1, "#f5c518");
+      ctx.fillStyle = barGrad;
+      ctx.fillRect(RIGHT - barW, yTop + 33, barW, 3);
+    }
 
     ctx.font = "700 21px Rajdhani, sans-serif";
     ctx.textAlign = "right";
     ctx.fillStyle = "#ffffff";
-    ctx.fillText((p.points || 0).toLocaleString("en-US"), RIGHT, base);
+    ctx.fillText(metricText(p), RIGHT, base);
   });
 
   // ---- footer
