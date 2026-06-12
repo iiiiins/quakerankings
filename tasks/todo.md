@@ -1,75 +1,82 @@
-# Feature 3 — Admin data-entry, full CRUD (roadmap.md §3)
+# Feature 4 — Shareable rankings + top-10 share card
 
-Session 2026-06-11. The auth/RLS design was fixed in the roadmap; two dashboard-only steps
-(policies SQL + disable signups) ran mid-session as a Bruno handoff. No deploy without "ship it".
+Session 2026-06-12. Spec: docs/ROADMAP.md §4 + docs/mocks/shareable-rankings-walkthrough.html.
+Build + verify against dev preview; NO deploy without Bruno's "ship it".
 
-## Assumptions / build-time decisions (held)
+## Design decisions (made this session, within roadmap constraints)
 
-- `.env` (committed) = public config (Supabase URL, anon key, GA id); `.env.local` = secrets
-  (service key, ADMIN_EMAIL/ADMIN_PASSWORD). CRA bakes env at server/build start.
-- Admin user created programmatically (service key) with a generated password; Bruno replaced
-  it with his own in `.env.local` mid-session (aligned to auth via admin API — see review).
-- Edit affordance desktop-only on /events; editor edits raw rows (team events → row picker).
-- Adds on `/admin`; corrections from the browser surface. Insert id = max+1 (script's scheme).
-- Names lowercased on save via shared `normalizeRow`; soft dup warning (warn once, then allow).
-- No signup/reset UI; `/admin` has no nav tab — RLS is the gate, not obscurity.
+- **Single versioned param** `#/?f=v1.<segments>` — one opaque token, version governs the
+  whole blob. Dot-separated segments, canonical order, omit-at-default (a bare `v1` = pure
+  default board, legal).
+- **Share icon home-only**: the link always targets the home board; sharing from /events or
+  /charts has no defined meaning. Icon renders left of the gear (mock position), only on `/`.
+- **No continuous URL sync**: the link is built on demand in the popover (mock step 1 shows a
+  bare URL while tuning). Avoids history spam and router fights.
+- **Search / column sort / pager are NOT in the contract** — view conveniences, not the
+  ranking. Filters (game, mode, years, LAN, power) + full formula are.
+- **Shared view = defaults + link overrides** (localStorage ignored entirely while shared —
+  omitted segment means *default*, so every visitor sees the same board).
+- **While shared: formula auto-save suppressed.** Adopt = persist current state to
+  localStorage + dismiss + clean URL. Reset = restore visitor's own stored formula + remount
+  board (filters back to defaults) + clean URL. Tweaks while shared stay unsaved until adopt.
+- **Card**: 1200×630 landscape PNG (Discord-paste size), single-column top-10, site visual
+  language, drawn after document.fonts load of Orbitron/Rajdhani. Download + clipboard copy.
+- **Filters reach the header share popover via a ref mirror** (PlayerList pushes its filter
+  state up through onFiltersChange; popover reads the ref when opened — popover blocks
+  filter interaction while open, so a ref is race-free). ShareMenu recomputes the top-10
+  itself via useTournaments + computeRankings (same pure pipeline as the board).
 
-## Plan
+## URL schema v1 (public contract — goes in CLAUDE.md at ship)
 
-- [x] **Commit 1 — chore: env vars** (`f1eb7b5`) — .env + supabaseClient/App.js/import script
-      on env config. Verified: site loads full data + GA; script dry-run green. Known issue #1
-      closed.
-- [x] **Commit 2 — refactor: shared validation rules** (`79b3b60`) — tournamentRules.js (CJS),
-      import script refactored onto it. Verified: 9-case invalid CSV reports every rule with
-      raw sheet values; valid row plans clean.
-- [x] **Commit 3 — feat(scripts): admin setup + RLS probes** (`51921a0`) — create-admin-user.js
-      (user `bcbf6194…` created, creds → .env.local, setup-admin.sql emitted), probe-rls.js.
-      **Baseline probe found a live gap**: signups OPEN + legacy policy allowing ANY
-      authenticated INSERT → SQL rewritten to wipe all policies first (DO block).
-- [x] **Commit 4 — feat: auth session + /admin login** (`23847f7`) — useSession + login card.
-      Verified: bad creds error, real login, session survives reload, sign-out clears.
-- [x] **Commit 5 — feat: add-tournament form** (`069ab12`) — TournamentForm + tournamentWrites
-      (0-rows guard) + refreshTournaments. Verified: rule errors render; dup warning on
-      QuakeCon 2008/QL/CTF; live insert #1928 → visible in /events, name lowercased; cleaned.
-      Gotcha fixed: babel-helper syntax flips the CJS rules file to ESM (build error) —
-      rewrote with Object.assign/forEach + guard comment; consumers default-import.
-- [x] **Commit 6 — feat: edit/delete from the browser** (`6c3be8c`) — pencil column (authed,
-      desktop), EventEditDialog (row picker for team events, add-row, dialog re-derives event
-      by key). Verified incl. pre-SQL negative path ("No row was updated — write rejected").
-- [x] **HANDOFF → Bruno**: SQL pasted, signups disabled. ✔ done same session.
-- [x] **Verification (post-handoff)**: `probe-rls.js --full` **8/8 PASS** (anon
-      insert/update/delete rejected, public signup rejected, admin insert/update/delete
-      allowed, row count restored). UI E2E against live RLS: add #1928 → edit ($777→$999 +
-      2nd place) → two-step delete → 1,385 events restored; sign-out removes pencils.
-- [x] **Commit 7 — fix: sign-out zombie sessions** (`9ace29b`) — found during E2E: signOut()
-      on a server-revoked session errors without clearing the persisted token (tab stranded
-      signed-in). Handler force-clears sb-*-auth-token + reloads. Both paths verified.
-- [x] **Commit 8 — docs**: CLAUDE.md (overview, stack, structure incl. scripts/, write-access
-      model, auth flow, known issues renumbered, quirks), roadmap §3 SHIPPED + decision log,
-      this review.
-- [x] Final: `npm run build` green (268.91 kB gz, +5.3 kB over feature 2). No deploy — gate.
+```
+#/?f=v1[.<segment>]*          segments in canonical order, each omitted at default
+p<n>-<n>-<n>-<n>              base points first-second-top4-top8      p150-75-30-10
+hp<c>[-<c>]                   hidden placements  c ∈ 1|2|4|8          hp4-8
+t<n>-<n>-<n>-<n>-<n>          tier weights 1→5                        t100-80-50-25-10
+ht<c>[-<c>]                   hidden tiers       c ∈ 1..5             ht4-5
+g<code>_<n>[-<code>_<n>]      game weights ≠ 100                      gql_120-qc_80
+hg<code>[-<code>]             hidden games                            hgdb
+m<code>_<n>[-<code>_<n>]      mode weights ≠ 100                      mtdm_50
+hm<code>[-<code>]             hidden modes                            hmsac-wip
+e<n>                          minEventsForPpe ≠ 15                    e10
+fg<code>                      game filter ≠ All                       fgq3
+fm<code>                      mode filter ≠ All                       fmduel
+y<from>-<to>                  year range ≠ 1996–current               y2003-2013
+l                             LAN only
+w                             Power Ranking
+
+games: qw q2 q3 q4 ql qc db   modes: duel 2v2 tdm ctf ca sac wip dbt
+```
+
+Decode: no `v1` prefix → null (not a shared view). Unknown segment/code → skipped leniently
+(forward compat: vocabulary may grow, grammar may not). Weights/points clamped [0, 100000];
+years clamped [1996, current], swapped if from>to. Decode returns COMPLETE config + filters.
+
+## Steps
+
+- [ ] 1. Extract `src/lib/formulaDefaults.js` (9 default objects + GAMES/MODES/CURRENT_YEAR
+       + default filters); App.js + PlayerList consume. Pure refactor.
+       → verify: board renders identically in preview (same summary-line counts), HMR clean.
+- [ ] 2. `src/lib/shareCodec.js` (encode / decode / summarize chips) +
+       `src/lib/shareCodec.test.js` (round-trips, omit-defaults, leniency, clamping, chips).
+       → verify: CI=true npm test green. First test file in the repo.
+- [ ] 3. Share popover: `components/ShareMenu.js`, header share icon (home-only, left of
+       gear), PlayerList onFiltersChange mirror. Link box + copy + customization chips.
+       → verify in preview: tweaked settings/filters produce the right link; copy feedback.
+- [ ] 4. Shared-view mode: boot parse from hash, config init from shared, banner
+       (`components/SharedBanner.js`) with adopt/reset, save suppression, hashchange
+       handler, boardKey remount, URL cleanup via replaceState.
+       → verify in preview: open share link fresh → board + banner + filter UI match;
+         adopt persists to localStorage + cleans URL; reset restores prior formula;
+         visitor's stored formula untouched while merely viewing.
+- [ ] 5. Share card: `lib/renderShareCard.js` (canvas draw) + card section in ShareMenu
+       (preview img, Download PNG, Copy image; fonts awaited before draw).
+       → verify in preview: preview img renders (dataURL length + screenshot), download
+         triggers, copy guarded with fallback message.
+- [ ] 6. Docs + wrap: CLAUDE.md (schema as public contract, project structure, state
+       architecture, share lifecycle), ROADMAP.md (feature 4 built/verified, awaiting
+       "ship it"), final `npm run build` green. NO deploy.
 
 ## Review
 
-Built roadmap feature 3 in seven code commits + docs, all verified against the live dev
-preview and the live Supabase project. Deployed 2026-06-11 after Bruno's "ship it":
-pre-deploy checks passed, main pushed, bundle `98ad6618` published and grep-verified live
-(10/10 tokens incl. service-key-absent check).
-
-The probe-first approach paid for itself before any UI existed: the baseline run exposed that
-production was one scripted signup away from arbitrary inserts (open signups + a legacy
-any-authenticated INSERT policy). The setup SQL now nukes every existing policy before
-creating the four intended ones, and the probe is the standing regression tool for the
-roadmap's verification requirement (insert AND update AND delete, both roles, plus signup).
-
-Incidents handled mid-session, both worth remembering:
-- Bruno rotated ADMIN_PASSWORD in .env.local but the dashboard-side change didn't land —
-  resolved by setting auth to the .env.local value via the admin API (the secrets file is the
-  contract; his password never entered the transcript).
-- My own mid-session password updates revoked the preview's server-side session, which exposed
-  the supabase-js zombie-sign-out bug (commit 7) — sign-out silently no-ops on a
-  revoked/expired session, stranding the tab. Real-world trigger: dashboard password rotation
-  with a site tab open.
-
-Deviations from the roadmap's letter: none of substance — the design (auth method, RLS shape,
-client key model, full-CRUD-on-browser-surface, both riders) shipped as specced.
+(filled at end of session)

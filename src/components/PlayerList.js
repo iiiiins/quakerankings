@@ -23,21 +23,11 @@ import {
 import useTournaments from "../hooks/useTournaments";
 import computeRankings from "../lib/computeRankings";
 import gameLogos from "../lib/gameLogos";
+import { GAMES, MODES, CURRENT_YEAR, YEAR_MIN } from "../lib/formulaDefaults";
 
-const CURRENT_YEAR = new Date().getFullYear();
+const games = ["All", ...GAMES];
 
-const games = [
-  "All",
-  "Quake World",
-  "Quake 2",
-  "Quake 3",
-  "Quake 4",
-  "Quake Live",
-  "Quake Champions",
-  "Diabotical",
-];
-
-const modes = ["All", "Duel", "2v2", "TDM", "CTF", "CA", "SAC", "WIP", "DBT"];
+const modes = ["All", ...MODES];
 
 const columnKeyMap = {
   "1st": "placements.first",
@@ -101,7 +91,7 @@ const PlayerList = ({
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedGame, setSelectedGame] = useState("All");
   const [selectedMode, setSelectedMode] = useState("All");
-  const [yearRange, setYearRange] = useState([1996, CURRENT_YEAR]);
+  const [yearRange, setYearRange] = useState([YEAR_MIN, CURRENT_YEAR]);
   const [searchQuery, setSearchQuery] = useState("");
   const [lanOnly, setLanOnly] = useState(false);
   const [powerRanking, setPowerRanking] = useState(false);
@@ -340,7 +330,7 @@ const PlayerList = ({
               value={yearRange}
               onChange={handleYearRangeChange}
               valueLabelDisplay="auto"
-              min={1996}
+              min={YEAR_MIN}
               max={CURRENT_YEAR}
               step={1}
             />
@@ -679,7 +669,7 @@ const PlayerList = ({
               value={yearRange}
               onChange={handleYearRangeChange}
               valueLabelDisplay="auto"
-              min={1996}
+              min={YEAR_MIN}
               max={CURRENT_YEAR}
               step={1}
             />

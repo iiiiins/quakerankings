@@ -21,6 +21,17 @@ import {
 import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings Icon
 import SettingsMenu from "./components/SettingsMenu";
 import { loadStoredFormula, saveStoredFormula } from "./lib/formulaStorage";
+import {
+  DEFAULT_POINTS_CONFIG,
+  DEFAULT_POINTS_VISIBILITY,
+  DEFAULT_GAME_WEIGHTS,
+  DEFAULT_GAME_VISIBILITY,
+  DEFAULT_TIER_WEIGHTS,
+  DEFAULT_TIER_VISIBILITY,
+  DEFAULT_MODE_WEIGHTS,
+  DEFAULT_MODE_VISIBILITY,
+  DEFAULT_MIN_EVENTS_FOR_PPE,
+} from "./lib/formulaDefaults";
 import theme from "./theme";
 import "./App.css";
 import twitterLogo from "./logos/x_logo.png";
@@ -60,88 +71,48 @@ const storedFormula = loadStoredFormula();
 
 const App = () => {
   const [pointsConfig, setPointsConfig] = useState({
-    first: 100,
-    second: 50,
-    top4: 25,
-    top8: 10,
+    ...DEFAULT_POINTS_CONFIG,
     ...storedFormula?.pointsConfig,
   });
 
   const [pointsVisibility, setPointsVisibility] = useState({
-    first: true,
-    second: true,
-    top4: true,
-    top8: true,
+    ...DEFAULT_POINTS_VISIBILITY,
     ...storedFormula?.pointsVisibility,
   });
 
   const [gameWeights, setGameWeights] = useState({
-    "Quake World": 100,
-    "Quake 2": 100,
-    "Quake 3": 100,
-    "Quake 4": 100,
-    "Quake Live": 100,
-    "Quake Champions": 100,
-    Diabotical: 100,
+    ...DEFAULT_GAME_WEIGHTS,
     ...storedFormula?.gameWeights,
   });
 
   const [gameVisibility, setGameVisibility] = useState({
-    "Quake World": true,
-    "Quake 2": true,
-    "Quake 3": true,
-    "Quake 4": true,
-    "Quake Live": true,
-    "Quake Champions": true,
-    Diabotical: true,
+    ...DEFAULT_GAME_VISIBILITY,
     ...storedFormula?.gameVisibility,
   });
 
   const [tierWeights, setTierWeights] = useState({
-    1: 100,
-    2: 60,
-    3: 35,
-    4: 20,
-    5: 10,
+    ...DEFAULT_TIER_WEIGHTS,
     ...storedFormula?.tierWeights,
   });
 
   const [tierVisibility, setTierVisibility] = useState({
-    1: true,
-    2: true,
-    3: true,
-    4: true,
-    5: true,
+    ...DEFAULT_TIER_VISIBILITY,
     ...storedFormula?.tierVisibility,
   });
 
   const [modeVisibility, setModeVisibility] = useState({
-    "Duel": true,
-    "2v2": true,
-    "TDM": true,
-    "CTF": true,
-    "CA": true,
-    "SAC": true,
-    "WIP": true,
-    "DBT": true,
+    ...DEFAULT_MODE_VISIBILITY,
     ...storedFormula?.modeVisibility,
   });
 
   const [modeWeights, setModeWeights] = useState({
-    "Duel": 100,
-    "2v2": 100,
-    "TDM": 100,
-    "CTF": 100,
-    "CA": 100,
-    "SAC": 100,
-    "WIP": 100,
-    "DBT": 100,
+    ...DEFAULT_MODE_WEIGHTS,
     ...storedFormula?.modeWeights,
   });
 
   // Points/Event is only shown for players with at least this many events
   const [minEventsForPpe, setMinEventsForPpe] = useState(
-    storedFormula?.minEventsForPpe ?? 15
+    storedFormula?.minEventsForPpe ?? DEFAULT_MIN_EVENTS_FOR_PPE
   );
 
   // Formula memory: returning visitors keep their tuning
