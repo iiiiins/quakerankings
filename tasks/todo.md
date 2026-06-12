@@ -91,7 +91,9 @@ can't DDL), then probe + e2e verification run.
 
 Feature 5 complete in 5 atomic commits (`60b616c` SQL+probe, `5e99ccd` service+form
 slot, `0ae9c78` public UI, `b977f2c` admin queue, `fed49ef` todo) + docs. Tests 22/22,
-prod build green (+2.3 kB JS). NOT deployed — Bruno tries it first, then "ship it".
+prod build green (+2.3 kB JS). **SHIPPED 2026-06-12 on Bruno's "ship it"**: pre-deploy
+checks passed, main pushed, `npm run deploy` published, bundle `7266b6fa` live (~40s
+CDN lag) with all nine feature markers in the served JS/CSS.
 
 The security model carries the feature: anon's only path is a column-level INSERT
 forced to pending with an empty honeypot, caps are DB constraints, the queue treats

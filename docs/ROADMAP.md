@@ -30,6 +30,12 @@ all four player-depth candidates committed; order = sharing → submissions → 
    factory reset), custom-formula banner, PPE sort in the contract. Commits
    `7e6628e`…`a0a623b`; deployed bundle `38ed9e07`, verified live 2026-06-12 (hash + six
    feature markers in the served bundle).
+5. **Community submissions** — `Submissions` table + anon-INSERT-only RLS
+   (`scripts/setup-submissions.sql`, pasted 2026-06-12), public suggest-a-fix / submit-a-
+   tournament on /events (signed-out only), /admin review queue with live-row diffs +
+   approve/reject, probe-rls.js extended to 20 probes (the standing regression). Commits
+   `60b616c`…`679fb1a`; deployed bundle `7266b6fa`, verified live 2026-06-12 (hash + nine
+   feature markers in the served bundle/CSS).
 
 ## Committed features, in order
 
@@ -57,12 +63,12 @@ all four player-depth candidates committed; order = sharing → submissions → 
 
 ### 5. Community submissions — in-app, with admin review queue (~1.5 sessions)
 
-> **Status: BUILT 2026-06-12** — not yet deployed (awaiting "ship it"). Table + RLS live
-> in Supabase (`scripts/setup-submissions.sql` pasted same day), probe extended and green
-> 20/20, full loop verified in preview against the live backend: signed-out correction +
-> new submission → queue (diff vs live row) → approve applied the row change / reject
-> marked — test data cleaned up after. Docs in CLAUDE.md ("Submissions table",
-> "Community submissions flow"). Commits `60b616c`…`b977f2c`.
+> **Status: SHIPPED 2026-06-12** — bundle `7266b6fa` verified live (see Shipped section).
+> Table + RLS live in Supabase (`scripts/setup-submissions.sql` pasted same day), probe
+> extended and green 20/20, full loop verified against the live backend: signed-out
+> correction + new submission → queue (diff vs live row) → approve applied the row change /
+> reject marked — test data cleaned up after. Docs in CLAUDE.md ("Submissions table",
+> "Community submissions flow").
 
 Supersedes v1's "B2-lite first" stance — two things changed: Bruno explicitly wants
 corrections-from-visitors now, and feature 3 built the auth/RLS/admin surfaces that made
