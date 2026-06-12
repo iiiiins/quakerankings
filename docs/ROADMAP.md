@@ -57,6 +57,13 @@ all four player-depth candidates committed; order = sharing → submissions → 
 
 ### 5. Community submissions — in-app, with admin review queue (~1.5 sessions)
 
+> **Status: BUILT 2026-06-12** — not yet deployed (awaiting "ship it"). Table + RLS live
+> in Supabase (`scripts/setup-submissions.sql` pasted same day), probe extended and green
+> 20/20, full loop verified in preview against the live backend: signed-out correction +
+> new submission → queue (diff vs live row) → approve applied the row change / reject
+> marked — test data cleaned up after. Docs in CLAUDE.md ("Submissions table",
+> "Community submissions flow"). Commits `60b616c`…`b977f2c`.
+
 Supersedes v1's "B2-lite first" stance — two things changed: Bruno explicitly wants
 corrections-from-visitors now, and feature 3 built the auth/RLS/admin surfaces that made
 B2-full expensive. Decision logged 2026-06-12.
@@ -209,3 +216,18 @@ B2-full expensive. Decision logged 2026-06-12.
   visitor clicking Reset on someone's link loses their tuning — viewing never destroys,
   the explicit click does. Supersedes the feature-4 entry's "restores the visitor's
   stored formula".
+- 2026-06-12 — **Feature 5 build decisions** (within the locked roadmap constraints):
+  honeypot enforced at the DB (INSERT policy's WITH CHECK rejects a filled trap — bot rows
+  are never stored; the client also fakes success without calling the API, so form bots
+  get no tell); anon INSERT is a **column-level grant** after revoking Supabase's default
+  table-wide grant (anon can't supply id/created_at/status — Submissions ids are identity
+  because anon can't SELECT for max-id+1); length caps live as CHECK constraints, client
+  maxLength is just UX; suggest UI is signed-out-only (one rule: signed-out = suggest,
+  signed-in = pencil — an authenticated session can't insert under anon-only RLS);
+  team-event corrections reuse the admin row-picker pattern; queue diffs corrections
+  against the LIVE row and treats payloads as untrusted (rebuilt from known columns +
+  re-validated before approve enables; no FK on target_id — missing target warns and
+  disables approve); approve = tournamentWrites then mark approved, with an explicit
+  do-not-reapprove warning if marking fails after the write landed. Bonus fix shipped
+  with it: message-less Supabase errors (bare `{}` body) rendered "[object Object]" in
+  the shared form.

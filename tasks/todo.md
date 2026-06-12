@@ -69,29 +69,47 @@ can't DDL), then probe + e2e verification run.
 - [x] 5. `npm test` 22/22 + `npm run build` green (+2.3 kB JS, +0.3 kB CSS).
        → **HANDOFF (waiting on Bruno): paste scripts/setup-submissions.sql** in
        Dashboard → SQL Editor.
-- [ ] 6. Post-paste: `node scripts/probe-rls.js --full` (all probes green). E2E in
-       preview: signed-out submit (one correction w/ diff-able edits, one new) →
-       sign in → queue shows both, diff correct → approve correction (row visibly
-       changes in /events) → reject the new one → statuses verified; cleanup test
-       rows (admin delete via UI / service script). Sign out.
-- [ ] 7. Docs: CLAUDE.md (structure, data model Submissions section, admin flow,
-       probe note), ROADMAP.md (§5 status + decision log), todo review section.
-       Commit.
-
-## Post-paste verification checklist (step 6 detail — survives a context reset)
-
-1. `node scripts/probe-rls.js --full` → expect all green incl. new Submissions probes.
-2. Preview signed out on /events: suggest a fix on a single-row event — change Tier +
-   one placement, note "test correction", handle "claude-test" → success message.
-3. "Submit a tournament" → fill a fake event ("RLS PROBE EVENT 2026") → success.
-4. Sign in (/admin, creds in .env.local): queue shows 2 pending — correction shows
-   only the changed fields as old → new; new shows full row summary.
-5. Approve the correction → /events row reflects it (then edit it back / delete);
-   reject the new one. Queue empties as actions land.
-6. Service-key check (node one-liner): statuses approved/rejected as expected; then
-   delete the two test submissions + revert the tournament edit.
-7. Sign out, confirm suggest icons return.
+- [x] 6. Post-paste (Bruno ran the SQL 2026-06-12): `probe-rls.js --full` **20/20
+       green** — anon submission INSERT lands as pending; non-pending rejected by the
+       column grant ("permission denied"); honeypot rejected by WITH CHECK; 600-char
+       note rejected by the check constraint; anon read/update/delete all rejected;
+       admin select/update/delete allowed; both counts restored. E2E in preview
+       against live Supabase: correction on 250 FPS Season 2 (Prizepool 3500→3501,
+       8th swex→swexx) + new "E2E Test Cup" submitted signed-out → queue showed
+       FIX #4 with exactly the two diff lines + NEW #5 with row summary, notes +
+       handles intact → approve applied the row (events table showed $3,501; DB
+       showed 8th=swexx) and marked approved → reject marked #5 rejected → queue
+       emptied. Cleanup: row reverted, both submissions deleted (service key), temp
+       script removed. Signed out; suggest icons returned; console clean after the
+       final marker.
+- [x] 7. Docs: CLAUDE.md (overview, backend bullet, structure entries, Submissions
+       data-model section, submissions flow section, probe 20/20 note, test-count
+       19→22 drift fix), ROADMAP.md (§5 BUILT status + build-decisions log entry),
+       this review.
 
 ## Review
 
-(to fill at completion)
+Feature 5 complete in 5 atomic commits (`60b616c` SQL+probe, `5e99ccd` service+form
+slot, `0ae9c78` public UI, `b977f2c` admin queue, `fed49ef` todo) + docs. Tests 22/22,
+prod build green (+2.3 kB JS). NOT deployed — Bruno tries it first, then "ship it".
+
+The security model carries the feature: anon's only path is a column-level INSERT
+forced to pending with an empty honeypot, caps are DB constraints, the queue treats
+payloads as untrusted input (rebuild from known columns + re-validate + string-coerce),
+and probe-rls.js now pins all of it as the standing regression (run --full after any
+policy change).
+
+Build decisions logged in the roadmap (honeypot-rejects-at-DB, revoke-then-narrow
+grants, identity ids, signed-out-only suggest, live-row diffs, no FK on target_id,
+do-not-reapprove warning). One drive-by fix: message-less Supabase errors rendered
+"[object Object]" in the shared form — now readable (also fixed the latent admin case).
+
+Deliberately NOT done: submissions pagination (queue is expected to stay short;
+revisit if drive-by QA actually arrives in volume), approved/rejected history view in
+the UI (the table keeps the rows — query in Supabase if ever needed), GA events on
+submit, and any notification path ("N pending" badge outside /admin is the backlog's
+free version; email/webhook needs a server).
+
+Verification gap to try by hand if desired: nothing — the full loop ran against the
+live backend. The only environment-specific caveat is the known preview screenshot
+wedge (styles verified via preview_inspect instead).

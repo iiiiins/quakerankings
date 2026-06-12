@@ -1,20 +1,20 @@
 # CLAUDE.md
 
-Regenerated 2026-06-11 from a full source read; updated the same day after the leaderboard-upgrades session (roadmap feature 1), the tournament-browser session (feature 2), and the admin-CRUD session (feature 3); updated 2026-06-12 after the sharing session (feature 4). Every claim below was verified against the code on those dates.
+Regenerated 2026-06-11 from a full source read; updated the same day after the leaderboard-upgrades session (roadmap feature 1), the tournament-browser session (feature 2), and the admin-CRUD session (feature 3); updated 2026-06-12 after the sharing session (feature 4) and the community-submissions session (feature 5). Every claim below was verified against the code on those dates.
 
 ## Overview
 
-Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset; the formula persists across visits in localStorage. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). The formula + home filters are also shareable as a versioned URL (`#/?f=v1…` — see Share links) that reproduces the exact board for anyone; viewers get a banner to adopt or dismiss it, and the share popover renders a top-10 PNG card for chats whose link previews can't see the formula. Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts. A tournament browser at `/events` lists the full dataset as grouped events (filters, podium links, prize pools), and a methodology page (footer link) is the standing "how the ranking works" answer. A single-user admin (`/admin`, no nav tab) adds tournaments; signed-in sessions edit/delete rows from the events browser. Security lives entirely in Supabase RLS, not in hiding the page.
+Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset; the formula persists across visits in localStorage. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). The formula + home filters are also shareable as a versioned URL (`#/?f=v1…` — see Share links) that reproduces the exact board for anyone; viewers get a banner to adopt or dismiss it, and the share popover renders a top-10 PNG card for chats whose link previews can't see the formula. Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts. A tournament browser at `/events` lists the full dataset as grouped events (filters, podium links, prize pools), and a methodology page (footer link) is the standing "how the ranking works" answer. A single-user admin (`/admin`, no nav tab) adds tournaments; signed-in sessions edit/delete rows from the events browser. Signed-out visitors can suggest a fix on any event row or submit a missing tournament — both land in a `Submissions` review queue invisible to the public (anon INSERT only); `/admin` lists the pending queue with a per-field diff for corrections and approve/reject actions. Security lives entirely in Supabase RLS, not in hiding the page.
 
 ## Stack
 
 - **React 19.0** + **react-scripts 5.0.1** (Create React App). React 19 with CRA 5 is unofficial — `.npmrc` has `legacy-peer-deps=true` so `npm install` resolves.
 - **Routing**: `react-router-dom` 7.x using `HashRouter`. Deploy path is `https://iiiiins.github.io/quakerankings/#/...`. Six routes.
 - **UI**: `@mui/material` 6.3 + `@mui/icons-material` 6.3. Full custom theme in `src/theme.js` (2026-06-11 redesign: ember `#e05a1f` primary on warm gunmetal surfaces, Rajdhani UI type, component styleOverrides); design-system classes (medal headers/lanes, podium, plates, mobile rows) live in `App.css`. The fixed visual target is `docs/mocks/direction-hybrid.html` — compare against it before changing styles (full brief: `docs/REDESIGN.md`). Emotion is the MUI peer dep.
-- **Backend**: Supabase (`@supabase/supabase-js` 2.47) — a single `Tournaments` table. Reads use the anon role; writes require the signed-in admin (email/password auth, signups disabled, uid-scoped RLS — see Data model). URL + anon JWT + GA id come from the committed `.env` (`REACT_APP_*`, public by design); secrets (service key, admin credentials) live in the gitignored `.env.local`.
+- **Backend**: Supabase (`@supabase/supabase-js` 2.47) — a `Tournaments` table plus a `Submissions` review-queue table (feature 5). Tournaments: public reads via anon role, writes require the signed-in admin; Submissions: anon may only INSERT pending rows (honeypot + caps enforced in the DB), only the admin uid can read/update/delete (email/password auth, signups disabled, uid-scoped RLS — see Data model). URL + anon JWT + GA id come from the committed `.env` (`REACT_APP_*`, public by design); secrets (service key, admin credentials) live in the gitignored `.env.local`.
 - **Charts**: `chart.js` 4.x + `react-chartjs-2` 5.x. Only `Line` is used; scales/elements registered at the top of `AdvancedStats.js`.
 - **Analytics**: `react-ga4` with GA property `G-X11M9568HY`, initialized at module load in `App.js`; `AnalyticsTracker` fires a pageview on each route change.
-- **Tests**: jest via `react-scripts test` (`$env:CI="true"; npm test -- --watchAll=false`). One suite so far: `src/lib/shareCodec.test.js` — 19 cases pinning the share-URL public contract; a failure there means links in the wild change meaning.
+- **Tests**: jest via `react-scripts test` (`$env:CI="true"; npm test -- --watchAll=false`). One suite so far: `src/lib/shareCodec.test.js` — 22 cases pinning the share-URL public contract; a failure there means links in the wild change meaning.
 - **Hosting**: GitHub Pages, served from the `gh-pages` branch. `main` holds source.
 
 ## Project structure
@@ -42,16 +42,27 @@ src/
 │   ├── EventsBrowser.js           "/events" route. Filterable grouped-event table (game/tier/year/LAN
 │   │                              + name search, sortable year/event/tier/prize, medal podium columns
 │   │                              linking to player pages, scroll pager). Mobile: chip rail +
-│   │                              bottom sheet + two-line rows. Scoring-config independent — no props
+│   │                              bottom sheet + two-line rows. Scoring-config independent — no props.
+│   │                              Trailing action per row: signed-in desktop = edit pencil, signed-out
+│   │                              = suggest-a-fix (desktop + mobile); summary line carries the
+│   │                              "+ Submit a tournament" entry (signed-out only)
 │   ├── Methodology.js             "/methodology" route (footer link). Static how-it-works cards +
 │   │                              live result/event counts from useTournaments
 │   ├── AdminPage.js               "/admin" route (no nav tab — direct URL). Login card → signed-in
-│   │                              shell: add-tournament form + sign-out (force-clears zombie
-│   │                              sessions whose server side was revoked elsewhere)
-│   ├── TournamentForm.js          one form for add + edit: 15 row fields, shared validation, soft
-│   │                              duplicate warning ("Add anyway"), prefill/dupCheck props
+│   │                              shell: review queue + add-tournament form + sign-out (force-clears
+│   │                              zombie sessions whose server side was revoked elsewhere)
+│   ├── TournamentForm.js          one form for add + edit + suggest: 15 row fields, shared validation,
+│   │                              soft duplicate warning ("Add anyway"), prefill/dupCheck props,
+│   │                              children slot for extra grid fields (the suggest extras)
 │   ├── EventEditDialog.js         the browser's edit surface: single-row events open the form,
 │   │                              team events get a row picker + add-row-to-event; closes on save
+│   ├── SuggestDialog.js           the public submission surface: correction (prefilled form; team
+│   │                              events pick a raw row first) or new tournament, plus reviewer
+│   │                              note / handle / offscreen honeypot; writes only to Submissions
+│   ├── SubmissionQueue.js         /admin pending queue: FIX/NEW badges, note+handle, per-field diff
+│   │                              vs the LIVE row for corrections (missing target disables approve),
+│   │                              payload re-validation gate; approve applies via tournamentWrites
+│   │                              then marks approved, reject just marks
 │   ├── SettingsMenu.js            controlled form in the gear popover; five sections (Points, Games,
 │   │                              Tier, Mode — rows = visibility checkbox + weight input — and
 │   │                              Points per Event with the min-events threshold)
@@ -87,8 +98,13 @@ src/
 ├── services/
 │   ├── supabaseClient.js          client from .env config (REACT_APP_SUPABASE_URL / _ANON_KEY)
 │   ├── fetchPlayersByGame.js      fetchListTournaments — full Tournaments table, [] on error
-│   └── tournamentWrites.js        insert (max-id+1) / update / delete; turns RLS silent no-ops
-│                                  (0 rows affected) into visible errors
+│   ├── tournamentWrites.js        insert (max-id+1) / update / delete; turns RLS silent no-ops
+│   │                              (0 rows affected) into visible errors
+│   └── submissions.js             public submitSuggestion (anon INSERT, no .select — anon has no
+│                                  SELECT grant; honeypot short-circuits to fake success) + admin
+│                                  fetchPendingSubmissions/setSubmissionStatus + rowFromPayload
+│                                  (rebuild from known columns only — payloads arrive via an
+│                                  endpoint open to anon; never spread one into a write or JSX)
 └── logos/                         per-game PNGs + footer X/Twitch logos
 
 scripts/                           plain node (loadEnv reads .env.local then .env)
@@ -98,9 +114,14 @@ scripts/                           plain node (loadEnv reads .env.local then .en
 │                                  setup-admin.sql with the uid baked in
 ├── setup-admin.sql                the live RLS policy set (drops ALL policies first — a legacy
 │                                  any-authenticated-INSERT policy had to die); paste in SQL editor
-├── probe-rls.js                   write-access probes: anon insert/update/delete + public signup
-│                                  must reject; --full adds signed-in admin CRUD on marker rows.
-│                                  Run after ANY auth/RLS change.
+├── setup-submissions.sql          Submissions table + grants + policies (feature 5), idempotent;
+│                                  admin uid hardcoded — must match setup-admin.sql. Paste in SQL
+│                                  editor (ran 2026-06-12)
+├── probe-rls.js                   write-access probes: Tournaments (anon writes + public signup
+│                                  must reject) AND Submissions (anon INSERT-pending allowed;
+│                                  non-pending/honeypot/over-cap/read/update/delete rejected);
+│                                  --full adds signed-in admin CRUD on marker rows in both tables.
+│                                  Run after ANY auth/RLS change (20/20 on 2026-06-12).
 └── env.js                         shared env loader for the admin/probe scripts
 ```
 
@@ -126,7 +147,13 @@ Rows missing `Game`, `Mode`, `Tier`, or `Year` are skipped with a `console.error
 
 PlayerPage queries with `eq` on the **lowercased** URL slug (`1st.eq.<name>`); Postgres `eq` is case-sensitive, so this only matches if DB names are stored lowercase. Client-side comparisons lowercase both sides. The shared `tournamentRules.normalizeRow` lowercases placement names on every write path (admin form + import script) to keep this invariant.
 
-**Write access (since 2026-06-11)**: RLS on `Tournaments` — public SELECT; INSERT/UPDATE/DELETE require the `authenticated` role AND `auth.uid()` = the single admin uid (`scripts/setup-admin.sql` is the live policy set). Signups are disabled in the dashboard (primary control); the uid scope is defense-in-depth. `id` has no DB default — both write paths insert with max-id+1. After ANY auth/RLS change, re-run `node scripts/probe-rls.js --full` (verified 8/8 on 2026-06-11: anon insert/update/delete + public signup rejected; admin insert/update/delete allowed). Note: blocked UPDATE/DELETE surface as 0-affected-rows, not errors — both the probe and `tournamentWrites.js` account for that.
+**Write access (since 2026-06-11)**: RLS on `Tournaments` — public SELECT; INSERT/UPDATE/DELETE require the `authenticated` role AND `auth.uid()` = the single admin uid (`scripts/setup-admin.sql` is the live policy set). Signups are disabled in the dashboard (primary control); the uid scope is defense-in-depth. `id` has no DB default — both write paths insert with max-id+1. After ANY auth/RLS change, re-run `node scripts/probe-rls.js --full` (8/8 on 2026-06-11; 20/20 incl. the Submissions probes on 2026-06-12). Note: blocked UPDATE/DELETE surface as 0-affected-rows, not errors — both the probe and `tournamentWrites.js` account for that.
+
+### `Submissions` table (feature 5, created 2026-06-12 via `scripts/setup-submissions.sql`)
+
+One row per community suggestion: `id` (identity — the DB must assign it: anon has no SELECT, so the Tournaments max-id+1 scheme is impossible), `created_at`, `type` (`new` | `correction`), `target_id` (Tournaments row id for corrections; **no FK** — Tournaments.id has no unique constraint; the queue warns and disables approve when the target is gone), `payload` jsonb (the full proposed row in Tournaments column shape, pre-normalized by the form), `note` (≤ 500), `handle` (≤ 40), `status` (`pending`/`approved`/`rejected`), `website` (the honeypot — humans never see the field).
+
+The spam posture is enforced in the DB, not the client: length caps are CHECK constraints; the INSERT policy's WITH CHECK requires `status = 'pending'` AND an empty honeypot (bot rows are rejected, not stored — the client additionally fakes success without calling the API when the trap is filled); and the anon grant is **column-level** (type, target_id, payload, note, handle, website) after a revoke of Supabase's default table-wide grant, so anon physically can't supply `id`/`created_at`/`status`. No anon SELECT at all — submissions are invisible until reviewed; the admin uid gets SELECT/UPDATE/DELETE. Queue-side, payloads are treated as untrusted: rebuilt from known columns (`rowFromPayload`), re-validated with `validateRow` before approve enables, and only string-coerced values are rendered.
 
 ## Scoring model
 
@@ -182,7 +209,9 @@ Data flow per page:
 - `EventsBrowser` and `Methodology` use the same hook but run `groupEvents` instead — they show raw data and take **no scoring-config props**; the settings gear doesn't affect them.
 - `PlayerPage` builds its own filtered Supabase query per visit.
 
-**Auth/admin flow**: `useSession` mirrors the Supabase session (persisted in localStorage by supabase-js; survives reloads). `/admin` hosts login + the add form; `EventsBrowser` shows a pencil column when signed in on desktop (mobile rows stay read-only) opening `EventEditDialog`. The editor edits **raw rows**, not grouped events — single-row events open the form directly, team events go through a row picker. Every successful write calls `refreshTournaments()` (cache drop + push to all mounted consumers) and closes the dialog; the open dialog re-derives its event by group key, so an edit that changes the key just closes it. The admin UI ships in the public bundle on purpose — RLS is the gate.
+**Auth/admin flow**: `useSession` mirrors the Supabase session (persisted in localStorage by supabase-js; survives reloads). `/admin` hosts login + the review queue + the add form; `EventsBrowser` shows a pencil column when signed in on desktop (mobile rows stay read-only) opening `EventEditDialog`. The editor edits **raw rows**, not grouped events — single-row events open the form directly, team events go through a row picker. Every successful write calls `refreshTournaments()` (cache drop + push to all mounted consumers) and closes the dialog; the open dialog re-derives its event by group key, so an edit that changes the key just closes it. The admin UI ships in the public bundle on purpose — RLS is the gate.
+
+**Community submissions flow (feature 5)**: signed-out only — one rule: signed-out = suggest, signed-in = edit (an authenticated session can't INSERT under the anon-only policy, so the suggest affordances hide when a session exists). `SuggestDialog` reuses `TournamentForm` (corrections prefill the raw row; team events get the same row picker as the admin editor) plus reviewer note / handle / honeypot extras, and submits the normalized row as the `payload`. Approving in `SubmissionQueue` applies via `tournamentWrites` with the admin session (correction → `updateTournament(target_id)`, new → `insertTournament` max-id+1), then marks the submission `approved`; if marking fails after the write landed, the item shows a do-NOT-reapprove warning (a second approve would double-apply). Corrections diff against the **live** row — what approving would change today, not what the submitter saw.
 
 Routes (all under `HashRouter`): `/` → PlayerList, `/events` → EventsBrowser, `/charts` → AdvancedStats, `/methodology` → Methodology (footer link, not a tab), `/admin` → AdminPage (no tab — direct URL), `/players/:playerName` → PlayerPage. In-app nav in `App.js` uses `window.location.hash = "#/..."` rather than `useNavigate()` — works, but bypasses the router lifecycle; NavTabs marks Home active on `/players/*` too (pre-existing behavior, kept).
 
