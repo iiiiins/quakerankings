@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { HashRouter as Router, Routes, Route, useLocation, Link } from "react-router-dom";
 import PlayerList from "./components/PlayerList";
 import PlayerPage from "./components/PlayerPage";
@@ -19,7 +19,9 @@ import {
   Popover,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings Icon
+import ShareIcon from "@mui/icons-material/Share";
 import SettingsMenu from "./components/SettingsMenu";
+import ShareMenu from "./components/ShareMenu";
 import { loadStoredFormula, saveStoredFormula } from "./lib/formulaStorage";
 import {
   DEFAULT_POINTS_CONFIG,
@@ -31,6 +33,7 @@ import {
   DEFAULT_MODE_WEIGHTS,
   DEFAULT_MODE_VISIBILITY,
   DEFAULT_MIN_EVENTS_FOR_PPE,
+  DEFAULT_FILTERS,
 } from "./lib/formulaDefaults";
 import theme from "./theme";
 import "./App.css";
@@ -61,6 +64,36 @@ const NavTabs = () => {
         </Button>
       ))}
     </nav>
+  );
+};
+
+// The share affordance only exists on the home board — the link it builds
+// always targets "/" with the current formula + home filters. Lives in its
+// own component so useLocation runs inside <Router> (same as NavTabs).
+const ShareControl = ({ config, getFilters }) => {
+  const { pathname } = useLocation();
+  const [anchorEl, setAnchorEl] = useState(null);
+  if (pathname !== "/") return null;
+  return (
+    <>
+      <IconButton
+        color="inherit"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-label="Share this ranking"
+      >
+        <ShareIcon />
+      </IconButton>
+      <Popover
+        id="share-popover"
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <ShareMenu config={config} filters={getFilters()} />
+      </Popover>
+    </>
   );
 };
 
@@ -149,6 +182,27 @@ const App = () => {
   };
   const isOpen = Boolean(anchorEl);
 
+  // Mirror of PlayerList's filter state for the header share popover. A ref
+  // is enough: the popover re-reads it when it opens, and the open popover
+  // blocks filter interaction, so it can't go stale while visible.
+  const homeFiltersRef = useRef({ ...DEFAULT_FILTERS });
+  const handleFiltersChange = useCallback((filters) => {
+    homeFiltersRef.current = filters;
+  }, []);
+  const getHomeFilters = useCallback(() => homeFiltersRef.current, []);
+
+  const scoringConfig = {
+    pointsConfig,
+    pointsVisibility,
+    gameWeights,
+    gameVisibility,
+    tierWeights,
+    tierVisibility,
+    modeWeights,
+    modeVisibility,
+    minEventsForPpe,
+  };
+
   
 
   return (
@@ -164,6 +218,7 @@ const App = () => {
             </h1>
             <NavTabs />
             <Box className="header-icons">
+              <ShareControl config={scoringConfig} getFilters={getHomeFilters} />
               <IconButton
                 color="inherit"
                 onClick={handleSettingsClick}
@@ -225,6 +280,7 @@ const App = () => {
                     modeWeights={modeWeights}
                     modeVisibility={modeVisibility}
                     minEventsForPpe={minEventsForPpe}
+                    onFiltersChange={handleFiltersChange}
                   />
                 }
               />

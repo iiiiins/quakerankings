@@ -86,6 +86,7 @@ const PlayerList = ({
   modeWeights,
   modeVisibility,
   minEventsForPpe,
+  onFiltersChange,
 }) => {
   const [sortBy, setSortBy] = useState("Points");
   const [sortOrder, setSortOrder] = useState("desc");
@@ -152,6 +153,12 @@ const PlayerList = ({
   useEffect(() => {
     setLoadMore(100);
   }, [players]);
+
+  // Mirror the filter state up for the header share popover — filters stay
+  // owned here (per-page state), App only ever reads the snapshot.
+  useEffect(() => {
+    onFiltersChange?.({ selectedGame, selectedMode, yearRange, lanOnly, powerRanking });
+  }, [onFiltersChange, selectedGame, selectedMode, yearRange, lanOnly, powerRanking]);
 
   useEffect(() => {
     const handleScroll = () => {
