@@ -97,3 +97,21 @@ now noted as doubled in degenerate states); era presets (backlog, ride on this e
 Verification gaps to try by hand in a real browser (preview browser can't): happy-path
 clipboard copy (link + image) — the preview environment denies clipboard permission, so
 only the fallback paths were exercised end-to-end.
+
+## Follow-up (same session): sort in the share contract
+
+Bruno's catch on review: PPE-sorted board, but card (and link) ignored the sort. Fix in 4
+commits (`93ca2cc` sortPlayers extraction, `9d7bc33` codec `s` segment, `ba6f944` wiring,
+docs): `s<code>` segment (desc implied, vocabulary {ppe}); scoping line = a sort is
+shareable iff "top 10 by X" reads as a leaderboard — stat-column/alphabetical/ascending
+sorts stay view-local ("most titles" belongs to feature 6's records page; vocabulary can
+grow within v1 via lenient decode). ShareMenu now renders the CANONICAL encode→decode
+state, so chips + card ≡ what the link opens, by construction.
+
+Verified: PPE-desc board → link `…f=v1.sppe` + "Sorted by Pts/Event" chip + card header
+"TOP 10 · BY PTS/EVENT" with PPE values/bars and points-ranks traveling (01 rapha gold
+mid-list); sort-by-2nd → link canonicalizes to `v1`, no sort chip; opener path desktop
+(active arrow, PPE order) + mobile (Sort-by select "Points per event", PPE trailing
+values); fresh-load console clean (the dep-array-size error in the buffer was the HMR
+swap of the mirror effect, gone on reload). Tests 22/22; prod build green. Still NOT
+deployed.

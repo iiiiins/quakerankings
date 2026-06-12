@@ -184,3 +184,9 @@ B2-full expensive. Decision logged 2026-06-12.
   remounts the board); card is 1200×630 landscape, recomputed through the same
   computeRankings pipeline as the board. First jest suite in the repo pins the URL contract
   (19 cases).
+- 2026-06-12 — **Sort joins the share contract** (Bruno's catch: PPE-sorted board, unchanged
+  card). `s<code>` segment, desc implied, vocabulary {ppe}; the line = a sort is shareable
+  iff "top 10 by X" reads as a leaderboard — stat-column/alphabetical/ascending sorts stay
+  view-local and canonicalize to points order ("most titles" → records page, feature 6).
+  Share popover renders the canonical encode→decode state so chips/card ≡ what the link
+  opens. Suite now 22 cases.
