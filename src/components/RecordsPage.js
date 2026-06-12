@@ -28,27 +28,32 @@ const PlayerName = ({ name }) => (
   </Link>
 );
 
-// joined co-leader / winner name links, capped to keep team rows in check.
-// The literal spaces around the separator matter: each name is nowrap, so
-// they're the only soft wrap points on narrow screens.
-const NameList = ({ names }) => (
-  <>
-    {names.slice(0, LEADER_CAP).map((name, i) => (
-      <React.Fragment key={name}>
-        {i > 0 && <span className="rec-sep"> · </span>}
-        <PlayerName name={name} />
-      </React.Fragment>
-    ))}
-    {names.length > LEADER_CAP && (
-      <>
-        {" "}
-        <span className="rec-more" title={names.join(", ")}>
-          +{names.length - LEADER_CAP}
-        </span>
-      </>
-    )}
-  </>
-);
+// joined name links. cap=null shows everyone — the prize card names every
+// winner (cutting a roster reads as a slight); titles-by-game keeps the cap,
+// it only guards freak co-leader ties. The literal spaces around the
+// separator matter: each name is nowrap, so they're the only soft wrap
+// points on narrow screens (winner lines wrap rather than truncate).
+const NameList = ({ names, cap = LEADER_CAP }) => {
+  const shown = cap == null ? names : names.slice(0, cap);
+  return (
+    <>
+      {shown.map((name, i) => (
+        <React.Fragment key={name}>
+          {i > 0 && <span className="rec-sep"> · </span>}
+          <PlayerName name={name} />
+        </React.Fragment>
+      ))}
+      {names.length > shown.length && (
+        <>
+          {" "}
+          <span className="rec-more" title={names.join(", ")}>
+            +{names.length - shown.length}
+          </span>
+        </>
+      )}
+    </>
+  );
+};
 
 const RecordCard = ({ title, note, wide, children }) => (
   <Paper elevation={0} className={`game-section${wide ? " rec-wide" : ""}`}>
@@ -272,7 +277,7 @@ const RecordsPage = ({
                       <span className="rec-event">{e.name}</span>
                       <span className="rec-gsub">
                         {e.year} · {e.mode} · won by{" "}
-                        <NameList names={e.winners} />
+                        <NameList names={e.winners} cap={null} />
                       </span>
                     </span>
                     <span className="rec-val rec-prize">{prize(e.prizepool)}</span>
