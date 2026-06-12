@@ -228,19 +228,16 @@ const App = () => {
     setMinEventsForPpe(DEFAULT_MIN_EVENTS_FOR_PPE);
   };
 
-  // Reset to default: back to the visitor's own formula (defaults if they
-  // never tuned) and a fresh board — the remount drops the link's filters.
+  // Reset to default: the default SITE, in one click — factory formula
+  // (persisted by the save effect once shared clears) and a fresh board (the
+  // remount drops the link's filters AND sort). Deliberately not "back to
+  // your stored formula": a sharer's stored formula IS the shared one
+  // (formula memory saved it as they tuned), so restoring it made reset look
+  // like it only touched the sort. The button does what it says, including
+  // for a visitor with their own tuning — viewing never destroys it, this
+  // explicit click does.
   const resetShared = () => {
-    const own = ownFormula(loadStoredFormula());
-    setPointsConfig(own.pointsConfig);
-    setPointsVisibility(own.pointsVisibility);
-    setGameWeights(own.gameWeights);
-    setGameVisibility(own.gameVisibility);
-    setTierWeights(own.tierWeights);
-    setTierVisibility(own.tierVisibility);
-    setModeWeights(own.modeWeights);
-    setModeVisibility(own.modeVisibility);
-    setMinEventsForPpe(own.minEventsForPpe);
+    resetFormulaToDefaults();
     setShared(null);
     setBoardKey((k) => k + 1);
     cleanShareUrl();
