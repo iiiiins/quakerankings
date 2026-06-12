@@ -1,143 +1,97 @@
-# Feature 4 — Shareable rankings + top-10 share card
+# Feature 5 — Community submissions (in-app, admin review queue)
 
-Session 2026-06-12. Spec: docs/ROADMAP.md §4 + docs/mocks/shareable-rankings-walkthrough.html.
-Build + verify against dev preview; NO deploy without Bruno's "ship it".
+Session 2026-06-12. Spec: docs/ROADMAP.md §5 (decisions locked there). Build + verify
+against dev preview; NO deploy without Bruno's "ship it". Known mid-session handoff:
+Bruno pastes scripts/setup-submissions.sql in the dashboard SQL editor (service key
+can't DDL), then probe + e2e verification run.
 
-## Design decisions (made this session, within roadmap constraints)
+## Locked by roadmap
 
-- **Single versioned param** `#/?f=v1.<segments>` — one opaque token, version governs the
-  whole blob. Dot-separated segments, canonical order, omit-at-default (a bare `v1` = pure
-  default board, legal).
-- **Share icon home-only**: the link always targets the home board; sharing from /events or
-  /charts has no defined meaning. Icon renders left of the gear (mock position), only on `/`.
-- **No continuous URL sync**: the link is built on demand in the popover (mock step 1 shows a
-  bare URL while tuning). Avoids history spam and router fights.
-- **Search / column sort / pager are NOT in the contract** — view conveniences, not the
-  ranking. Filters (game, mode, years, LAN, power) + full formula are.
-- **Shared view = defaults + link overrides** (localStorage ignored entirely while shared —
-  omitted segment means *default*, so every visitor sees the same board).
-- **While shared: formula auto-save suppressed.** Adopt = persist current state to
-  localStorage + dismiss + clean URL. Reset = restore visitor's own stored formula + remount
-  board (filters back to defaults) + clean URL. Tweaks while shared stay unsaved until adopt.
-- **Card**: 1200×630 landscape PNG (Discord-paste size), single-column top-10, site visual
-  language, drawn after document.fonts load of Orbitron/Rajdhani. Download + clipboard copy.
-- **Filters reach the header share popover via a ref mirror** (PlayerList pushes its filter
-  state up through onFiltersChange; popover reads the ref when opened — popover blocks
-  filter interaction while open, so a ref is race-free). ShareMenu recomputes the top-10
-  itself via useTournaments + computeRankings (same pure pipeline as the board).
+- `Submissions` table: type (`new`|`correction`), target_id, payload jsonb, optional
+  note + handle, status pending/approved/rejected, honeypot column.
+- RLS: anon INSERT only, WITH CHECK forces status='pending'; NO anon SELECT; admin uid
+  gets SELECT/UPDATE/DELETE. Extend probe-rls.js; run --full after any policy change.
+- Public UI: "suggest a fix" on every event row (TournamentForm in suggest mode,
+  prefilled) + "submit a tournament" entry on /events. Shared tournamentRules
+  validation (CJS — default-import interop, file itself untouched).
+- Spam posture: honeypot + length caps + review-before-apply; no captcha.
+- Admin queue in /admin: pending list, diff view vs current row for corrections,
+  approve (tournamentWrites + mark approved) / reject.
 
-## URL schema v1 (public contract — goes in CLAUDE.md at ship)
+## Build decisions (this session, within the locked constraints)
 
-```
-#/?f=v1[.<segment>]*          segments in canonical order, each omitted at default
-p<n>-<n>-<n>-<n>              base points first-second-top4-top8      p150-75-30-10
-hp<c>[-<c>]                   hidden placements  c ∈ 1|2|4|8          hp4-8
-t<n>-<n>-<n>-<n>-<n>          tier weights 1→5                        t100-80-50-25-10
-ht<c>[-<c>]                   hidden tiers       c ∈ 1..5             ht4-5
-g<code>_<n>[-<code>_<n>]      game weights ≠ 100                      gql_120-qc_80
-hg<code>[-<code>]             hidden games                            hgdb
-m<code>_<n>[-<code>_<n>]      mode weights ≠ 100                      mtdm_50
-hm<code>[-<code>]             hidden modes                            hmsac-wip
-e<n>                          minEventsForPpe ≠ 15                    e10
-fg<code>                      game filter ≠ All                       fgq3
-fm<code>                      mode filter ≠ All                       fmduel
-y<from>-<to>                  year range ≠ 1996–current               y2003-2013
-l                             LAN only
-w                             Power Ranking
-
-games: qw q2 q3 q4 ql qc db   modes: duel 2v2 tdm ctf ca sac wip dbt
-```
-
-Decode: no `v1` prefix → null (not a shared view). Unknown segment/code → skipped leniently
-(forward compat: vocabulary may grow, grammar may not). Weights/points clamped [0, 100000];
-years clamped [1996, current], swapped if from>to. Decode returns COMPLETE config + filters.
+- **Honeypot enforced at the DB**: WITH CHECK also requires the honeypot column
+  (`website`, classic trap name) to be empty — bot rows are never stored, not stored-
+  and-flagged. Client additionally pretends success without calling the API when the
+  trap is filled (don't teach the bot).
+- **Column-level INSERT grant for anon** (type, target_id, payload, note, handle,
+  website): Supabase default privileges grant table-wide ALL to anon on new tables, so
+  the script revokes-then-narrows. anon physically can't supply id / created_at /
+  status (status comes from the column default + WITH CHECK belt-and-braces).
+- **Length caps live in the DB** (note ≤ 500, handle ≤ 40, payload ≤ 4000 chars as
+  jsonb text) + input maxLength in the form. validateRow untouched.
+- **Suggest UI hidden when signed in** — "anon INSERT only" means an authenticated
+  session can't insert; signed-in admin gets the edit pencil instead (mobile signed-in:
+  read-only, as today). Signed-out = suggest, signed-in = edit, one rule.
+- **Team events**: public correction flow reuses the admin row-picker pattern
+  (rowSummary list → pick a row → prefilled form). Suggest affordance on mobile rows
+  too ("every event row" — admin pencils stay desktop-only as before).
+- **Queue safety**: payload is rebuilt from known columns only (`rowFromPayload`) and
+  re-validated with validateRow before approve — a direct-API payload can't inject
+  unknown columns into tournamentWrites or crash the page (all payload-derived display
+  is string-coerced).
+- **No FK on target_id** (Tournaments.id has no declared unique constraint to
+  reference; a missing/deleted target renders a warning and approve is disabled).
+- **id is `generated by default as identity`** — anon can't SELECT, so client-side
+  max+1 (the Tournaments pattern) is impossible; the DB must assign ids.
 
 ## Steps
 
-- [x] 1. Extract `src/lib/formulaDefaults.js` — commit `7e6628e`. Verified: board identical
-       (1,690 players · 1,925 tournaments · 0 filtered), no console errors; the pre-refactor
-       localStorage formula matched the extracted defaults key-for-key (identity cross-check).
-- [x] 2. `shareCodec.js` + `shareCodec.test.js` — commit `7661402`. 19/19 green (first test
-       suite in the repo). Round-trips, canonical order, omit-defaults, leniency, clamping,
-       chip summaries all pinned.
-- [x] 3. Share popover — commit `bb2e0d0`. Verified in preview: LAN+Power → `#/?f=v1.l.w`
-       with matching chips; FIRST=150 + Tier-4 hidden → `v1.p150-50-25-10.ht4`; icon absent
-       on /events; popover visuals match the design system (screenshot).
-- [x] 4. Shared-view mode — commit `983b3d5`. Verified both entry paths (boot + hashchange)
-       and both exits against a seeded stored formula (first=99): banner + mock chips exact;
-       shared board = defaults + link (settings showed 100, not 99); storage untouched while
-       viewing; Reset restored 99 + default board + clean URL; Adopt kept the view, persisted
-       the shared formula, cleaned the URL; post-adopt reload = adopted formula + default
-       filters.
-- [x] 5. Share card — commit `c1aca29`. Verified: 1200×630 render, full-size screenshot
-       matches the site language (medal ranks, Orbitron names, placement counts, point bars,
-       chips, counts footer); popover link round-trips the opened URL exactly; empty-formula
-       state shows an honest note; clipboard rejection falls back to "use Download"; download
-       click clean; clean-pass console: zero new warnings/errors.
-- [x] 6. Docs: CLAUDE.md (v1 contract section, structure, state architecture, known-issue
-       note), ROADMAP.md (§4 status BUILT + decision-log entry). Tests 19/19, prod build
-       green. NOT deployed.
+- [ ] 1. `scripts/setup-submissions.sql` (table + revoke/grants + RLS policies,
+       idempotent, admin uid hardcoded to match setup-admin.sql) + extend
+       `scripts/probe-rls.js` (anon submission INSERT ok / non-pending rejected /
+       honeypot rejected / caps enforced / SELECT-UPDATE-DELETE rejected; --full:
+       admin SELECT/UPDATE/DELETE on a marker submission; cleanup + count restored).
+       Commit. (Probes can't run until the SQL is pasted.)
+- [ ] 2. Plumbing: `src/services/submissions.js` (submitSuggestion — no .select(),
+       anon has no SELECT grant; rowFromPayload; fetchPendingSubmissions;
+       setSubmissionStatus) + TournamentForm `children` slot (extra fields render
+       inside the grid; no behavior change for existing callers). Commit.
+- [ ] 3. Public UI: `src/components/SuggestDialog.js` (correction prefill via
+       initialRow, row picker for team events, note/handle/honeypot fields, success
+       state) + EventsBrowser entry points (suggest icon column when signed out,
+       desktop + mobile rows; "Submit a tournament" in the summary line) + App.css.
+       Verify in preview (validation, prefill, picker, honeypot offscreen, caps;
+       submit fails with table-missing error — expected pre-paste). Commit.
+- [ ] 4. Admin queue: `src/components/SubmissionQueue.js` (pending list, NEW/FIX
+       badges, note/handle display, diff view for corrections, payload validation
+       gate, approve→tournamentWrites→mark approved / reject) + AdminPage wiring +
+       App.css. Verify render in preview (fetch error pre-paste is honest). Commit.
+- [ ] 5. `npm test` (shareCodec 22) + `npm run build` green. → **HANDOFF: Bruno
+       pastes scripts/setup-submissions.sql** in Dashboard → SQL Editor.
+- [ ] 6. Post-paste: `node scripts/probe-rls.js --full` (all probes green). E2E in
+       preview: signed-out submit (one correction w/ diff-able edits, one new) →
+       sign in → queue shows both, diff correct → approve correction (row visibly
+       changes in /events) → reject the new one → statuses verified; cleanup test
+       rows (admin delete via UI / service script). Sign out.
+- [ ] 7. Docs: CLAUDE.md (structure, data model Submissions section, admin flow,
+       probe note), ROADMAP.md (§5 status + decision log), todo review section.
+       Commit.
+
+## Post-paste verification checklist (step 6 detail — survives a context reset)
+
+1. `node scripts/probe-rls.js --full` → expect all green incl. new Submissions probes.
+2. Preview signed out on /events: suggest a fix on a single-row event — change Tier +
+   one placement, note "test correction", handle "claude-test" → success message.
+3. "Submit a tournament" → fill a fake event ("RLS PROBE EVENT 2026") → success.
+4. Sign in (/admin, creds in .env.local): queue shows 2 pending — correction shows
+   only the changed fields as old → new; new shows full row summary.
+5. Approve the correction → /events row reflects it (then edit it back / delete);
+   reject the new one. Queue empties as actions land.
+6. Service-key check (node one-liner): statuses approved/rejected as expected; then
+   delete the two test submissions + revert the tournament edit.
+7. Sign out, confirm suggest icons return.
 
 ## Review
 
-Feature 4 complete in 5 atomic commits + docs. The v1 URL schema is live as a public
-contract the moment it deploys — it's pinned by the test suite and documented in CLAUDE.md;
-any change to `formulaDefaults.js` or the codec must keep existing links meaning the same
-thing (bump to v2 for shape changes).
-
-Build-time decisions (all logged in the roadmap): single versioned `f` param; share icon
-home-only; no live URL sync (link built on demand); search/sort/pager excluded from the
-contract; shared view suppresses formula-memory until adopt; adopt keeps the view, reset
-remounts; card 1200×630 recomputed through computeRankings (card ≡ board by construction).
-
-Deliberately NOT done: GA events on share/copy (not in scope — cheap follow-up if Bruno
-wants usage signal); silencing the pre-existing no-players console.error (known issue #1,
-now noted as doubled in degenerate states); era presets (backlog, ride on this encoding).
-
-Verification gaps to try by hand in a real browser (preview browser can't): happy-path
-clipboard copy (link + image) — the preview environment denies clipboard permission, so
-only the fallback paths were exercised end-to-end.
-
-## Follow-up (same session): sort in the share contract
-
-Bruno's catch on review: PPE-sorted board, but card (and link) ignored the sort. Fix in 4
-commits (`93ca2cc` sortPlayers extraction, `9d7bc33` codec `s` segment, `ba6f944` wiring,
-docs): `s<code>` segment (desc implied, vocabulary {ppe}); scoping line = a sort is
-shareable iff "top 10 by X" reads as a leaderboard — stat-column/alphabetical/ascending
-sorts stay view-local ("most titles" belongs to feature 6's records page; vocabulary can
-grow within v1 via lenient decode). ShareMenu now renders the CANONICAL encode→decode
-state, so chips + card ≡ what the link opens, by construction.
-
-Verified: PPE-desc board → link `…f=v1.sppe` + "Sorted by Pts/Event" chip + card header
-"TOP 10 · BY PTS/EVENT" with PPE values/bars and points-ranks traveling (01 rapha gold
-mid-list); sort-by-2nd → link canonicalizes to `v1`, no sort chip; opener path desktop
-(active arrow, PPE order) + mobile (Sort-by select "Points per event", PPE trailing
-values); fresh-load console clean (the dep-array-size error in the buffer was the HMR
-swap of the mirror effect, gone on reload). Tests 22/22; prod build green. Still NOT
-deployed.
-
-## Follow-up 2 (same session): custom-formula banner
-
-Bruno's ask: surface the (invisible) gear customizations the way the shared banner does,
-with a revert. `CustomFormulaBanner` (commit `caf8aea`): same surface/chips on the home
-board when the visitor's own formula ≠ defaults and no shared view is active; one factory
-"Reset to default" (save effect persists defaults — no undo). Detection reuses the codec
-(default iff `encodeShareState(config, DEFAULT_FILTERS) === "v1"`). Filters/sort excluded
-(visible in their own controls). Precedence shared > custom; adopt hands the banner over
-to the strip (verified live: e50+sppe link → adopt → strip shows "PPE min 50", sort chip
-correctly absent). Also verified: no strip on defaults, chips track gear edits, reset
-restores storage to defaults, LAN toggle doesn't summon it, clean console after marker.
-Tests 22/22, build green. NOT deployed.
-
-## Follow-up 3 (same session): shared-banner Reset = the default site
-
-Bruno's repro: open your own share link, click Reset → only the sort visibly reset. Root
-cause: Reset restored the visitor's STORED formula, and a sharer's stored formula == the
-shared one (formula memory saved it while they tuned it). Fix (`dbc7a4c`): shared Reset
-now factory-defaults the formula (persisted) + remounts the board (filters/sort default)
-— one click to the vanilla site, as the mock's caption promised. Accepted trade-off
-(logged in roadmap): a tuned visitor clicking Reset on someone's link loses their tuning;
-viewing never destroys it, only this explicit click. Verified on Bruno's exact link
-(gq2_69.hmduel-ctf.sppe, adopted first to simulate the sharer): one Reset → no banner, no
-strip, storage factory (Q2=100, Duel/CTF visible, minEvents 15), points order, full
-counts, clean URL, clean console. Tests 22/22, build green. NOT deployed.
+(to fill at completion)
