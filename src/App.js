@@ -22,7 +22,9 @@ import SettingsIcon from "@mui/icons-material/Settings"; // Import Settings Icon
 import ShareIcon from "@mui/icons-material/Share";
 import SettingsMenu from "./components/SettingsMenu";
 import ShareMenu from "./components/ShareMenu";
+import SharedBanner from "./components/SharedBanner";
 import { loadStoredFormula, saveStoredFormula } from "./lib/formulaStorage";
+import { parseShareFromHash } from "./lib/shareCodec";
 import {
   DEFAULT_POINTS_CONFIG,
   DEFAULT_POINTS_VISIBILITY,
@@ -97,59 +99,53 @@ const ShareControl = ({ config, getFilters }) => {
   );
 };
 
-// Read once per page load; each state below spreads the stored section over
-// its defaults, so a formula saved before a new game/mode/setting was added
-// still loads cleanly.
-const storedFormula = loadStoredFormula();
+// The visitor's own formula: stored sections spread over defaults, so a
+// formula saved before a new game/mode/setting was added still loads cleanly.
+const ownFormula = (stored) => ({
+  pointsConfig: { ...DEFAULT_POINTS_CONFIG, ...stored?.pointsConfig },
+  pointsVisibility: { ...DEFAULT_POINTS_VISIBILITY, ...stored?.pointsVisibility },
+  gameWeights: { ...DEFAULT_GAME_WEIGHTS, ...stored?.gameWeights },
+  gameVisibility: { ...DEFAULT_GAME_VISIBILITY, ...stored?.gameVisibility },
+  tierWeights: { ...DEFAULT_TIER_WEIGHTS, ...stored?.tierWeights },
+  tierVisibility: { ...DEFAULT_TIER_VISIBILITY, ...stored?.tierVisibility },
+  modeWeights: { ...DEFAULT_MODE_WEIGHTS, ...stored?.modeWeights },
+  modeVisibility: { ...DEFAULT_MODE_VISIBILITY, ...stored?.modeVisibility },
+  minEventsForPpe: stored?.minEventsForPpe ?? DEFAULT_MIN_EVENTS_FOR_PPE,
+});
+
+// Read once per page load. A share link in the URL (#/?f=v1...) wins over the
+// stored formula: an omitted segment means DEFAULT, never the viewer's own
+// value, so the same link shows the same board to everyone. The stored
+// formula is left untouched until the visitor explicitly adopts.
+const sharedBoot = parseShareFromHash(window.location.hash);
+const initialFormula = sharedBoot ? sharedBoot.config : ownFormula(loadStoredFormula());
 
 const App = () => {
-  const [pointsConfig, setPointsConfig] = useState({
-    ...DEFAULT_POINTS_CONFIG,
-    ...storedFormula?.pointsConfig,
-  });
-
-  const [pointsVisibility, setPointsVisibility] = useState({
-    ...DEFAULT_POINTS_VISIBILITY,
-    ...storedFormula?.pointsVisibility,
-  });
-
-  const [gameWeights, setGameWeights] = useState({
-    ...DEFAULT_GAME_WEIGHTS,
-    ...storedFormula?.gameWeights,
-  });
-
-  const [gameVisibility, setGameVisibility] = useState({
-    ...DEFAULT_GAME_VISIBILITY,
-    ...storedFormula?.gameVisibility,
-  });
-
-  const [tierWeights, setTierWeights] = useState({
-    ...DEFAULT_TIER_WEIGHTS,
-    ...storedFormula?.tierWeights,
-  });
-
-  const [tierVisibility, setTierVisibility] = useState({
-    ...DEFAULT_TIER_VISIBILITY,
-    ...storedFormula?.tierVisibility,
-  });
-
-  const [modeVisibility, setModeVisibility] = useState({
-    ...DEFAULT_MODE_VISIBILITY,
-    ...storedFormula?.modeVisibility,
-  });
-
-  const [modeWeights, setModeWeights] = useState({
-    ...DEFAULT_MODE_WEIGHTS,
-    ...storedFormula?.modeWeights,
-  });
+  const [pointsConfig, setPointsConfig] = useState(initialFormula.pointsConfig);
+  const [pointsVisibility, setPointsVisibility] = useState(initialFormula.pointsVisibility);
+  const [gameWeights, setGameWeights] = useState(initialFormula.gameWeights);
+  const [gameVisibility, setGameVisibility] = useState(initialFormula.gameVisibility);
+  const [tierWeights, setTierWeights] = useState(initialFormula.tierWeights);
+  const [tierVisibility, setTierVisibility] = useState(initialFormula.tierVisibility);
+  const [modeVisibility, setModeVisibility] = useState(initialFormula.modeVisibility);
+  const [modeWeights, setModeWeights] = useState(initialFormula.modeWeights);
 
   // Points/Event is only shown for players with at least this many events
-  const [minEventsForPpe, setMinEventsForPpe] = useState(
-    storedFormula?.minEventsForPpe ?? DEFAULT_MIN_EVENTS_FOR_PPE
-  );
+  const [minEventsForPpe, setMinEventsForPpe] = useState(initialFormula.minEventsForPpe);
 
-  // Formula memory: returning visitors keep their tuning
+  // Shared-view mode: non-null while a share link's formula is active and
+  // unadopted. Holds the decoded link itself ({ config, filters }) so the
+  // banner can describe what was shared. boardKey remounts PlayerList when
+  // the board must re-derive its filters (reset, or a new link arriving).
+  const [shared, setShared] = useState(sharedBoot);
+  const [boardKey, setBoardKey] = useState(0);
+
+  // Formula memory: returning visitors keep their tuning. Suppressed while
+  // viewing a shared ranking — merely opening a link must not overwrite the
+  // visitor's own formula. Flipping shared to null re-runs this effect, so
+  // adopting persists the current (shared) formula with no extra save call.
   useEffect(() => {
+    if (shared) return;
     saveStoredFormula({
       pointsConfig,
       pointsVisibility,
@@ -171,7 +167,68 @@ const App = () => {
     modeWeights,
     modeVisibility,
     minEventsForPpe,
+    shared,
   ]);
+
+  // A share link can also arrive without a page load (pasting a second link
+  // into the address bar only fires hashchange). Apply it like a boot.
+  const applyShared = useCallback((next) => {
+    setPointsConfig(next.config.pointsConfig);
+    setPointsVisibility(next.config.pointsVisibility);
+    setGameWeights(next.config.gameWeights);
+    setGameVisibility(next.config.gameVisibility);
+    setTierWeights(next.config.tierWeights);
+    setTierVisibility(next.config.tierVisibility);
+    setModeWeights(next.config.modeWeights);
+    setModeVisibility(next.config.modeVisibility);
+    setMinEventsForPpe(next.config.minEventsForPpe);
+    setShared(next);
+    setBoardKey((k) => k + 1);
+  }, []);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = parseShareFromHash(window.location.hash);
+      if (next) applyShared(next);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [applyShared]);
+
+  // Drop the f param after adopt/reset so a reload doesn't re-enter shared
+  // view. replaceState avoids a router navigation (we're on "/" already).
+  const cleanShareUrl = () => {
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search + "#/"
+    );
+  };
+
+  // Keep this formula: the suppressed save effect fires once shared clears,
+  // persisting exactly what's on screen. The board keeps its current state.
+  const adoptShared = () => {
+    setShared(null);
+    cleanShareUrl();
+  };
+
+  // Reset to default: back to the visitor's own formula (defaults if they
+  // never tuned) and a fresh board — the remount drops the link's filters.
+  const resetShared = () => {
+    const own = ownFormula(loadStoredFormula());
+    setPointsConfig(own.pointsConfig);
+    setPointsVisibility(own.pointsVisibility);
+    setGameWeights(own.gameWeights);
+    setGameVisibility(own.gameVisibility);
+    setTierWeights(own.tierWeights);
+    setTierVisibility(own.tierVisibility);
+    setModeWeights(own.modeWeights);
+    setModeVisibility(own.modeVisibility);
+    setMinEventsForPpe(own.minEventsForPpe);
+    setShared(null);
+    setBoardKey((k) => k + 1);
+    cleanShareUrl();
+  };
 
   const [anchorEl, setAnchorEl] = useState(null);
   const handleSettingsClick = (event) => {
@@ -265,12 +322,16 @@ const App = () => {
               </Popover>
             </Box>
           </header>
+          {shared && (
+            <SharedBanner shared={shared} onAdopt={adoptShared} onReset={resetShared} />
+          )}
             <Routes>
               {/* Home Page */}
               <Route
                 path="/"
                 element={
                   <PlayerList
+                    key={boardKey}
                     pointsConfig={pointsConfig}
                     pointsVisibility={pointsVisibility}
                     gameWeights={gameWeights}
@@ -281,6 +342,7 @@ const App = () => {
                     modeVisibility={modeVisibility}
                     minEventsForPpe={minEventsForPpe}
                     onFiltersChange={handleFiltersChange}
+                    initialFilters={shared?.filters}
                   />
                 }
               />

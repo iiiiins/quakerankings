@@ -87,15 +87,18 @@ const PlayerList = ({
   modeVisibility,
   minEventsForPpe,
   onFiltersChange,
+  initialFilters,
 }) => {
   const [sortBy, setSortBy] = useState("Points");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [selectedGame, setSelectedGame] = useState("All");
-  const [selectedMode, setSelectedMode] = useState("All");
-  const [yearRange, setYearRange] = useState([YEAR_MIN, CURRENT_YEAR]);
+  // initialFilters carries a share link's filters; App remounts this
+  // component (key bump) whenever they must re-derive
+  const [selectedGame, setSelectedGame] = useState(initialFilters?.selectedGame ?? "All");
+  const [selectedMode, setSelectedMode] = useState(initialFilters?.selectedMode ?? "All");
+  const [yearRange, setYearRange] = useState(initialFilters?.yearRange ?? [YEAR_MIN, CURRENT_YEAR]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [lanOnly, setLanOnly] = useState(false);
-  const [powerRanking, setPowerRanking] = useState(false);
+  const [lanOnly, setLanOnly] = useState(initialFilters?.lanOnly ?? false);
+  const [powerRanking, setPowerRanking] = useState(initialFilters?.powerRanking ?? false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loadMore, setLoadMore] = useState(100);
   const isMobile = useMediaQuery("(max-width:899px)");
