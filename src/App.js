@@ -23,6 +23,7 @@ import ShareIcon from "@mui/icons-material/Share";
 import SettingsMenu from "./components/SettingsMenu";
 import ShareMenu from "./components/ShareMenu";
 import SharedBanner from "./components/SharedBanner";
+import CustomFormulaBanner from "./components/CustomFormulaBanner";
 import { loadStoredFormula, saveStoredFormula } from "./lib/formulaStorage";
 import { parseShareFromHash } from "./lib/shareCodec";
 import {
@@ -212,6 +213,21 @@ const App = () => {
     cleanShareUrl();
   };
 
+  // The custom-formula banner's reset: factory defaults, not the stored
+  // formula — the save effect then persists them over the old tuning.
+  // Filters/sort stay untouched (they're visible, page-owned view state).
+  const resetFormulaToDefaults = () => {
+    setPointsConfig({ ...DEFAULT_POINTS_CONFIG });
+    setPointsVisibility({ ...DEFAULT_POINTS_VISIBILITY });
+    setGameWeights({ ...DEFAULT_GAME_WEIGHTS });
+    setGameVisibility({ ...DEFAULT_GAME_VISIBILITY });
+    setTierWeights({ ...DEFAULT_TIER_WEIGHTS });
+    setTierVisibility({ ...DEFAULT_TIER_VISIBILITY });
+    setModeWeights({ ...DEFAULT_MODE_WEIGHTS });
+    setModeVisibility({ ...DEFAULT_MODE_VISIBILITY });
+    setMinEventsForPpe(DEFAULT_MIN_EVENTS_FOR_PPE);
+  };
+
   // Reset to default: back to the visitor's own formula (defaults if they
   // never tuned) and a fresh board — the remount drops the link's filters.
   const resetShared = () => {
@@ -322,8 +338,10 @@ const App = () => {
               </Popover>
             </Box>
           </header>
-          {shared && (
+          {shared ? (
             <SharedBanner shared={shared} onAdopt={adoptShared} onReset={resetShared} />
+          ) : (
+            <CustomFormulaBanner config={scoringConfig} onReset={resetFormulaToDefaults} />
           )}
             <Routes>
               {/* Home Page */}
