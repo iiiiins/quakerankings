@@ -86,6 +86,22 @@ describe("encodeShareState", () => {
     ).toBe("v1.y2003-2013");
     expect(encodeShareState(makeConfig(), makeFilters({ lanOnly: true }))).toBe("v1.l");
     expect(encodeShareState(makeConfig(), makeFilters({ powerRanking: true }))).toBe("v1.w");
+    expect(
+      encodeShareState(makeConfig(), makeFilters({ sortBy: "Ppe", sortOrder: "desc" }))
+    ).toBe("v1.sppe");
+  });
+
+  test("only a descending ranking sort is encoded", () => {
+    // ascending PPE and stat-column sorts canonicalize to the points order
+    expect(
+      encodeShareState(makeConfig(), makeFilters({ sortBy: "Ppe", sortOrder: "asc" }))
+    ).toBe("v1");
+    expect(
+      encodeShareState(makeConfig(), makeFilters({ sortBy: "2nd", sortOrder: "desc" }))
+    ).toBe("v1");
+    expect(
+      encodeShareState(makeConfig(), makeFilters({ sortBy: "player", sortOrder: "asc" }))
+    ).toBe("v1");
   });
 
   test("kitchen sink uses canonical segment order", () => {
@@ -106,9 +122,11 @@ describe("encodeShareState", () => {
       yearRange: [2003, 2013],
       lanOnly: true,
       powerRanking: true,
+      sortBy: "Ppe",
+      sortOrder: "desc",
     });
     expect(encodeShareState(config, filters)).toBe(
-      "v1.p150-75-30-5.hp8.t100-80-50-25-10.ht4-5.gql_120-qc_80.hgdb.m2v2_50.hmsac-wip-dbt.e10.fgq3.fmduel.y2003-2013.l.w"
+      "v1.p150-75-30-5.hp8.t100-80-50-25-10.ht4-5.gql_120-qc_80.hgdb.m2v2_50.hmsac-wip-dbt.e10.fgq3.fmduel.y2003-2013.l.w.sppe"
     );
   });
 
@@ -153,8 +171,17 @@ describe("decodeShareParam", () => {
       yearRange: [2003, 2013],
       lanOnly: true,
       powerRanking: true,
+      sortBy: "Ppe",
+      sortOrder: "desc",
     });
     expect(decodeShareParam(encodeShareState(config, filters))).toEqual({ config, filters });
+  });
+
+  test("sort decodes from its code, unknown sort codes are skipped", () => {
+    expect(decodeShareParam("v1.sppe").filters.sortBy).toBe("Ppe");
+    expect(decodeShareParam("v1.sppe").filters.sortOrder).toBe("desc");
+    expect(decodeShareParam("v1.sxyz").filters.sortBy).toBe("Points");
+    expect(decodeShareParam("v1").filters.sortBy).toBe("Points");
   });
 
   test("explicit defaults canonicalize back to bare v1", () => {
@@ -231,6 +258,11 @@ describe("summarizeShareState", () => {
   test("tier lists render as runs", () => {
     const { config, filters } = decodeShareParam("v1.ht4");
     expect(summarizeShareState(config, filters)).toEqual(["Tiers 1–3, 5"]);
+  });
+
+  test("a shared sort gets a chip", () => {
+    const { config, filters } = decodeShareParam("v1.sppe");
+    expect(summarizeShareState(config, filters)).toEqual(["Sorted by Pts/Event"]);
   });
 
   test("weights and hidden sets summarize honestly", () => {

@@ -25,7 +25,11 @@
 //   y<from>-<to>              year range ≠ 1996–current
 //   l                         LAN only
 //   w                         Power Ranking
+//   s<code>                   ranking sort ≠ points (descending implied)
 // Game codes: qw q2 q3 q4 ql qc db · mode codes: duel 2v2 tdm ctf ca sac wip dbt
+// Sort codes: ppe (Pts/Event). Only leaderboard-meaningful sorts are in the
+// contract — stat-column sorts (2nd, events, alphabetical…) stay view-local;
+// "most titles" style boards belong to the records page (roadmap feature 6).
 
 import {
   CURRENT_YEAR,
@@ -70,11 +74,16 @@ const MODE_CODES = {
   DBT: "dbt",
 };
 
+// Ranking sorts shareable via the s segment (descending implied). The
+// vocabulary may grow within v1; the default points sort is always omitted.
+const SORT_CODES = { ppe: "Ppe" };
+
 const invert = (map) =>
   Object.fromEntries(Object.entries(map).map(([k, v]) => [v, k]));
 const CODE_TO_GAME = invert(GAME_CODES);
 const CODE_TO_MODE = invert(MODE_CODES);
 const CODE_TO_PLACEMENT = invert(PLACEMENT_CODES);
+const SORT_TO_CODE = invert(SORT_CODES);
 
 // Weights and points are sanitized to non-negative integers on both ends so
 // a round-trip is exact and a hand-edited link can't inject NaN into scoring.
@@ -138,6 +147,12 @@ export function encodeShareState(config, filters) {
 
   if (filters.lanOnly) segs.push("l");
   if (filters.powerRanking) segs.push("w");
+
+  // Only a descending ranking sort is a shareable board ("top 10 by X");
+  // ascending and stat-column sorts canonicalize to the points order.
+  if (SORT_TO_CODE[filters.sortBy] && filters.sortOrder === "desc") {
+    segs.push("s" + SORT_TO_CODE[filters.sortBy]);
+  }
 
   return ["v1", ...segs].join(".");
 }
@@ -237,6 +252,9 @@ export function decodeShareParam(raw) {
     } else if (seg.startsWith("e")) {
       const n = Number(seg.slice(1));
       if (Number.isFinite(n)) config.minEventsForPpe = num(n);
+    } else if (seg.startsWith("s")) {
+      const sortBy = SORT_CODES[seg.slice(1)];
+      if (sortBy) filters.sortBy = sortBy;
     } else if (seg.startsWith("y")) {
       const vals = ints(seg.slice(1), "-");
       if (vals && vals.length === 2) {
@@ -274,6 +292,9 @@ export function summarizeShareState(config, filters) {
   if (filters.selectedGame !== "All") chips.push(`${filters.selectedGame} only`);
   if (filters.selectedMode !== "All") chips.push(`${filters.selectedMode} only`);
   if (filters.powerRanking) chips.push("Power Ranking");
+  if (filters.sortBy === "Ppe" && filters.sortOrder === "desc") {
+    chips.push("Sorted by Pts/Event");
+  }
 
   if (PLACEMENTS.some((k) => num(config.pointsConfig[k]) !== DEFAULT_POINTS_CONFIG[k])) {
     chips.push("Points " + PLACEMENTS.map((k) => num(config.pointsConfig[k])).join("/"));

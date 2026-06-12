@@ -92,11 +92,15 @@ export const DEFAULT_MODE_VISIBILITY = {
 
 export const DEFAULT_MIN_EVENTS_FOR_PPE = 15;
 
-// Home-board filter defaults (per-page state owned by PlayerList)
+// Home-board filter defaults (per-page state owned by PlayerList). sortBy /
+// sortOrder ride along because the share contract carries the board's
+// ranking sort (Pts/Event) even though they aren't filters strictly.
 export const DEFAULT_FILTERS = {
   selectedGame: "All",
   selectedMode: "All",
   yearRange: [YEAR_MIN, CURRENT_YEAR],
   lanOnly: false,
   powerRanking: false,
+  sortBy: "Points",
+  sortOrder: "desc",
 };
