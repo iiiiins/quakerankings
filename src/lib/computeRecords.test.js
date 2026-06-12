@@ -248,6 +248,24 @@ describe("biggest prize-pool events won", () => {
   });
 });
 
+describe("LAN only", () => {
+  test("flips every record to LAN-world: online titles and prizes drop", () => {
+    const rows = [
+      row({ LAN: true, Prizepool: 50000, "1st": "alpha" }),
+      row({ LAN: false, Prizepool: 90000, Year: 2006, "1st": "alpha" }),
+    ];
+    const all = run(rows);
+    expect(all.mostTitles[0].titles).toBe(2);
+    expect(all.prizeEvents.map((e) => e.prizepool)).toEqual([90000, 50000]);
+
+    // run() routes lanOnly to BOTH layers, like the page: computeRankings
+    // (player records) and computeRecords (prize list)
+    const lan = run(rows, { lanOnly: true });
+    expect(lan.mostTitles[0].titles).toBe(1);
+    expect(lan.prizeEvents.map((e) => e.prizepool)).toEqual([50000]);
+  });
+});
+
 describe("limits", () => {
   test("every top list caps at RECORD_LIMIT", () => {
     const names = ["a", "b", "c", "d", "e", "f", "g"];

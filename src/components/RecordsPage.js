@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container, Paper, Typography } from "@mui/material";
 import useTournaments from "../hooks/useTournaments";
@@ -15,7 +15,9 @@ import { CURRENT_YEAR, YEAR_MIN } from "../lib/formulaDefaults";
 // formula: the gear config arrives as props (PlayerList is the model) and a
 // hidden game/tier/mode/placement doesn't count while hidden. Deliberately no
 // filter bar — records take the gear config only, never the home board's
-// per-page filters (Power Ranking included).
+// per-page filters (Power Ranking included). The one page-local control is
+// the LAN Only plate: it flips the whole page (prize card included) to
+// LAN-world, and its state lives and dies here.
 
 const pct = (rate) => `${Math.round(rate * 1000) / 10}%`;
 const prize = (n) => `$${n.toLocaleString("en-US")}`;
@@ -92,15 +94,16 @@ const RecordsPage = ({
   minEventsForPpe,
 }) => {
   const tournamentList = useTournaments();
+  const [lanOnly, setLanOnly] = useState(false);
 
   const records = useMemo(() => {
     // neutral filters: records run over the full dataset; only the gear
-    // (weights + visibility) shapes them
+    // (weights + visibility) and the page's own LAN plate shape them
     const { players } = computeRankings(tournamentList, {
       selectedGame: "All",
       selectedMode: "All",
       yearRange: [YEAR_MIN, CURRENT_YEAR],
-      lanOnly: false,
+      lanOnly,
       powerRanking: false,
       pointsConfig,
       pointsVisibility,
@@ -117,9 +120,11 @@ const RecordsPage = ({
       gameVisibility,
       tierVisibility,
       modeVisibility,
+      lanOnly,
     });
   }, [
     tournamentList,
+    lanOnly,
     pointsConfig,
     pointsVisibility,
     gameWeights,
@@ -150,6 +155,18 @@ const RecordsPage = ({
           reweight or hide anything, and every record recomputes. A hidden
           game's titles don't count while it's hidden.
         </p>
+
+        <div className="rec-tools toggle-plates">
+          <button
+            type="button"
+            className={`plate${lanOnly ? " on" : ""}`}
+            onClick={() => setLanOnly(!lanOnly)}
+            title="Only LAN tournaments"
+          >
+            <span className="led" />
+            LAN Only
+          </button>
+        </div>
 
         <div className="rec-grid">
           <RecordCard title="Most titles">

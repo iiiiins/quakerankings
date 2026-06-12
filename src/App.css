@@ -1247,6 +1247,10 @@ footer a.method-link:hover {
   margin: 0 auto;
 }
 
+.rec-tools {
+  margin-top: 16px;
+}
+
 .rec-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

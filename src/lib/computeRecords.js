@@ -47,7 +47,15 @@ const titlesIn = (player, game) =>
 export default function computeRecords(
   players,
   events,
-  { pointsVisibility, gameVisibility, tierVisibility, modeVisibility }
+  {
+    pointsVisibility,
+    gameVisibility,
+    tierVisibility,
+    modeVisibility,
+    // the page's LAN-only plate; player records get it via computeRankings'
+    // own lanOnly filter, this flag applies the same cut to the prize list
+    lanOnly = false,
+  }
 ) {
   const mostTitles = top(players, (p) => p.placements.first).map((p) => ({
     player: p.player,
@@ -133,6 +141,7 @@ export default function computeRecords(
     .filter(
       (ev) =>
         ev.prizepool != null &&
+        (!lanOnly || ev.lan) &&
         (gameVisibility[ev.game] ?? true) &&
         (tierVisibility[ev.tier] ?? true) &&
         (modeVisibility[ev.mode] ?? true)
