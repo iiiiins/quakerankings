@@ -115,3 +115,16 @@ mid-list); sort-by-2nd → link canonicalizes to `v1`, no sort chip; opener path
 values); fresh-load console clean (the dep-array-size error in the buffer was the HMR
 swap of the mirror effect, gone on reload). Tests 22/22; prod build green. Still NOT
 deployed.
+
+## Follow-up 2 (same session): custom-formula banner
+
+Bruno's ask: surface the (invisible) gear customizations the way the shared banner does,
+with a revert. `CustomFormulaBanner` (commit `caf8aea`): same surface/chips on the home
+board when the visitor's own formula ≠ defaults and no shared view is active; one factory
+"Reset to default" (save effect persists defaults — no undo). Detection reuses the codec
+(default iff `encodeShareState(config, DEFAULT_FILTERS) === "v1"`). Filters/sort excluded
+(visible in their own controls). Precedence shared > custom; adopt hands the banner over
+to the strip (verified live: e50+sppe link → adopt → strip shows "PPE min 50", sort chip
+correctly absent). Also verified: no strip on defaults, chips track gear edits, reset
+restores storage to defaults, LAN toggle doesn't summon it, clean console after marker.
+Tests 22/22, build green. NOT deployed.

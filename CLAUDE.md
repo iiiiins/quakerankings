@@ -58,8 +58,11 @@ src/
 │   ├── ShareMenu.js               share-popover content: v1 link (built on demand) + copy, chips,
 │   │                              top-10 card preview with Download PNG / Copy image; recomputes the
 │   │                              top-10 via useTournaments + computeRankings so card = board
-│   └── SharedBanner.js            "viewing a shared custom ranking" banner (home only): chips from
-│                                  the decoded link + Keep this formula / Reset to default
+│   ├── SharedBanner.js            "viewing a shared custom ranking" banner (home only): chips from
+│   │                              the decoded link + Keep this formula / Reset to default
+│   └── CustomFormulaBanner.js     "using a custom formula" strip (home only, when no shared view):
+│                                  same chips for the visitor's own non-default formula + a factory
+│                                  Reset; self-detects via encode === "v1" against default filters
 ├── hooks/
 │   ├── useTournaments.js          shared fetch hook; module-level cache = one table fetch per
 │   │                              session; refreshTournaments() drops the cache after admin writes
@@ -167,6 +170,8 @@ sort codes: ppe (Pts/Event)
 Segments are dot-separated in the canonical order above and omitted at default (a pure-default board encodes as bare `v1`). Decoding is **lenient**: unknown segments/codes are skipped, malformed segments fall back to defaults, weights clamp to [0, 100000] ints, years clamp to [1996, current] and swap if reversed — any v1 link always produces a board. Deliberately **not** in the contract: search query, pager, and non-ranking sorts. The line for sorts: a sort is shareable iff "top 10 by X" reads as a leaderboard — today that's Pts/Event descending only; ascending/stat-column/alphabetical sorts canonicalize to the points order ("most titles" boards belong to the records page, feature 6). The share popover renders the **canonical** state (encode→decode) so chips + card always show what the link opener will see. Era presets (backlog) are just curated instances of these links.
 
 **Shared-view lifecycle** (`App.js`): a link is parsed at boot (module scope) and on `hashchange` (pasting a link into an open tab). While `shared` is active: formula state = the decoded link, localStorage is ignored AND the formula-memory save effect is suppressed — merely viewing never overwrites the visitor's formula. PlayerList receives the link's filters as `initialFilters` (state initializers) and is remounted via a `key` bump when they must re-derive (reset, or a new link arriving). Exits: **Keep this formula** (clears `shared`; the save effect re-fires and persists what's on screen; the current view stays) or **Reset to default** (restores the visitor's own stored formula and remounts the board). Both strip the `f` param via `history.replaceState` so a reload stays out of shared view. The share popover itself is home-route-only (`ShareControl` in App.js) and builds the link on demand — the address bar is never rewritten while tuning.
+
+**Custom-formula banner**: when no shared view is active and the visitor's own formula ≠ defaults, the same banner surface shows "You're using a custom formula" with the formula chips and a factory **Reset to default** (sets the 9 config states to defaults; the save effect persists them — the old tuning is gone, there is no undo). Filters/sort are excluded by design (their state is visible in the controls). Adopting a shared formula hands the shared banner over to this strip. Banner precedence: shared > custom > none.
 
 `App` owns the **scoring configuration** (8 objects: `pointsConfig`/`pointsVisibility`, `gameWeights`/`gameVisibility`, `tierWeights`/`tierVisibility`, `modeWeights`/`modeVisibility`, plus `minEventsForPpe`) and passes values + setters to `<SettingsMenu>` (the only edit point) and values to the pages that consume them. The whole set persists via `lib/formulaStorage.js` (**formula memory**): saved to localStorage on every change, loaded at page load with each stored section spread over its defaults (so formulas saved before a new game/mode/setting still load), versioned key `qpr.formula.v1` — bump it to invalidate stale shapes. Corrupt or unavailable storage falls back to defaults silently. Defaults live in `lib/formulaDefaults.js`. A share link overrides all of this at boot and suppresses saving until adopted (see Share links).
 

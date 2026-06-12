@@ -190,3 +190,9 @@ B2-full expensive. Decision logged 2026-06-12.
   view-local and canonicalize to points order ("most titles" → records page, feature 6).
   Share popover renders the canonical encode→decode state so chips/card ≡ what the link
   opens. Suite now 22 cases.
+- 2026-06-12 — **Custom-formula banner** (Bruno's ask during feature-4 review): the gear
+  state was invisible — now the visitor's own non-default formula gets the shared-banner
+  treatment (same surface/chips, home only, factory "Reset to default"). Detection = the
+  codec ("default iff encodes to bare v1"). Filters/sort excluded (visible in their own
+  controls). Precedence: shared banner > custom strip > none; adopt hands over from one to
+  the other.
