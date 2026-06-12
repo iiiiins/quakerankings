@@ -1410,6 +1410,49 @@ footer a.method-link:hover {
   flex-shrink: 0;
 }
 
+/* ---------- community submissions (public suggest surface) ---------- */
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ev-suggest-new {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #e05a1f;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ev-suggest-new:hover {
+  color: #ece8df;
+}
+
+.ev-row .MuiIconButton-root.ev-suggest {
+  font-size: 17px;
+  color: #6e6859;
+  padding: 4px;
+  margin-left: -2px;
+  flex-shrink: 0;
+}
+
+/* honeypot — parked offscreen, not display:none (more tempting to bots) */
+.hp-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 /* ---------- charts ---------- */
 .chart-panel {
   background: #14120e;

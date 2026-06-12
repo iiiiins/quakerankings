@@ -22,11 +22,13 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import useTournaments from "../hooks/useTournaments";
 import useSession from "../hooks/useSession";
 import groupEvents from "../lib/groupEvents";
 import gameLogos from "../lib/gameLogos";
 import EventEditDialog from "./EventEditDialog";
+import SuggestDialog from "./SuggestDialog";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -94,6 +96,7 @@ const EventsBrowser = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loadMore, setLoadMore] = useState(100);
   const [editingKey, setEditingKey] = useState(null);
+  const [suggesting, setSuggesting] = useState(null); // grouped event | "new" | null
   const isMobile = useMediaQuery("(max-width:899px)");
 
   const tournamentList = useTournaments();
@@ -102,6 +105,9 @@ const EventsBrowser = () => {
 
   // Admin corrections are a desktop task — mobile rows stay read-only
   const canEdit = Boolean(session) && !isMobile;
+  // Public suggestions are anon-only (RLS: an authenticated session can't
+  // INSERT submissions) — signed-out gets suggest, signed-in gets the pencil
+  const canSuggest = !session;
   // Derived by key so a cache refresh swaps in fresh rows (or closes the
   // dialog if the edit changed the event's identity)
   const editingEvent = canEdit
@@ -276,12 +282,23 @@ const EventsBrowser = () => {
         </div>
       )}
 
-      {/* Summary Message */}
-      <Typography component="div" className="summary-line">
-        <b>{sortedEvents.length.toLocaleString("en-US")}</b> events ·{" "}
-        <b>{(events.length - sortedEvents.length).toLocaleString("en-US")}</b>{" "}
-        filtered
-      </Typography>
+      {/* Summary Message + public "submit a tournament" entry point */}
+      <div className="summary-row">
+        <Typography component="div" className="summary-line">
+          <b>{sortedEvents.length.toLocaleString("en-US")}</b> events ·{" "}
+          <b>{(events.length - sortedEvents.length).toLocaleString("en-US")}</b>{" "}
+          filtered
+        </Typography>
+        {canSuggest && (
+          <button
+            type="button"
+            className="ev-suggest-new"
+            onClick={() => setSuggesting("new")}
+          >
+            + Submit a tournament
+          </button>
+        )}
+      </div>
 
       {isMobile ? (
         <div className="ev-list">
@@ -319,6 +336,16 @@ const EventsBrowser = () => {
                     ))
                   )}
                 </span>
+                {canSuggest && (
+                  <IconButton
+                    size="small"
+                    className="ev-suggest"
+                    aria-label={`Suggest a fix for ${ev.name}`}
+                    onClick={() => setSuggesting(ev)}
+                  >
+                    <EditNoteIcon fontSize="inherit" />
+                  </IconButton>
+                )}
               </div>
             ))
           )}
@@ -369,13 +396,14 @@ const EventsBrowser = () => {
                 <TableCell className="gold-header">1st</TableCell>
                 <TableCell className="silver-header">2nd</TableCell>
                 <TableCell className="bronze-header">Top 4</TableCell>
-                {canEdit && <TableCell className="edit-cell" />}
+                {/* trailing action column: admin pencil or public suggest */}
+                <TableCell className="edit-cell" />
               </TableRow>
             </TableHead>
             <TableBody>
               {sortedEvents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 10 : 9} align="center">
+                  <TableCell colSpan={10} align="center">
                     No events found
                   </TableCell>
                 </TableRow>
@@ -426,8 +454,8 @@ const EventsBrowser = () => {
                         <PodiumNames names={ev.placements.top4} />
                       </div>
                     </TableCell>
-                    {canEdit && (
-                      <TableCell className="edit-cell">
+                    <TableCell className="edit-cell">
+                      {canEdit ? (
                         <IconButton
                           size="small"
                           aria-label={`Edit ${ev.name}`}
@@ -435,8 +463,19 @@ const EventsBrowser = () => {
                         >
                           <EditIcon fontSize="inherit" />
                         </IconButton>
-                      </TableCell>
-                    )}
+                      ) : (
+                        canSuggest && (
+                          <IconButton
+                            size="small"
+                            aria-label={`Suggest a fix for ${ev.name}`}
+                            title="Suggest a fix"
+                            onClick={() => setSuggesting(ev)}
+                          >
+                            <EditNoteIcon fontSize="inherit" />
+                          </IconButton>
+                        )
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -450,6 +489,7 @@ const EventsBrowser = () => {
           onClose={() => setEditingKey(null)}
         />
       )}
+      <SuggestDialog target={suggesting} onClose={() => setSuggesting(null)} />
       {visibleEvents.length < sortedEvents.length && (
         <div className="loadhint">Scroll — next 100 load automatically</div>
       )}

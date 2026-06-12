@@ -13,6 +13,12 @@ const { GAMES, MODES, PLACEMENTS, validateRow, normalizeRow } = tournamentRules;
 // through raw so validateRow's errors show what was typed.
 const num = (s) => (s !== "" && !isNaN(Number(s)) ? Number(s) : s);
 
+// Supabase errors aren't guaranteed a .message (e.g. a bare "{}" body) —
+// String() on those renders "[object Object]".
+const errText = (error) =>
+  error?.message ||
+  (typeof error === "string" ? error : `Request failed — ${JSON.stringify(error)}`);
+
 const PLACEMENT_TINTS = {
   "1st": "pm-g",
   "2nd": "pm-s",
@@ -115,7 +121,7 @@ const TournamentForm = ({
     const result = (await onSubmit(row)) || {};
     setBusy(false);
     if (result.error) {
-      setErrors([result.error.message || String(result.error)]);
+      setErrors([errText(result.error)]);
       return;
     }
     if (!isEdit) setFields(emptyFields());
@@ -131,7 +137,7 @@ const TournamentForm = ({
     const result = (await onDelete()) || {};
     setBusy(false);
     if (result.error) {
-      setErrors([result.error.message || String(result.error)]);
+      setErrors([errText(result.error)]);
       setConfirmingDelete(false);
     }
   };
