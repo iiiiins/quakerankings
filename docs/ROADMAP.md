@@ -24,15 +24,21 @@ all four player-depth candidates committed; order = sharing → submissions → 
    delete from the browser, `probe-rls.js` as the standing security regression (8/8).
    Commits `f1eb7b5`…`9ace29b`; deployed bundle `98ad6618`. The baseline probe caught and
    killed a legacy any-authenticated-INSERT policy + open signups.
+4. **Shareable rankings + top-10 card** — v1 share-URL public contract (`#/?f=v1…`,
+   `lib/shareCodec.js` + 22-case suite, schema in CLAUDE.md), share popover (link/copy/
+   chips), 1200×630 canvas card (download/clipboard), shared-view banner (adopt / one-click
+   factory reset), custom-formula banner, PPE sort in the contract. Commits
+   `7e6628e`…`a0a623b`; deployed bundle `38ed9e07`, verified live 2026-06-12 (hash + six
+   feature markers in the served bundle).
 
 ## Committed features, in order
 
 ### 4. Shareable rankings + top-10 share card (~1–1.5 sessions)
 
-> **Status: BUILT 2026-06-12** (commits `7e6628e`…, session feature-4) — verified against the
-> dev preview (both entry paths, both banner exits, card render/download/copy-fallback,
-> 19-case codec test suite, prod build green). **Not deployed — awaiting Bruno's "ship it".**
-> Schema documented in CLAUDE.md ("Share links — the v1 public URL contract").
+> **Status: SHIPPED 2026-06-12** — bundle `38ed9e07` verified live (see Shipped section).
+> Includes the three review follow-ups: PPE sort in the contract, custom-formula banner,
+> shared-reset = default site. Schema documented in CLAUDE.md ("Share links — the v1
+> public URL contract"). **The v1 encoding is now a live public contract.**
 
 - **Share link**: encode the full scoring config (8 objects + minEventsForPpe, plus the list
   filters) into the URL; anyone opening it sees the board that formula produces. UI per the
