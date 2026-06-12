@@ -29,6 +29,11 @@ all four player-depth candidates committed; order = sharing → submissions → 
 
 ### 4. Shareable rankings + top-10 share card (~1–1.5 sessions)
 
+> **Status: BUILT 2026-06-12** (commits `7e6628e`…, session feature-4) — verified against the
+> dev preview (both entry paths, both banner exits, card render/download/copy-fallback,
+> 19-case codec test suite, prod build green). **Not deployed — awaiting Bruno's "ship it".**
+> Schema documented in CLAUDE.md ("Share links — the v1 public URL contract").
+
 - **Share link**: encode the full scoring config (8 objects + minEventsForPpe, plus the list
   filters) into the URL; anyone opening it sees the board that formula produces. UI per the
   existing mock `docs/mocks/shareable-rankings-walkthrough.html` (share popover from the
@@ -169,3 +174,13 @@ B2-full expensive. Decision logged 2026-06-12.
 - 2026-06-12 — Depth-internal order set by engine reuse: records (standalone opener) →
   rank-over-time (builds the per-year engine) → comparison (builds the meetings engine) →
   PlayerPage upgrades (consumes both).
+- 2026-06-12 — **Feature 4 build decisions** (within the locked roadmap constraints): single
+  versioned param (`f=v1.<dot-segments>`, omit-at-default, lenient decode — vocabulary may
+  grow, grammar may not); share icon is home-route-only (the link always targets the home
+  board); the address bar is never rewritten while tuning — the link is built on demand in
+  the popover; search/column-sort/pager deliberately excluded from the contract; shared view
+  = defaults + link overrides with formula-memory saving suppressed until "Keep this formula"
+  (adopt keeps the current view; "Reset to default" restores the visitor's stored formula and
+  remounts the board); card is 1200×630 landscape, recomputed through the same
+  computeRankings pipeline as the board. First jest suite in the repo pins the URL contract
+  (19 cases).

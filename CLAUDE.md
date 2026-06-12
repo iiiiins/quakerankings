@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Regenerated 2026-06-11 from a full source read; updated the same day after the leaderboard-upgrades session (roadmap feature 1), the tournament-browser session (feature 2), and the admin-CRUD session (feature 3). Every claim below was verified against the code on that date.
+Regenerated 2026-06-11 from a full source read; updated the same day after the leaderboard-upgrades session (roadmap feature 1), the tournament-browser session (feature 2), and the admin-CRUD session (feature 3); updated 2026-06-12 after the sharing session (feature 4). Every claim below was verified against the code on those dates.
 
 ## Overview
 
-Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset; the formula persists across visits in localStorage. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts. A tournament browser at `/events` lists the full dataset as grouped events (filters, podium links, prize pools), and a methodology page (footer link) is the standing "how the ranking works" answer. A single-user admin (`/admin`, no nav tab) adds tournaments; signed-in sessions edit/delete rows from the events browser. Security lives entirely in Supabase RLS, not in hiding the page.
+Quake Player Rankings is a single-page React app that aggregates competitive Quake tournament results across the franchise (Quake World through Champions, plus Diabotical) into a weighted player ranking. Users tune the scoring formula in real time — placement-point values, per-game / per-tier / per-mode weights, and visibility toggles for each — and the leaderboard recomputes client-side against a Supabase-backed tournament dataset; the formula persists across visits in localStorage. Filters cover game, mode, year range, LAN-only, and a "Power Ranking" mode (top-25 tournaments per player). The formula + home filters are also shareable as a versioned URL (`#/?f=v1…` — see Share links) that reproduces the exact board for anyone; viewers get a banner to adopt or dismiss it, and the share popover renders a top-10 PNG card for chats whose link previews can't see the formula. Players drill down to a per-player detail page; an Advanced Stats page renders points-over-time line charts. A tournament browser at `/events` lists the full dataset as grouped events (filters, podium links, prize pools), and a methodology page (footer link) is the standing "how the ranking works" answer. A single-user admin (`/admin`, no nav tab) adds tournaments; signed-in sessions edit/delete rows from the events browser. Security lives entirely in Supabase RLS, not in hiding the page.
 
 ## Stack
 
@@ -14,6 +14,7 @@ Quake Player Rankings is a single-page React app that aggregates competitive Qua
 - **Backend**: Supabase (`@supabase/supabase-js` 2.47) — a single `Tournaments` table. Reads use the anon role; writes require the signed-in admin (email/password auth, signups disabled, uid-scoped RLS — see Data model). URL + anon JWT + GA id come from the committed `.env` (`REACT_APP_*`, public by design); secrets (service key, admin credentials) live in the gitignored `.env.local`.
 - **Charts**: `chart.js` 4.x + `react-chartjs-2` 5.x. Only `Line` is used; scales/elements registered at the top of `AdvancedStats.js`.
 - **Analytics**: `react-ga4` with GA property `G-X11M9568HY`, initialized at module load in `App.js`; `AnalyticsTracker` fires a pageview on each route change.
+- **Tests**: jest via `react-scripts test` (`$env:CI="true"; npm test -- --watchAll=false`). One suite so far: `src/lib/shareCodec.test.js` — 19 cases pinning the share-URL public contract; a failure there means links in the wild change meaning.
 - **Hosting**: GitHub Pages, served from the `gh-pages` branch. `main` holds source.
 
 ## Project structure
@@ -21,7 +22,9 @@ Quake Player Rankings is a single-page React app that aggregates competitive Qua
 ```
 src/
 ├── index.js                       createRoot mount under <StrictMode>
-├── App.js                         header (wordmark/NavTabs/gear), footer, settings popover, <Routes>; owns scoring config
+├── App.js                         header (wordmark/NavTabs/share/gear), footer, popovers, <Routes>;
+│                                  owns scoring config + shared-view state (boot parse, hashchange,
+│                                  adopt/reset, save suppression) + the home-filters ref mirror
 ├── App.css                        2 font imports (Rajdhani + Orbitron) + page atmosphere + design-system classes
 ├── theme.js                       the MUI theme — ember palette, typography, component styleOverrides
 ├── AnalyticsTracker.js            GA pageview on each navigation (useLocation effect)
@@ -49,9 +52,14 @@ src/
 │   │                              duplicate warning ("Add anyway"), prefill/dupCheck props
 │   ├── EventEditDialog.js         the browser's edit surface: single-row events open the form,
 │   │                              team events get a row picker + add-row-to-event; closes on save
-│   └── SettingsMenu.js            controlled form in the gear popover; five sections (Points, Games,
-│                                  Tier, Mode — rows = visibility checkbox + weight input — and
-│                                  Points per Event with the min-events threshold)
+│   ├── SettingsMenu.js            controlled form in the gear popover; five sections (Points, Games,
+│   │                              Tier, Mode — rows = visibility checkbox + weight input — and
+│   │                              Points per Event with the min-events threshold)
+│   ├── ShareMenu.js               share-popover content: v1 link (built on demand) + copy, chips,
+│   │                              top-10 card preview with Download PNG / Copy image; recomputes the
+│   │                              top-10 via useTournaments + computeRankings so card = board
+│   └── SharedBanner.js            "viewing a shared custom ranking" banner (home only): chips from
+│                                  the decoded link + Keep this formula / Reset to default
 ├── hooks/
 │   ├── useTournaments.js          shared fetch hook; module-level cache = one table fetch per
 │   │                              session; refreshTournaments() drops the cache after admin writes
@@ -64,7 +72,14 @@ src/
 │   ├── tournamentRules.js         shared validation rules (web form + import script) — CommonJS,
 │   │                              and it must stay free of babel-helper syntax (see quirks)
 │   ├── gameLogos.js               the Game-string → logo PNG map (PlayerList + EventsBrowser)
-│   └── formulaStorage.js          load/save the scoring config, versioned key qpr.formula.v1
+│   ├── formulaStorage.js          load/save the scoring config, versioned key qpr.formula.v1
+│   ├── formulaDefaults.js         single source of truth for default formula + filters (and the
+│   │                              GAMES/MODES lists, YEAR_MIN, CURRENT_YEAR); part of the share
+│   │                              contract — changing a default changes what existing links decode to
+│   ├── shareCodec.js              encode/decode/summarize for the v1 share URL (+ .test.js — the
+│   │                              contract tests; run them before touching either file)
+│   └── renderShareCard.js         1200×630 canvas top-10 card in the site visual language; awaits
+│                                  Orbitron/Rajdhani via document.fonts before drawing
 ├── services/
 │   ├── supabaseClient.js          client from .env config (REACT_APP_SUPABASE_URL / _ANON_KEY)
 │   ├── fetchPlayersByGame.js      fetchListTournaments — full Tournaments table, [] on error
@@ -124,11 +139,35 @@ points(placement) = base[placement] × tierWeight/100 × gameWeight/100 × modeW
 - PlayerPage computes the same formula written as `(base × tierW × gameW × modeW) / 1000000` — mathematically equivalent; don't "fix" one to match the other without reading both. It rounds to 1 decimal where the list pages round to integers.
 - PlayerPage extras: average placement (1st=1, 2nd=2, Top4=3.5, Top8=6.5), grand finals = 1st+2nd count, grand-final win rate = 1sts / grand finals.
 
-## State architecture
+## Share links — the v1 public URL contract (since 2026-06-12)
 
-`App` owns the **scoring configuration** (8 objects: `pointsConfig`/`pointsVisibility`, `gameWeights`/`gameVisibility`, `tierWeights`/`tierVisibility`, `modeWeights`/`modeVisibility`, plus `minEventsForPpe`) and passes values + setters to `<SettingsMenu>` (the only edit point) and values to the pages that consume them. The whole set persists via `lib/formulaStorage.js` (**formula memory**): saved to localStorage on every change, loaded at page load with each stored section spread over its defaults (so formulas saved before a new game/mode/setting still load), versioned key `qpr.formula.v1` — bump it to invalidate stale shapes. Corrupt or unavailable storage falls back to defaults silently.
+`#/?f=v1[.<segment>]*` — the params live **inside the hash fragment** (HashRouter; parse `window.location.hash`, never `location.search`). Implemented in `lib/shareCodec.js`; `lib/shareCodec.test.js` pins everything below. **The v1 grammar is permanent once links circulate**: the code vocabulary may grow (new games/modes), the grammar may not; bump to `v2` for shape changes and keep decoding v1. Defaults (`lib/formulaDefaults.js`) are part of the contract — an omitted segment decodes to the DEFAULT (never the viewer's stored value), so the same link shows the same board to everyone, and changing a default silently changes what existing links decode to.
 
-**Filter state is per-page, not shared.** Each list page declares its own `selectedGame`, `selectedMode`/`selectedTier`, `yearRange`, `lanOnly` (PlayerList also `powerRanking`); changing a filter on one page does not affect another.
+```
+p<n>-<n>-<n>-<n>          base points first-second-top4-top8      p150-75-30-10
+hp<c>[-<c>]               hidden placements  c ∈ 1|2|4|8          hp4-8
+t<n>-<n>-<n>-<n>-<n>      tier weights 1→5                        t100-80-50-25-10
+ht<c>[-<c>]               hidden tiers       c ∈ 1..5             ht4-5
+g<code>_<n>[-<code>_<n>]  game weights ≠ 100                      gql_120-qc_80
+hg<code>[-<code>]         hidden games                            hgdb
+m<code>_<n>[-<code>_<n>]  mode weights ≠ 100                      mtdm_50
+hm<code>[-<code>]         hidden modes                            hmsac-wip
+e<n>                      minEventsForPpe ≠ 15                    e10
+fg<code>                  game filter ≠ All                       fgq3
+fm<code>                  mode filter ≠ All                       fmduel
+y<from>-<to>              year range ≠ 1996–current               y2003-2013
+l                         LAN only          w                     Power Ranking
+
+game codes: qw q2 q3 q4 ql qc db · mode codes: duel 2v2 tdm ctf ca sac wip dbt
+```
+
+Segments are dot-separated in the canonical order above and omitted at default (a pure-default board encodes as bare `v1`). Decoding is **lenient**: unknown segments/codes are skipped, malformed segments fall back to defaults, weights clamp to [0, 100000] ints, years clamp to [1996, current] and swap if reversed — any v1 link always produces a board. Deliberately **not** in the contract: search query, column sort, pager — view conveniences, not the ranking. Era presets (backlog) are just curated instances of these links.
+
+**Shared-view lifecycle** (`App.js`): a link is parsed at boot (module scope) and on `hashchange` (pasting a link into an open tab). While `shared` is active: formula state = the decoded link, localStorage is ignored AND the formula-memory save effect is suppressed — merely viewing never overwrites the visitor's formula. PlayerList receives the link's filters as `initialFilters` (state initializers) and is remounted via a `key` bump when they must re-derive (reset, or a new link arriving). Exits: **Keep this formula** (clears `shared`; the save effect re-fires and persists what's on screen; the current view stays) or **Reset to default** (restores the visitor's own stored formula and remounts the board). Both strip the `f` param via `history.replaceState` so a reload stays out of shared view. The share popover itself is home-route-only (`ShareControl` in App.js) and builds the link on demand — the address bar is never rewritten while tuning.
+
+`App` owns the **scoring configuration** (8 objects: `pointsConfig`/`pointsVisibility`, `gameWeights`/`gameVisibility`, `tierWeights`/`tierVisibility`, `modeWeights`/`modeVisibility`, plus `minEventsForPpe`) and passes values + setters to `<SettingsMenu>` (the only edit point) and values to the pages that consume them. The whole set persists via `lib/formulaStorage.js` (**formula memory**): saved to localStorage on every change, loaded at page load with each stored section spread over its defaults (so formulas saved before a new game/mode/setting still load), versioned key `qpr.formula.v1` — bump it to invalidate stale shapes. Corrupt or unavailable storage falls back to defaults silently. Defaults live in `lib/formulaDefaults.js`. A share link overrides all of this at boot and suppresses saving until adopted (see Share links).
+
+**Filter state is per-page, not shared.** Each list page declares its own `selectedGame`, `selectedMode`/`selectedTier`, `yearRange`, `lanOnly` (PlayerList also `powerRanking`); changing a filter on one page does not affect another. Two share-feature exceptions that keep this ownership intact: PlayerList **mirrors** its filters up through `onFiltersChange` into an App-held ref (read by the share popover when it opens — an open popover blocks filter interaction, so the ref can't go stale while visible), and accepts `initialFilters` from a share link as state initializers.
 
 Data flow per page:
 - `PlayerList` and `AdvancedStats` read the table through `useTournaments()` (module-level cache — one Supabase fetch per session, shared across pages; empty/error results aren't cached so a later mount retries) and run `computeRankings(tournaments, config)` in a `useMemo`. PlayerList layers search + column sort on top as derived memos, so sort survives searches and settings changes; `Rank` is always the points-desc rank regardless of the displayed order.
@@ -154,7 +193,7 @@ The working source was lost locally in 2025; deploys had been going straight to 
 
 Remaining after the 2026-06-11 fix batch (year cap, weight-fallback mismatch, Diabotical dropdown gap, debug text/log spam, favicon/manifest, medal-header `class=`, Participations sort arrow — all fixed and deployed that day), the 2026-06-11 redesign (emotion-hash selectors, serif fallbacks, fixed pixel layouts, PlayerPage's nested ThemeProvider removed; all three pages responsive), the 2026-06-11 foundation extraction (which resolved the former #1–#3: the ~200-line PlayerList/AdvancedStats copy-paste, the dead state blocks/imports, and the AdvancedStats chart double-init — all replaced by `useTournaments` + `computeRankings`), and the 2026-06-11 admin session (which closed the former #1 — hardcoded Supabase/GA config — via `.env`, and found+fixed a legacy RLS policy that let ANY authenticated user insert while signups were open).
 
-1. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case stays silent).
+1. **Cosmetics**: `package.json` `"name": "react"`; `public/index.html` `<title>` is "Quake Rankings" while the H1 reads "Quake Player Rankings". A no-players `console.error` still fires if user settings filter out every tournament (the on-load case stays silent; since feature 4 the open share popover runs the same pipeline, so degenerate states log it twice).
 2. **Narrow-desktop horizontal scroll**: with the Pts/Event column the leaderboard needs ~1060px; between 900px (the mobile breakpoint) and ~1110px viewports it scrolls horizontally inside the board (MUI `overflow-x: auto`) instead of fully fitting. The events table has the same trade-off at ~1150px content width (its name/podium columns are capped by inner `max-width` divs — without those, table auto-layout would stretch it past 1800px); the signed-in pencil column adds ~40px more, so admin sessions may scroll slightly even at 1280px.
 
 ## Local dev quirks

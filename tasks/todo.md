@@ -54,29 +54,46 @@ years clamped [1996, current], swapped if from>to. Decode returns COMPLETE confi
 
 ## Steps
 
-- [ ] 1. Extract `src/lib/formulaDefaults.js` (9 default objects + GAMES/MODES/CURRENT_YEAR
-       + default filters); App.js + PlayerList consume. Pure refactor.
-       → verify: board renders identically in preview (same summary-line counts), HMR clean.
-- [ ] 2. `src/lib/shareCodec.js` (encode / decode / summarize chips) +
-       `src/lib/shareCodec.test.js` (round-trips, omit-defaults, leniency, clamping, chips).
-       → verify: CI=true npm test green. First test file in the repo.
-- [ ] 3. Share popover: `components/ShareMenu.js`, header share icon (home-only, left of
-       gear), PlayerList onFiltersChange mirror. Link box + copy + customization chips.
-       → verify in preview: tweaked settings/filters produce the right link; copy feedback.
-- [ ] 4. Shared-view mode: boot parse from hash, config init from shared, banner
-       (`components/SharedBanner.js`) with adopt/reset, save suppression, hashchange
-       handler, boardKey remount, URL cleanup via replaceState.
-       → verify in preview: open share link fresh → board + banner + filter UI match;
-         adopt persists to localStorage + cleans URL; reset restores prior formula;
-         visitor's stored formula untouched while merely viewing.
-- [ ] 5. Share card: `lib/renderShareCard.js` (canvas draw) + card section in ShareMenu
-       (preview img, Download PNG, Copy image; fonts awaited before draw).
-       → verify in preview: preview img renders (dataURL length + screenshot), download
-         triggers, copy guarded with fallback message.
-- [ ] 6. Docs + wrap: CLAUDE.md (schema as public contract, project structure, state
-       architecture, share lifecycle), ROADMAP.md (feature 4 built/verified, awaiting
-       "ship it"), final `npm run build` green. NO deploy.
+- [x] 1. Extract `src/lib/formulaDefaults.js` — commit `7e6628e`. Verified: board identical
+       (1,690 players · 1,925 tournaments · 0 filtered), no console errors; the pre-refactor
+       localStorage formula matched the extracted defaults key-for-key (identity cross-check).
+- [x] 2. `shareCodec.js` + `shareCodec.test.js` — commit `7661402`. 19/19 green (first test
+       suite in the repo). Round-trips, canonical order, omit-defaults, leniency, clamping,
+       chip summaries all pinned.
+- [x] 3. Share popover — commit `bb2e0d0`. Verified in preview: LAN+Power → `#/?f=v1.l.w`
+       with matching chips; FIRST=150 + Tier-4 hidden → `v1.p150-50-25-10.ht4`; icon absent
+       on /events; popover visuals match the design system (screenshot).
+- [x] 4. Shared-view mode — commit `983b3d5`. Verified both entry paths (boot + hashchange)
+       and both exits against a seeded stored formula (first=99): banner + mock chips exact;
+       shared board = defaults + link (settings showed 100, not 99); storage untouched while
+       viewing; Reset restored 99 + default board + clean URL; Adopt kept the view, persisted
+       the shared formula, cleaned the URL; post-adopt reload = adopted formula + default
+       filters.
+- [x] 5. Share card — commit `c1aca29`. Verified: 1200×630 render, full-size screenshot
+       matches the site language (medal ranks, Orbitron names, placement counts, point bars,
+       chips, counts footer); popover link round-trips the opened URL exactly; empty-formula
+       state shows an honest note; clipboard rejection falls back to "use Download"; download
+       click clean; clean-pass console: zero new warnings/errors.
+- [x] 6. Docs: CLAUDE.md (v1 contract section, structure, state architecture, known-issue
+       note), ROADMAP.md (§4 status BUILT + decision-log entry). Tests 19/19, prod build
+       green. NOT deployed.
 
 ## Review
 
-(filled at end of session)
+Feature 4 complete in 5 atomic commits + docs. The v1 URL schema is live as a public
+contract the moment it deploys — it's pinned by the test suite and documented in CLAUDE.md;
+any change to `formulaDefaults.js` or the codec must keep existing links meaning the same
+thing (bump to v2 for shape changes).
+
+Build-time decisions (all logged in the roadmap): single versioned `f` param; share icon
+home-only; no live URL sync (link built on demand); search/sort/pager excluded from the
+contract; shared view suppresses formula-memory until adopt; adopt keeps the view, reset
+remounts; card 1200×630 recomputed through computeRankings (card ≡ board by construction).
+
+Deliberately NOT done: GA events on share/copy (not in scope — cheap follow-up if Bruno
+wants usage signal); silencing the pre-existing no-players console.error (known issue #1,
+now noted as doubled in degenerate states); era presets (backlog, ride on this encoding).
+
+Verification gaps to try by hand in a real browser (preview browser can't): happy-path
+clipboard copy (link + image) — the preview environment denies clipboard permission, so
+only the fallback paths were exercised end-to-end.
