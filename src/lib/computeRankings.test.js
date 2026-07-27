@@ -89,11 +89,17 @@ describe("points", () => {
   });
 
   test("ranks are 1-indexed and follow descending points", () => {
+    // Rows are fed WORST-FIRST on purpose. Players enter playerStats in the order
+    // their names first appear, so listing alpha first would hand the sort an
+    // already-descending array — and a comparator that always returns positive
+    // leaves such an array untouched, letting `b.points - a.points` be swapped
+    // for `+` with this assertion still passing. Feeding charlie first forces the
+    // sort to actually reorder. See flag f9c485.
     const rows = [
-      row({ "1st": "alpha" }),
-      row({ "1st": "alpha" }),
-      row({ "1st": "bravo" }),
       row({ "2nd": "charlie" }),
+      row({ "1st": "bravo" }),
+      row({ "1st": "alpha" }),
+      row({ "1st": "alpha" }),
     ];
     const { players } = run(rows);
     expect(players.map((p) => [p.player, p.Rank])).toEqual([
@@ -144,6 +150,21 @@ describe("filters", () => {
     expect(totalTournaments).toBe(3);
     expect(filteredCount).toBe(2);
     expect(players).toHaveLength(1);
+  });
+
+  test("the mode filter drops rows and counts them, same as the game filter", () => {
+    // The Game filter above was covered; Mode was not, so inverting its `!==` to
+    // `===` changed nothing any test could see. Every fixture row is Duel and every
+    // test left selectedMode on "All". See flag ba438b.
+    const rows = [
+      row({ Mode: "Duel", "1st": "alpha" }),
+      row({ Mode: "TDM", "1st": "bravo" }),
+      row({ Mode: "CTF", "1st": "charlie" }),
+    ];
+    const { players, filteredCount, totalTournaments } = run(rows, { selectedMode: "Duel" });
+    expect(totalTournaments).toBe(3);
+    expect(filteredCount).toBe(2);
+    expect(players.map((p) => p.player)).toEqual(["alpha"]);
   });
 
   test("an incomplete row is dropped WITHOUT being counted as filtered", () => {
