@@ -229,9 +229,14 @@ describe("visibility", () => {
 });
 
 describe("power ranking", () => {
+  // The weak results are listed FIRST on purpose. Power ranking keeps the top 25 by
+  // sorting player.tournaments then slicing, so a fixture already in descending order
+  // lets a broken comparator keep the right events by accident — which is exactly how
+  // `sort((a, b) => b.points - a.points)` at computeRankings.js:139 could be swapped
+  // for `+` with these tests still green. Worst-first forces the sort to do the work.
   const thirty = () => [
-    ...Array.from({ length: 25 }, () => row({ Tier: 1, "1st": "alpha" })), // 100 each
     ...Array.from({ length: 5 }, () => row({ Tier: 5, "1st": "alpha" })), // 10 each
+    ...Array.from({ length: 25 }, () => row({ Tier: 1, "1st": "alpha" })), // 100 each
   ];
 
   test("off: every result counts", () => {
