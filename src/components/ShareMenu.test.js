@@ -430,11 +430,11 @@ describe("the top-10 card", () => {
     expect(cardArgs().countsLine).toBe("1,200 players · 1,234 tournaments scored");
   });
 
-  test("a row dropped as invalid is still counted as scored (known overstatement)", async () => {
-    // Characterization of flag 276bbc: computeRankings drops a row missing
-    // Game/Mode/Tier/Year WITHOUT incrementing filteredCount, so the card's
-    // "tournaments scored" claim comes out one too high. Pinned so a fix has to
-    // change this line deliberately rather than silently.
+  test("a row dropped as invalid is not counted as scored", async () => {
+    // Flag 276bbc, now fixed. This test previously pinned the overstatement —
+    // an incomplete row was dropped without incrementing filteredCount, so the
+    // card claimed one more tournament than it had scored. It now asserts the
+    // corrected figure, which is what made it go red when the fix landed.
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
     useTournaments.mockReturnValue([
       row({ "1st": "alpha" }),
@@ -443,7 +443,7 @@ describe("the top-10 card", () => {
     await renderMenu({ config: makeConfig(), filters: makeFilters() });
 
     expect(cardArgs().players.map((p) => p.player)).toEqual(["alpha"]);
-    expect(cardArgs().countsLine).toBe("1 players · 2 tournaments scored");
+    expect(cardArgs().countsLine).toBe("1 players · 1 tournaments scored");
     spy.mockRestore();
   });
 

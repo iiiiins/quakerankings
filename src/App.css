@@ -1480,6 +1480,24 @@ footer a.method-link:hover {
   margin: 0 0 14px !important;
 }
 
+.incomplete-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.incomplete-list li {
+  color: #cfc9bb;
+  font-size: 14px;
+  padding: 7px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.incomplete-list li strong {
+  color: #f5c518;
+  font-weight: 600;
+}
+
 .admin-success {
   color: #f5c518;
   font-size: 14px;

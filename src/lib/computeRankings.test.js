@@ -6,7 +6,7 @@
 // These are business rules, not implementation details — a change here changes
 // what the site claims about a player's career.
 
-import computeRankings from "./computeRankings";
+import computeRankings, { missingFields } from "./computeRankings";
 import {
   YEAR_MIN,
   DEFAULT_POINTS_CONFIG,
@@ -167,18 +167,48 @@ describe("filters", () => {
     expect(players.map((p) => p.player)).toEqual(["alpha"]);
   });
 
-  test("an incomplete row is dropped WITHOUT being counted as filtered", () => {
-    // Current behaviour, pinned deliberately: a row missing Game/Mode/Tier/Year
-    // returns before filteredCount++, so it appears in neither the scored set
-    // nor the filtered tally, and "N of M" silently fails to add up.
-    // See flag 276bbc — change this test only alongside a decision about that.
+  test("an incomplete row counts as filtered, so the tally still adds up", () => {
+    // Resolves flag 276bbc. Bruno's call: a row missing Game/Mode/Tier/Year is
+    // almost always a half-finished entry of his own — placements typed in, tier
+    // or year forgotten — so it should stay OUT of the scoring but be counted,
+    // and surfaced by name on the admin page rather than vanishing.
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
     const rows = [row({ "1st": "alpha" }), row({ Tier: null, "1st": "bravo" })];
     const { players, filteredCount, totalTournaments } = run(rows);
     expect(totalTournaments).toBe(2);
-    expect(filteredCount).toBe(0);
+    expect(filteredCount).toBe(1);
+    expect(totalTournaments - filteredCount).toBe(1); // the line the board shows
     expect(players.map((p) => p.player)).toEqual(["alpha"]);
     expect(spy).toHaveBeenCalledWith("Invalid tournament entry:", expect.anything());
+    spy.mockRestore();
+  });
+});
+
+describe("missingFields", () => {
+  // One definition of "incomplete", shared by the scoring and the admin list, so
+  // the page can never disagree with the pipeline about which rows are broken.
+  test("a complete row is missing nothing", () => {
+    expect(missingFields(row())).toEqual([]);
+  });
+
+  test("it names every absent field, in a stable order", () => {
+    expect(missingFields(row({ Tier: null, Year: null }))).toEqual(["Tier", "Year"]);
+    expect(missingFields(row({ Game: "", Mode: undefined }))).toEqual(["Game", "Mode"]);
+    expect(missingFields({})).toEqual(["Game", "Mode", "Tier", "Year"]);
+  });
+
+  test("a missing row is treated as missing everything rather than throwing", () => {
+    // The first render happens before the fetch resolves.
+    expect(missingFields(undefined)).toEqual(["Game", "Mode", "Tier", "Year"]);
+  });
+
+  test("the rows it names are exactly the rows the scoring drops", () => {
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const rows = [row({ "1st": "alpha" }), row({ Year: null, "1st": "bravo" })];
+    const broken = rows.filter((r) => missingFields(r).length);
+    const { filteredCount } = run(rows);
+    expect(broken).toHaveLength(1);
+    expect(filteredCount).toBe(broken.length);
     spy.mockRestore();
   });
 });

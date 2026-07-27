@@ -7,6 +7,7 @@ import { refreshTournaments } from "../hooks/useTournaments";
 import { insertTournament } from "../services/tournamentWrites";
 import TournamentForm from "./TournamentForm";
 import SubmissionQueue from "./SubmissionQueue";
+import IncompleteEvents from "./IncompleteEvents";
 
 // Single-user admin: login gate + data entry. Security lives entirely in RLS
 // (uid-scoped write policies + signups disabled) — shipping this UI in the
@@ -122,6 +123,7 @@ const AdminPage = () => {
           control while you're signed in.
         </Typography>
         <SubmissionQueue />
+        <IncompleteEvents />
         <Paper elevation={0} className="game-section">
           <div className="game-section-head">
             <Typography component="h3" className="game-section-title">

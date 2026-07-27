@@ -4,6 +4,15 @@
 
 const POWER_RANKING_LIMIT = 25; // top tournaments kept per player under Power Ranking
 
+// A row without all four of these cannot be scored: there is no tier weight, no game
+// weight, no mode weight and no year to place it in. Exported so the admin page lists
+// exactly the rows the scoring drops — one definition of "incomplete", not two.
+export const REQUIRED_FIELDS = ["Game", "Mode", "Tier", "Year"];
+
+export function missingFields(tournament) {
+  return REQUIRED_FIELDS.filter((field) => !tournament?.[field]);
+}
+
 export default function computeRankings(
   tournamentList,
   {
@@ -29,13 +38,14 @@ export default function computeRankings(
   const totalTournaments = tournamentsArray.length;
 
   tournamentsArray.forEach((tournament) => {
-    if (
-      !tournament.Game ||
-      !tournament.Mode ||
-      !tournament.Tier ||
-      !tournament.Year
-    ) {
+    const missing = missingFields(tournament);
+    if (missing.length) {
+      // Counted as filtered so "N shown, M filtered" still adds up against the
+      // raw total. These rows are usually a half-finished entry — placements
+      // typed in, tier or year forgotten — so the admin page lists them by name
+      // with the missing fields, rather than leaving them to vanish silently.
       console.error("Invalid tournament entry:", tournament);
+      filteredCount++;
       return;
     }
     if (selectedGame !== tournament.Game && selectedGame !== "All") {
