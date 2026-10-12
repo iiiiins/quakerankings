@@ -2010,6 +2010,9 @@ footer a.method-link:hover {
 .who-chart { padding: 16px; border: 1px solid #2e2922; }
 .who-band { display: flex; height: 14px; margin-top: 12px; gap: 1px; }
 .who-band-cell { flex: 1; }
-.who-reigns { list-style: none; padding: 0; margin: 16px 0; display: flex; flex-wrap: wrap; gap: 8px 20px; color: #a39c8d; }
+.who-reigns { list-style: none; padding: 0; margin: 16px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 16px; color: #a39c8d; }
+.who-reigns li { display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; transition: opacity .15s; }
+.who-reigns li.dim { opacity: .15; }
+.who-reigns .who-years { margin-left: auto; font-variant-numeric: tabular-nums; }
 .who-reigns strong { color: #ece8df; }
-.who-dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; }
+.who-dot { flex: none; display: inline-block; width: 10px; height: 10px; border-radius: 2px; }

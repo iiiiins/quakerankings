@@ -11,6 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import useTournaments from "../hooks/useTournaments";
+import { focusStyle, toggleFocus } from "../lib/lineFocus";
 import computeWhoWasOne, { numberOnes, contenders } from "../lib/computeWhoWasOne";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
@@ -24,7 +25,7 @@ const BG = "#14120e";
 const GRID = "#2e2922";
 const TEXT = "#ece8df";
 const MUTED = "#a39c8d";
-const FADED = "rgba(110,104,89,0.45)";
+const FADED = "#6e6859";
 // Contenders: cooler/pastel hues, dashed, so #1 holders still lead the eye.
 const CONTENDER_PALETTE = ["#9fa8da", "#80deea", "#c5e1a5", "#ffcc80", "#bcaaa4"];
 const PALETTE = ["#e05a1f", "#ffff72", "#4fc3f7", "#81c784", "#ce93d8", "#ff8a65", "#f06292", "#4db6ac", "#fff176", "#90a4ae"];
@@ -33,6 +34,16 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   const tournaments = useTournaments();
   const [view, setView] = useState("ranks");
   const [powerRanking, setPowerRanking] = useState(Boolean(initialPowerRanking));
+  // hover = transient (mouse); pinned = click/tap, survives mouse leave.
+  const [hovered, setHovered] = useState(null);
+  const [pinned, setPinned] = useState(null);
+  const focus = hovered || pinned;
+  // Taps also fire hover on touch screens, so a pin/unpin clears hover too —
+  // otherwise tapping the same item again could never reset.
+  const pin = (name) => {
+    setHovered(null);
+    setPinned((p) => toggleFocus(p, name));
+  };
 
   const { years, snapshots, reigns } = useMemo(
     () => computeWhoWasOne(tournaments, { ...config, powerRanking }),
@@ -54,54 +65,86 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
       : chasers.includes(name)
       ? { borderWidth: 2, borderDash: [6, 4], order: 1 }
       : { borderWidth: 1, order: 2 };
+  // Only #1 holders and contenders are drawn; focus dims everyone else.
+  const lineOf = (name, extra) => {
+    const base = styleOf(name);
+    const f = focusStyle(name, focus, colorOf(name), base.borderWidth);
+    return {
+      label: name,
+      ...base,
+      ...extra,
+      borderColor: f.color,
+      backgroundColor: f.color,
+      borderWidth: f.width,
+      order: name === focus ? -1 : base.order,
+    };
+  };
   const labels = years.map((y) => `'${String(y).slice(2)}`);
 
-  const rankData = useMemo(() => {
-    const names = [...new Set(snapshots.flatMap((s) => s.top.map((p) => p.player)))];
-    return {
+  const rankData = useMemo(
+    () => ({
       labels,
-      datasets: names.map((name) => {
-        const lead = leaders.includes(name);
-        const chase = chasers.includes(name);
+      datasets: highlighted.map((name) => {
         const data = snapshots.map((s) => s.top.find((p) => p.player === name)?.rank ?? null);
-        return {
-          label: name,
+        const lead = leaders.includes(name);
+        return lineOf(name, {
           data,
-          borderColor: colorOf(name),
-          backgroundColor: colorOf(name),
-          ...styleOf(name),
-          pointRadius: data.map((r) => (r === 1 && lead ? 6 : lead || chase ? 3 : 0)),
+          pointRadius: data.map((r) => (r === 1 && lead ? 6 : 3)),
+          pointHoverRadius: 7,
           spanGaps: false,
-        };
+        });
       }),
-    };
-  }, [snapshots, reigns]);
+    }),
+    [snapshots, reigns, focus]
+  );
 
   const pointsData = useMemo(
     () => ({
       labels,
-      datasets: highlighted.map((name) => ({
-        label: name,
-        data: snapshots.map((s) => s.top.find((p) => p.player === name)?.points ?? null),
-        borderColor: colorOf(name),
-        backgroundColor: colorOf(name),
-        ...styleOf(name),
-        pointRadius: 2,
-      })),
+      datasets: highlighted.map((name) =>
+        lineOf(name, {
+          data: snapshots.map((s) => s.top.find((p) => p.player === name)?.points ?? null),
+          pointRadius: 2,
+          pointHoverRadius: 6,
+        })
+      ),
     }),
-    [snapshots, reigns]
+    [snapshots, reigns, focus]
   );
+
+  // Shared interaction: hovering a line/point or legend name focuses it;
+  // click/tap pins (same item again unpins). Legend click never hides.
+  const nameAt = (chart, elements) =>
+    elements && elements.length ? chart.data.datasets[elements[0].datasetIndex]?.label : null;
+  const interaction = {
+    interaction: { mode: "nearest", intersect: false, axis: "xy" },
+    onHover: (evt, elements, chart) => {
+      const name = nameAt(chart, chart.getElementsAtEventForMode(evt, "nearest", { intersect: true }, false));
+      if (name !== hovered) setHovered(name);
+    },
+    onClick: (evt, elements, chart) => {
+      const name = nameAt(chart, chart.getElementsAtEventForMode(evt, "nearest", { intersect: false }, false));
+      if (name) pin(name);
+    },
+  };
+  const legend = {
+    labels: { color: TEXT, usePointStyle: true, padding: 14 },
+    onHover: (evt, item) => setHovered(item.text),
+    onLeave: () => setHovered(null),
+    onClick: (evt, item) => pin(item.text),
+  };
 
   const axis = { grid: { color: GRID }, ticks: { color: MUTED } };
   const rankOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    ...interaction,
     scales: {
       x: axis,
       y: { ...axis, reverse: true, min: 1, max: 8, ticks: { color: MUTED, stepSize: 1, callback: (v) => `#${v}` } },
     },
     plugins: {
-      legend: { labels: { color: TEXT, usePointStyle: true, padding: 14, filter: (item) => highlighted.includes(item.text) } },
+      legend,
       tooltip: { callbacks: { label: (c) => `${c.dataset.label}: #${c.parsed.y}` } },
     },
   };
@@ -109,7 +152,8 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     responsive: true,
     maintainAspectRatio: false,
     scales: { x: axis, y: { ...axis, beginAtZero: true } },
-    plugins: { legend: { labels: { color: TEXT, usePointStyle: true, padding: 14 } } },
+    ...interaction,
+    plugins: { legend },
   };
 
   return (
@@ -151,7 +195,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
           {years.length === 0 ? (
             <div className="rec-empty">Loading…</div>
           ) : (
-            <div style={{ height: 460 }} data-testid={`who-chart-${view}`}>
+            <div style={{ height: 460 }} onMouseLeave={() => setHovered(null)} data-testid={`who-chart-${view}`}>
               {view === "ranks" ? (
                 <Line data={rankData} options={rankOptions} />
               ) : (
@@ -180,9 +224,16 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
         )}
         <ul className="who-reigns">
           {reigns.map((r) => (
-            <li key={`${r.player}-${r.from}`}>
+            <li
+              key={`${r.player}-${r.from}`}
+              className={focus && focus !== r.player ? "dim" : ""}
+              onMouseEnter={() => setHovered(r.player)}
+              onMouseLeave={() => setHovered(null)}
+              onClick={() => pin(r.player)}
+            >
               <span className="who-dot" style={{ background: colorOf(r.player) }} />
-              <strong>{r.player}</strong> {r.from === r.to ? r.from : `${r.from}–${r.to}`}
+              <strong>{r.player}</strong>
+              <span className="who-years">{r.from === r.to ? r.from : `${r.from}–${r.to}`}</span>
             </li>
           ))}
         </ul>
