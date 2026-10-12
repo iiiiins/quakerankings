@@ -108,3 +108,44 @@ export function selectionView(snapshots, selected) {
   });
   return { byYear, reigns };
 }
+
+// "Points per year" — same rule as AdvancedStats' "Performance Per Year":
+// run computeRankings once over the whole history (so Power Ranking keeps
+// each player's best 25 events CAREER-WIDE, exactly like /charts), then sum
+// each player's kept tournament points by year. Non-cumulative.
+export function pointsPerYear(tournaments, config) {
+  const list = Object.values(tournaments || {});
+  const years = list.map((t) => t.Year).filter(Boolean);
+  if (!years.length) return {};
+  const { players } = computeRankings(list, {
+    selectedGame: "All",
+    selectedMode: "All",
+    lanOnly: false,
+    powerRanking: false,
+    ...config,
+    yearRange: [Math.min(...years), Math.max(...years)],
+  });
+  const out = {};
+  players.forEach((p) => {
+    const byYear = {};
+    p.tournaments.forEach((t) => {
+      byYear[t.year] = (byYear[t.year] || 0) + t.points;
+    });
+    Object.keys(byYear).forEach((y) => (byYear[y] = Math.round(byYear[y])));
+    out[p.player] = byYear;
+  });
+  return out;
+}
+
+// Best single-year performer among the selection, per year (null if none of
+// them scored). Ties go to selection order.
+export function yearBest(perYear, selected, years) {
+  return years.map((year) => {
+    let best = null;
+    selected.forEach((n) => {
+      const pts = perYear[n]?.[year];
+      if (pts > 0 && (!best || pts > best.points)) best = { player: n, points: pts };
+    });
+    return { year, ...(best || { player: null, points: 0 }) };
+  });
+}

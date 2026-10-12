@@ -14,7 +14,7 @@ import useTournaments from "../hooks/useTournaments";
 import { focusStyle, toggleFocus, drawOrder, legendSort } from "../lib/lineFocus";
 import { assignColors } from "../lib/colorAssign";
 import { resolveSelection, addPlayer, removePlayer, togglePlayer, searchPlayers } from "../lib/chartSelection";
-import computeWhoWasOne, { numberOnes, contenders, latestBoard, selectionView } from "../lib/computeWhoWasOne";
+import computeWhoWasOne, { numberOnes, contenders, latestBoard, selectionView, pointsPerYear, yearBest } from "../lib/computeWhoWasOne";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -136,6 +136,31 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     [snapshots, reigns, focus, selection, rel]
   );
 
+  // Points per year (non-cumulative, /charts rule) + best of the selection each year.
+  const perYear = useMemo(
+    () => pointsPerYear(tournaments, { ...config, powerRanking }),
+    [tournaments, powerRanking, ...Object.values(config)]
+  );
+  const best = useMemo(() => yearBest(perYear, highlighted, years), [perYear, years, selection, reigns]);
+  const yearData = useMemo(
+    () => ({
+      labels,
+      datasets: highlighted.map((name) => {
+        const data = years.map((y) => perYear[name]?.[y] ?? null);
+        const isBest = years.map((y, i) => best[i].player === name);
+        return lineOf(name, {
+          data,
+          spanGaps: true, // like /charts: years without points are skipped
+          pointRadius: isBest.map((b) => (b ? 7 : 2)),
+          pointBorderColor: isBest.map((b) => (b ? TEXT : undefined)),
+          pointBorderWidth: isBest.map((b) => (b ? 2 : 1)),
+          pointHoverRadius: 7,
+        });
+      }),
+    }),
+    [perYear, best, focus, selection, reigns]
+  );
+
   const pointsData = useMemo(
     () => ({
       labels,
@@ -214,6 +239,21 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     },
   };
 
+  const yearOptions = {
+    ...pointsOptions,
+    plugins: {
+      legend,
+      tooltip: {
+        callbacks: {
+          label: (c) => {
+            const star = best[c.dataIndex]?.player === c.dataset.label ? " ★ best of selection" : "";
+            return `${c.dataset.label}: ${c.parsed.y.toLocaleString("en-US")} pts that year${star}`;
+          },
+        },
+      },
+    },
+  };
+
   return (
     <Container maxWidth="lg">
       <div className="rec-page who-page">
@@ -238,6 +278,14 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
           >
             <span className="led" />
             Points race
+          </button>
+          <button
+            type="button"
+            className={`plate${view === "year" ? " on" : ""}`}
+            onClick={() => setView("year")}
+          >
+            <span className="led" />
+            Points per year
           </button>
         </div>
         {/* Scoring switch, deliberately not a view plate */}
@@ -322,12 +370,16 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             <div style={{ height: 460 }} onMouseLeave={() => setHovered(null)} data-testid={`who-chart-${view}`}>
               {view === "ranks" ? (
                 <Line data={rankData} options={rankOptions} />
+              ) : view === "year" ? (
+                <Line data={yearData} options={yearOptions} />
               ) : (
                 <Line data={pointsData} options={pointsOptions} />
               )}
             </div>
           )}
           {years.length > 0 && (
+            <>
+            {view === "year" && <div className="who-band-label">#1 all-time standings</div>}
             <div className="who-band" aria-label="#1 at each year end">
               {rel.byYear.slice(firstIdx).map((y) => (
                 <span
@@ -338,8 +390,32 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
                 />
               ))}
             </div>
+            </>
+          )}
+          {years.length > 0 && view === "year" && (
+            <>
+              <div className="who-band-label">Best that year (among selected)</div>
+              <div className="who-band who-band-best" aria-label="best performer each year">
+                {best.slice(firstIdx).map((b) => (
+                  <span
+                    key={b.year}
+                    className="who-band-cell"
+                    title={`${b.year}: ${b.player ? `${b.player}, ${b.points.toLocaleString("en-US")} pts` : "-"}`}
+                    style={{ background: b.player ? colorOf(b.player) : "transparent" }}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </Paper>
+        {view === "year" && (
+          <p className="method-lede who-note">
+            Points earned in each year alone (not cumulative), same as Performance Per Year on
+            Advanced Stats. ★ / ringed point = best of the selection that year; the top band shows
+            it, the bottom band and the reign list stay the all-time standings.
+            {powerRanking ? " Power Ranking keeps each player's best 25 events over the whole career." : ""}
+          </p>
+        )}
         {view === "ranks" && (
           <p className="method-lede who-note">
             Ranks are among the selected players only. A gap means the player had no points yet

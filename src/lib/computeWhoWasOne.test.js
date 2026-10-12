@@ -111,3 +111,24 @@ test("selectionView: a gap year breaks a reign", async () => {
     { player: "x", from: 3, to: 3 },
   ]);
 });
+
+test("pointsPerYear: non-cumulative, and Power Ranking keeps the career-best 25 like /charts", async () => {
+  const { pointsPerYear, yearBest } = await import("./computeWhoWasOne");
+  const rows = [ev(2000, "a", "b"), ev(2001, "a"), ev(2001, "b"), ev(2001, "b")];
+  const py = pointsPerYear(rows, config);
+  expect(py.a).toEqual({ 2000: 100, 2001: 100 });
+  expect(py.b).toEqual({ 2000: 50, 2001: 200 });
+  expect(yearBest(py, ["a", "b"], [2000, 2001, 2002])).toEqual([
+    { year: 2000, player: "a", points: 100 },
+    { year: 2001, player: "b", points: 200 },
+    { year: 2002, player: null, points: 0 },
+  ]);
+  expect(yearBest(py, ["b"], [2000])[0].player).toBe("b");
+
+  // 30 tier-5 wins in 2000 (10 pts each) + 1 tier-1 win in 2001: best 25 = the
+  // 2001 win + 24 of the 2000 ones.
+  const pr = [...Array.from({ length: 30 }, () => ev(2000, "g", null, 5)), ev(2001, "g")];
+  expect(pointsPerYear(pr, config).g).toEqual({ 2000: 300, 2001: 100 });
+  expect(pointsPerYear(pr, { ...config, powerRanking: true }).g).toEqual({ 2000: 240, 2001: 100 });
+  expect(pointsPerYear([], config)).toEqual({});
+});
