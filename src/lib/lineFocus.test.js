@@ -43,3 +43,21 @@ test("added-player palette keeps >= 7:1 contrast on the page background", async 
   const bg = lum("#14120e");
   ADDED_PALETTE.forEach((h) => expect((lum(h) + 0.05) / (bg + 0.05)).toBeGreaterThanOrEqual(7));
 });
+
+test("added-player colours are >= 15deg in hue from every #1-holder/contender colour and each other", async () => {
+  const { ADDED_PALETTE, PALETTE, CONTENDER_PALETTE } = await import("../components/WhoWasOnePage");
+  const hue = (h) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    if (!d) return 0;
+    const x = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return (x * 60 + 360) % 360;
+  };
+  const dist = (a, b) => { const d = Math.abs(hue(a) - hue(b)); return Math.min(d, 360 - d); };
+  const reserved = [...PALETTE, ...CONTENDER_PALETTE];
+  ADDED_PALETTE.forEach((c, i) => {
+    reserved.forEach((r) => expect(dist(c, r)).toBeGreaterThanOrEqual(15));
+    ADDED_PALETTE.slice(i + 1).forEach((o) => expect(dist(c, o)).toBeGreaterThanOrEqual(15));
+  });
+  expect(dist("#ff8a80", "#ff8a65")).toBeLessThan(15); // the old serious-vs-cypher clash
+});

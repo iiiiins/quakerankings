@@ -2024,3 +2024,6 @@ footer a.method-link:hover {
 .who-chip-name { cursor: pointer; }
 .who-chip-x { background: none; border: 0; color: #a39c8d; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 4px; }
 .who-chip-x:hover { color: #e05a1f; }
+.who-chip.ghost { color: #a39c8d; border-style: dashed; }
+.who-chip-tag { font-size: 11px; color: #a39c8d; }
+.who-link { background: none; border: 0; padding: 0; color: #e05a1f; cursor: pointer; font: inherit; text-decoration: underline; }

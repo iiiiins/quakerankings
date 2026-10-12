@@ -28,11 +28,12 @@ const TEXT = "#ece8df";
 const MUTED = "#a39c8d";
 const FADED = "#6e6859";
 // Contenders: cooler/pastel hues, dashed, so #1 holders still lead the eye.
-const CONTENDER_PALETTE = ["#9fa8da", "#80deea", "#c5e1a5", "#ffcc80", "#bcaaa4"];
+export const CONTENDER_PALETTE = ["#9fa8da", "#80deea", "#c5e1a5", "#ffcc80", "#bcaaa4"];
 // Players the visitor adds: solid, mid-weight, their own hues.
-// All >= 7:1 contrast on #14120e.
-export const ADDED_PALETTE = ["#ff8a80", "#26c6da", "#d4e157", "#b39ddb", "#ffa726", "#29b6f6", "#66bb6a", "#f48fb1"];
-const PALETTE = ["#e05a1f", "#ffff72", "#4fc3f7", "#81c784", "#ce93d8", "#ff8a65", "#f06292", "#4db6ac", "#fff176", "#90a4ae"];
+// >= 7:1 contrast on #14120e and >= 15deg hue from every #1-holder/contender
+// colour (pinned by tests) — the free hue gaps are few, so 4 that cycle.
+export const ADDED_PALETTE = ["#33ff9c", "#b399ff", "#ff80dd", "#66ff33"];
+export const PALETTE = ["#e05a1f", "#ffff72", "#4fc3f7", "#81c784", "#ce93d8", "#ff8a65", "#f06292", "#4db6ac", "#fff176", "#90a4ae"];
 
 const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   const tournaments = useTournaments();
@@ -65,6 +66,9 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   const board = useMemo(() => latestBoard(snapshots), [snapshots]);
   const matches = searchPlayers(board, query, highlighted);
   const onChart = (name) => highlighted.includes(name);
+  // Drawn players with no top-8 year-end: no line in "Top 8 by year".
+  const neverTop8 = highlighted.filter((n) => !snapshots.some((sn) => (sn.all?.[n]?.rank ?? 99) <= 8));
+  const isGhost = (n) => view === "ranks" && neverTop8.includes(n);
   const resetPlayers = () => {
     setSelection(null);
     setPinned(null);
@@ -157,10 +161,24 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     },
   };
   const legend = {
-    labels: { color: TEXT, usePointStyle: true, padding: 14, sort: legendSort },
-    onHover: (evt, item) => setHovered(item.text),
+    labels: {
+      color: TEXT,
+      usePointStyle: true,
+      padding: 14,
+      sort: legendSort,
+      filter: (item, data) => {
+        const name = data.datasets[item.datasetIndex]?.label;
+        if (isGhost(name)) {
+          item.text = `${name} (never top 8)`;
+          item.fontColor = MUTED;
+        }
+        return true;
+      },
+    },
+    // Names come from the dataset, not item.text (which may carry a suffix).
+    onHover: function (evt, item) { setHovered(this.chart.data.datasets[item.datasetIndex]?.label ?? null); },
     onLeave: () => setHovered(null),
-    onClick: (evt, item) => pin(item.text),
+    onClick: function (evt, item) { pin(this.chart.data.datasets[item.datasetIndex]?.label); },
   };
 
   const axis = { grid: { color: GRID }, ticks: { color: MUTED } };
@@ -272,13 +290,15 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
           {highlighted.map((name) => (
             <span
               key={name}
-              className={`who-chip${focus && focus !== name ? " dim" : ""}`}
+              className={`who-chip${focus && focus !== name ? " dim" : ""}${isGhost(name) ? " ghost" : ""}`}
+              title={isGhost(name) ? "Never finished a year in the top 8 — see the Points race view" : undefined}
               onMouseEnter={() => setHovered(name)}
               onMouseLeave={() => setHovered(null)}
             >
               <span className="who-dot" style={{ background: colorOf(name) }} />
               <span className="who-chip-name" onClick={() => pin(name)}>
                 {name}
+                {isGhost(name) && <span className="who-chip-tag"> (never top 8)</span>}
               </span>
               <button
                 type="button"
@@ -316,6 +336,15 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             </div>
           )}
         </Paper>
+        {view === "ranks" && neverTop8.length > 0 && (
+          <p className="method-lede who-note who-hint">
+            {neverTop8.join(", ")} never finished a year in the top 8, so there's no line here.{" "}
+            <button type="button" className="who-link" onClick={() => setView("points")}>
+              Switch to Points race
+            </button>{" "}
+            to see them.
+          </p>
+        )}
         {view === "ranks" && (
           <p className="method-lede who-note">
             Gaps mean the player finished outside the top 8 that year. Their real rank is in the
