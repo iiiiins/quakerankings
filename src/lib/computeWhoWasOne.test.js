@@ -81,3 +81,33 @@ test("snapshots carry every player's real rank; latestBoard sorts the final year
   expect(board.map((p) => p.rank)).toEqual([...board.map((p) => p.rank)].sort((a, b) => a - b));
   expect(latestBoard([])).toEqual([]);
 });
+
+test("selectionView ranks only the selection; default selection reproduces global reigns", async () => {
+  const { selectionView, contenders } = await import("./computeWhoWasOne");
+  const rows = [ev(2000, "a", "b"), ev(2001, "a", "b"), ev(2002, "b", "c"), ev(2002, "b", "c"), ev(2003, "c", "a"), ev(2003, "d", "e")];
+  const { snapshots, reigns } = computeWhoWasOne(rows, config);
+  const defaults = [...numberOnes(reigns), ...contenders(snapshots, reigns).map((c) => c.player)];
+  expect(selectionView(snapshots, defaults).reigns).toEqual(reigns);
+
+  // without the global leaders, the best of the rest leads
+  const v = selectionView(snapshots, ["c", "d", "e"]);
+  expect(v.byYear[0]).toEqual({ year: 2000, ranks: {}, leader: null });
+  expect(v.byYear[2].ranks).toEqual({ c: 1 });
+  expect(v.byYear[3].ranks).toEqual({ c: 1, d: 2, e: 3 });
+  expect(v.reigns).toEqual([{ player: "c", from: 2002, to: 2003 }]);
+  // ranks are dense 1..n among the selection
+  expect(Object.values(v.byYear[3].ranks).sort()).toEqual([1, 2, 3]);
+});
+
+test("selectionView: a gap year breaks a reign", async () => {
+  const { selectionView } = await import("./computeWhoWasOne");
+  const snaps = [
+    { year: 1, all: { x: { rank: 1 } } },
+    { year: 2, all: {} },
+    { year: 3, all: { x: { rank: 4 } } },
+  ];
+  expect(selectionView(snaps, ["x"]).reigns).toEqual([
+    { player: "x", from: 1, to: 1 },
+    { player: "x", from: 3, to: 3 },
+  ]);
+});

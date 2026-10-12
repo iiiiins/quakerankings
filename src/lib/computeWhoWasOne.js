@@ -82,3 +82,29 @@ export function contenders(snapshots, reigns, { count = CONTENDERS, topN = TOP_N
     .sort((a, b) => b.score - a.score || b.nearTop - a.nearTop || a.best - b.best || a.player.localeCompare(b.player))
     .slice(0, count);
 }
+
+// Selection-relative view: each year-end, rank ONLY the selected players
+// against each other (by their real overall rank; absent = no points yet =
+// no rank). Leader = #1 among the selection; reigns merge consecutive years.
+// With the default selection (all real #1 holders included) the leaders and
+// reigns equal the global history.
+export function selectionView(snapshots, selected) {
+  const byYear = snapshots.map(({ year, all = {} }) => {
+    const present = selected
+      .filter((n) => all[n])
+      .sort((a, b) => all[a].rank - all[b].rank);
+    const ranks = {};
+    present.forEach((n, i) => {
+      ranks[n] = i + 1;
+    });
+    return { year, ranks, leader: present[0] ?? null };
+  });
+  const reigns = [];
+  byYear.forEach(({ year, leader }, i) => {
+    if (!leader) return;
+    const last = reigns[reigns.length - 1];
+    if (last && last.player === leader && byYear[i - 1]?.leader === leader) last.to = year;
+    else reigns.push({ player: leader, from: year, to: year });
+  });
+  return { byYear, reigns };
+}

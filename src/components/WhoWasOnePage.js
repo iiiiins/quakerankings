@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Container, Paper, TextField, List, ListItem, Checkbox, ListItemText } from "@mui/material";
+import { Container, Paper, Switch, TextField, List, ListItem, Checkbox, ListItemText } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -13,7 +13,7 @@ import {
 import useTournaments from "../hooks/useTournaments";
 import { focusStyle, toggleFocus, drawOrder, legendSort } from "../lib/lineFocus";
 import { resolveSelection, addPlayer, removePlayer, togglePlayer, searchPlayers } from "../lib/chartSelection";
-import computeWhoWasOne, { numberOnes, contenders, latestBoard } from "../lib/computeWhoWasOne";
+import computeWhoWasOne, { numberOnes, contenders, latestBoard, selectionView } from "../lib/computeWhoWasOne";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -66,9 +66,11 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   const board = useMemo(() => latestBoard(snapshots), [snapshots]);
   const matches = searchPlayers(board, query, highlighted);
   const onChart = (name) => highlighted.includes(name);
-  // Drawn players with no top-8 year-end: no line in "Top 8 by year".
-  const neverTop8 = highlighted.filter((n) => !snapshots.some((sn) => (sn.all?.[n]?.rank ?? 99) <= 8));
-  const isGhost = (n) => view === "ranks" && neverTop8.includes(n);
+  // Everything below the picker (band, reigns, ranks) is relative to the
+  // selection: #1 = leader among the selected players that year.
+  const rel = useMemo(() => selectionView(snapshots, highlighted), [snapshots, selection, reigns]);
+  const shownChasers = chasers.filter((n) => highlighted.includes(n));
+  const yMax = Math.max(1, Math.min(8, highlighted.length));
   const resetPlayers = () => {
     setSelection(null);
     setPinned(null);
@@ -113,21 +115,20 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     () => ({
       labels,
       datasets: highlighted.map((name) => {
-        // Outside the top 8 that year = no point (gap), not a clamp to #8.
-        const data = snapshots.map((s) => {
-          const r = s.all?.[name]?.rank;
+        // Rank among the selection; no points yet (or past #8) = gap.
+        const data = rel.byYear.map((y) => {
+          const r = y.ranks[name];
           return r && r <= 8 ? r : null;
         });
-        const lead = leaders.includes(name);
         return lineOf(name, {
           data,
-          pointRadius: data.map((r) => (r === 1 && lead ? 6 : 3)),
+          pointRadius: data.map((r) => (r === 1 ? 6 : 3)),
           pointHoverRadius: 7,
           spanGaps: false,
         });
       }),
     }),
-    [snapshots, reigns, focus, selection]
+    [snapshots, reigns, focus, selection, rel]
   );
 
   const pointsData = useMemo(
@@ -166,14 +167,6 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
       usePointStyle: true,
       padding: 14,
       sort: legendSort,
-      filter: (item, data) => {
-        const name = data.datasets[item.datasetIndex]?.label;
-        if (isGhost(name)) {
-          item.text = `${name} (never top 8)`;
-          item.fontColor = MUTED;
-        }
-        return true;
-      },
     },
     // Names come from the dataset, not item.text (which may carry a suffix).
     onHover: function (evt, item) { setHovered(this.chart.data.datasets[item.datasetIndex]?.label ?? null); },
@@ -188,7 +181,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     ...interaction,
     scales: {
       x: axis,
-      y: { ...axis, reverse: true, min: 1, max: 8, ticks: { color: MUTED, stepSize: 1, callback: (v) => `#${v}` } },
+      y: { ...axis, reverse: true, min: 1, max: yMax, ticks: { color: MUTED, stepSize: 1, callback: (v) => `#${v}` } },
     },
     plugins: {
       legend,
@@ -205,8 +198,10 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
       tooltip: {
         callbacks: {
           label: (c) => {
-            const rank = snapshots[c.dataIndex]?.all?.[c.dataset.label]?.rank;
-            return `${c.dataset.label}: ${c.parsed.y.toLocaleString("en-US")} pts (#${rank})`;
+            const name = c.dataset.label;
+            const overall = snapshots[c.dataIndex]?.all?.[name]?.rank;
+            const among = rel.byYear[c.dataIndex]?.ranks[name];
+            return `${name}: ${c.parsed.y.toLocaleString("en-US")} pts, #${among} of selected (#${overall} overall)`;
           },
         },
       },
@@ -238,16 +233,21 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             <span className="led" />
             Points race
           </button>
-          <button
-            type="button"
-            className={`plate${powerRanking ? " on" : ""}`}
-            onClick={() => setPowerRanking(!powerRanking)}
-            title="Only each player's best 25 events count"
-          >
-            <span className="led" />
-            Power Ranking
-          </button>
         </div>
+        {/* Scoring switch, deliberately not a view plate */}
+        <label
+          className="who-pr"
+          title="Power Ranking scores each player on their best 25 events only, so long careers full of minor results don't outweigh peak performance."
+        >
+          <Switch
+            size="small"
+            color="primary"
+            checked={powerRanking}
+            onChange={() => setPowerRanking(!powerRanking)}
+          />
+          <span className="who-pr-label">Power Ranking</span>
+          <span className="who-pr-note">Only counts the top 25 events of each player</span>
+        </label>
         <div className="who-picker-bar">
           <div className="filter-field search-field" style={{ position: "relative" }}>
             <span className="filter-label">Add player to chart</span>
@@ -290,15 +290,13 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
           {highlighted.map((name) => (
             <span
               key={name}
-              className={`who-chip${focus && focus !== name ? " dim" : ""}${isGhost(name) ? " ghost" : ""}`}
-              title={isGhost(name) ? "Never finished a year in the top 8 — see the Points race view" : undefined}
+              className={`who-chip${focus && focus !== name ? " dim" : ""}`}
               onMouseEnter={() => setHovered(name)}
               onMouseLeave={() => setHovered(null)}
             >
               <span className="who-dot" style={{ background: colorOf(name) }} />
               <span className="who-chip-name" onClick={() => pin(name)}>
                 {name}
-                {isGhost(name) && <span className="who-chip-tag"> (never top 8)</span>}
               </span>
               <button
                 type="button"
@@ -325,40 +323,31 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
           )}
           {years.length > 0 && (
             <div className="who-band" aria-label="#1 at each year end">
-              {snapshots.map((s) => (
+              {rel.byYear.map((y) => (
                 <span
-                  key={s.year}
+                  key={y.year}
                   className="who-band-cell"
-                  title={`${s.year}: ${s.top[0]?.player ?? "-"}`}
-                  style={{ background: colorOf(s.top[0]?.player) }}
+                  title={`${y.year}: ${y.leader ?? "-"}`}
+                  style={{ background: y.leader ? colorOf(y.leader) : "transparent" }}
                 />
               ))}
             </div>
           )}
         </Paper>
-        {view === "ranks" && neverTop8.length > 0 && (
-          <p className="method-lede who-note who-hint">
-            {neverTop8.join(", ")} never finished a year in the top 8, so there's no line here.{" "}
-            <button type="button" className="who-link" onClick={() => setView("points")}>
-              Switch to Points race
-            </button>{" "}
-            to see them.
-          </p>
-        )}
         {view === "ranks" && (
           <p className="method-lede who-note">
-            Gaps mean the player finished outside the top 8 that year. Their real rank is in the
-            Points race tooltip.
+            Ranks are among the selected players only. A gap means the player had no points yet
+            {highlighted.length > 8 ? " or was below #8 of the selection" : ""} that year.
           </p>
         )}
-        {chasers.length > 0 && (
+        {shownChasers.length > 0 && (
           <p className="method-lede who-contenders">
-            Dashed: closest players who never held #1 under this formula (sum over year-ends of
-            9 − rank while in the top 8): {chasers.join(", ")}.
+            Dashed: closest players who never held #1 overall under this formula (sum over year-ends
+            of 9 − rank while in the top 8): {shownChasers.join(", ")}.
           </p>
         )}
         <ul className="who-reigns">
-          {reigns.map((r) => (
+          {rel.reigns.map((r) => (
             <li
               key={`${r.player}-${r.from}`}
               className={focus && focus !== r.player ? "dim" : ""}
