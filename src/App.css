@@ -2016,3 +2016,11 @@ footer a.method-link:hover {
 .who-reigns .who-years { margin-left: auto; font-variant-numeric: tabular-nums; }
 .who-reigns strong { color: #ece8df; }
 .who-dot { flex: none; display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.who-picker-bar { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin: 12px 0; }
+.who-picker-bar .search-field { flex: 1 1 260px; max-width: 360px; }
+.who-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.who-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; background: #1b1813; border: 1px solid #2e2922; color: #ece8df; font-size: 13px; transition: opacity .15s; }
+.who-chip.dim { opacity: .15; }
+.who-chip-name { cursor: pointer; }
+.who-chip-x { background: none; border: 0; color: #a39c8d; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 4px; }
+.who-chip-x:hover { color: #e05a1f; }

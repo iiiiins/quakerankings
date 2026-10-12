@@ -69,3 +69,15 @@ test("Power Ranking can turn a #1 holder into a contender", async () => {
   expect(contenders(off.snapshots, off.reigns)[0].player).toBe("star");
   expect(contenders(on.snapshots, on.reigns)[0].player).toBe("grinder");
 });
+
+test("snapshots carry every player's real rank; latestBoard sorts the final year", async () => {
+  const { latestBoard } = await import("./computeWhoWasOne");
+  const rows = Array.from({ length: 10 }, (_, i) => ev(2000, `p${i}`, null, (i % 5) + 1));
+  const { snapshots } = computeWhoWasOne(rows, config);
+  expect(Object.keys(snapshots[0].all)).toHaveLength(10);
+  expect(snapshots[0].top).toHaveLength(8);
+  const board = latestBoard(snapshots);
+  expect(board[0].rank).toBe(1);
+  expect(board.map((p) => p.rank)).toEqual([...board.map((p) => p.rank)].sort((a, b) => a - b));
+  expect(latestBoard([])).toEqual([]);
+});

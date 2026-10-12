@@ -21,9 +21,16 @@ export default function computeWhoWasOne(tournaments, config, { topN = TOP_N } =
       ...config,
       yearRange: [first, year],
     });
+    // `all`: every ranked player's real rank/points that year-end, so the
+    // page can plot any added player (not only the top N).
+    const all = {};
+    players.forEach((p) => {
+      all[p.player] = { rank: p.Rank, points: p.points };
+    });
     return {
       year,
       top: players.slice(0, topN).map((p) => ({ player: p.player, points: p.points, rank: p.Rank })),
+      all,
     };
   });
 
@@ -37,6 +44,15 @@ export default function computeWhoWasOne(tournaments, config, { topN = TOP_N } =
   });
 
   return { years, snapshots, reigns };
+}
+
+// Final (latest year-end) board, best first — feeds search + top-25 picker.
+export function latestBoard(snapshots) {
+  const last = snapshots[snapshots.length - 1];
+  if (!last) return [];
+  return Object.entries(last.all || {})
+    .map(([player, v]) => ({ player, ...v }))
+    .sort((a, b) => a.rank - b.rank);
 }
 
 // Everyone who ever held #1, in the order they first got there.
