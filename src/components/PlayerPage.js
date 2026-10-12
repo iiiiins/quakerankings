@@ -16,6 +16,7 @@ import {
   MenuItem,
   Slider,
 } from "@mui/material";
+import fetchAllRows from "../services/fetchAllRows";
 import { supabase } from "../services/supabaseClient";
 import { useNavigate } from "react-router-dom";
 
@@ -63,6 +64,7 @@ const PlayerPage = ({
     const fetchPlayerData = async () => {
       const normalizedPlayerName = playerName.toLowerCase();
 
+      const buildQuery = () => {
       const query = supabase.from("Tournaments").select();
       query.or([
         `1st.eq.${normalizedPlayerName}`,
@@ -88,8 +90,10 @@ const PlayerPage = ({
       if (lanOnly) {
         query.eq("LAN", true);
       }
+      return query;
+      };
 
-      const { data: tournaments, error } = await query;
+      const { data: tournaments, error } = await fetchAllRows(buildQuery);
 
       if (error) {
         console.error("Error fetching player data:", error.message);

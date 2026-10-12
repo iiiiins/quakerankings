@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import fetchAllRows from "./fetchAllRows";
 // Default-import + destructure: tournamentRules is CommonJS (see the note in
 // TournamentForm.js) — named imports from CJS fail CRA's strictExportPresence.
 import tournamentRules from "../lib/tournamentRules";
@@ -54,11 +55,14 @@ export function rowFromPayload(payload) {
 // tournamentWrites, 0-affected-rows is surfaced as a visible error.
 
 export async function fetchPendingSubmissions() {
-  const { data, error } = await supabase
-    .from("Submissions")
-    .select("*")
-    .eq("status", "pending")
-    .order("created_at", { ascending: true });
+  // Paged (created_at, then id as tiebreak) so the queue can't stop at the row cap.
+  const { data, error } = await fetchAllRows(() =>
+    supabase
+      .from("Submissions")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+  );
   return error ? { error } : { submissions: data || [] };
 }
 

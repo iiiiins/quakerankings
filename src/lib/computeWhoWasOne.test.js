@@ -1,0 +1,52 @@
+import computeWhoWasOne, { numberOnes } from "./computeWhoWasOne";
+import {
+  DEFAULT_POINTS_CONFIG, DEFAULT_POINTS_VISIBILITY, DEFAULT_GAME_WEIGHTS, DEFAULT_GAME_VISIBILITY,
+  DEFAULT_TIER_WEIGHTS, DEFAULT_TIER_VISIBILITY, DEFAULT_MODE_WEIGHTS, DEFAULT_MODE_VISIBILITY,
+} from "./formulaDefaults";
+
+const config = {
+  pointsConfig: DEFAULT_POINTS_CONFIG, pointsVisibility: DEFAULT_POINTS_VISIBILITY,
+  gameWeights: DEFAULT_GAME_WEIGHTS, gameVisibility: DEFAULT_GAME_VISIBILITY,
+  tierWeights: DEFAULT_TIER_WEIGHTS, tierVisibility: DEFAULT_TIER_VISIBILITY,
+  modeWeights: DEFAULT_MODE_WEIGHTS, modeVisibility: DEFAULT_MODE_VISIBILITY,
+};
+let id = 0;
+const ev = (Year, first, second, Tier = 1) => ({
+  id: ++id, Year, Game: "Quake 3", Mode: "Duel", Tier, Event_Name: `E${id}`, "1st": first, "2nd": second,
+});
+
+test("replays cumulative boards and merges consecutive reigns", () => {
+  const rows = [ev(2000, "a", "b"), ev(2001, "a", "b"), ev(2002, "b", "c"), ev(2002, "b", "c"), ev(2003, "c", "a")];
+  const { years, snapshots, reigns } = computeWhoWasOne(rows, config);
+  expect(years).toEqual([2000, 2001, 2002, 2003]);
+  expect(snapshots[1].top[0]).toEqual({ player: "a", points: 200, rank: 1 });
+  expect(snapshots[2].top[0]).toEqual({ player: "b", points: 300, rank: 1 });
+  expect(reigns).toEqual([
+    { player: "a", from: 2000, to: 2001 },
+    { player: "b", from: 2002, to: 2003 },
+  ]);
+  expect(numberOnes(reigns)).toEqual(["a", "b"]);
+});
+
+test("Power Ranking caps each player at their best 25 events per snapshot", () => {
+  // "grinder" has 40 tier-5 wins (10 pts each = 400, capped to 250);
+  // "star" has 3 tier-1 wins (300). Off: grinder leads. On: star leads.
+  const rows = [...Array.from({ length: 40 }, () => ev(2010, "grinder", null, 5)), ev(2010, "star"), ev(2010, "star"), ev(2010, "star")];
+  expect(computeWhoWasOne(rows, config).snapshots[0].top[0].player).toBe("grinder");
+  const pr = computeWhoWasOne(rows, { ...config, powerRanking: true }).snapshots[0].top;
+  expect(pr[0]).toMatchObject({ player: "star", points: 300 });
+  expect(pr[1]).toMatchObject({ player: "grinder", points: 250 });
+});
+
+test("respects gear visibility (a hidden game doesn't count)", () => {
+  const rows = [ev(2000, "a"), { ...ev(2000, "b"), Game: "Quake 2" }, { ...ev(2000, "b"), Game: "Quake 2" }];
+  const hidden = { ...config, gameVisibility: { ...DEFAULT_GAME_VISIBILITY, "Quake 2": false } };
+  expect(computeWhoWasOne(rows, config).reigns[0].player).toBe("b");
+  expect(computeWhoWasOne(rows, hidden).reigns[0].player).toBe("a");
+});
+
+test("caps the snapshot at the top 8 and handles no data", () => {
+  const rows = Array.from({ length: 12 }, (_, i) => ev(2000, `p${i}`));
+  expect(computeWhoWasOne(rows, config).snapshots[0].top).toHaveLength(8);
+  expect(computeWhoWasOne([], config)).toEqual({ years: [], snapshots: [], reigns: [] });
+});

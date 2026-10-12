@@ -2005,3 +2005,11 @@ footer a.method-link:hover {
   .cmp-row { grid-template-columns: 1fr 84px 1fr; }
   .cmp-val { font-size: 14px; }
 }
+
+/* Who was #1 (/who-was-1) */
+.who-chart { padding: 16px; border: 1px solid #2e2922; }
+.who-band { display: flex; height: 14px; margin-top: 12px; gap: 1px; }
+.who-band-cell { flex: 1; }
+.who-reigns { list-style: none; padding: 0; margin: 16px 0; display: flex; flex-wrap: wrap; gap: 8px 20px; color: #a39c8d; }
+.who-reigns strong { color: #ece8df; }
+.who-dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; }

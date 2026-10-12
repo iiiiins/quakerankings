@@ -6,6 +6,7 @@ import AdvancedStats from "./components/AdvancedStats";
 import EventsBrowser from "./components/EventsBrowser";
 import RecordsPage from "./components/RecordsPage";
 import ComparePage from "./components/ComparePage";
+import WhoWasOnePage from "./components/WhoWasOnePage";
 import Methodology from "./components/Methodology";
 import AdminPage from "./components/AdminPage";
 import ReactGA from "react-ga4";
@@ -55,6 +56,7 @@ const NavTabs = () => {
     { label: "Events", hash: "#/events", active: pathname === "/events" },
     { label: "Records", hash: "#/records", active: pathname === "/records" },
     { label: "Compare", hash: "#/compare", active: pathname === "/compare" },
+    { label: "Who was #1", hash: "#/who-was-1", active: pathname === "/who-was-1" },
     { label: "Advanced Stats", hash: "#/charts", active: pathname === "/charts" },
   ];
   return (
@@ -391,6 +393,25 @@ const App = () => {
                 path="/compare"
                 element={
                   <ComparePage
+                    pointsConfig={pointsConfig}
+                    pointsVisibility={pointsVisibility}
+                    gameWeights={gameWeights}
+                    gameVisibility={gameVisibility}
+                    tierWeights={tierWeights}
+                    tierVisibility={tierVisibility}
+                    modeWeights={modeWeights}
+                    modeVisibility={modeVisibility}
+                    minEventsForPpe={minEventsForPpe}
+                  />
+                }
+              />
+              {/* Who was #1 — year-by-year replay under the visitor's formula;
+                  Power Ranking seeds from the home board, then is page-local */}
+              <Route
+                path="/who-was-1"
+                element={
+                  <WhoWasOnePage
+                    initialPowerRanking={getHomeFilters().powerRanking}
                     pointsConfig={pointsConfig}
                     pointsVisibility={pointsVisibility}
                     gameWeights={gameWeights}
