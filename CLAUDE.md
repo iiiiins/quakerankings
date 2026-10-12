@@ -228,6 +228,19 @@ Data flow per page:
 
 Routes (all under `HashRouter`): `/` → PlayerList, `/events` → EventsBrowser, `/records` → RecordsPage, `/charts` → AdvancedStats, `/methodology` → Methodology (footer link, not a tab), `/admin` → AdminPage (no tab — direct URL), `/players/:playerName` → PlayerPage. In-app nav in `App.js` uses `window.location.hash = "#/..."` rather than `useNavigate()` — works, but bypasses the router lifecycle; NavTabs marks Home active on `/players/*` too (pre-existing behavior, kept). **Nav pattern (decided at feature 6, features 7–9 follow it)**: new top-level pages get a header tab; below 900px `.site-tabs` scrolls horizontally with a hidden scrollbar (chip-rail pattern) instead of wrapping, so added tabs cost no layout.
 
+## Testing rules (how a test is accepted here, 2026-07-27)
+
+- **Run tests non-interactively or they hang.** The bare command sits in watch mode forever. Use
+  `CI=true npx react-scripts test --env=jsdom --watchAll=false` (bash) or
+  `$env:CI="true"; npm test -- --watchAll=false` (PowerShell).
+- **Green is not the gate — mutation is.** A test is accepted only when a deliberate break in the code
+  it covers makes it fail: `py ~/.claude/scripts/mutate.py <file> --test "npx react-scripts test --env=jsdom --watchAll=false" --env CI=true`.
+  Scores as of 2026-07-27: computeRankings 35/40, ShareMenu 11/12, IncompleteEvents 5/6. Every remaining
+  survivor is cosmetic or an unreachable default.
+- **NEVER run two mutation sweeps at once, or any sweep against a dirty tree.** One collided with another
+  and left a mutated `||` → `&&` in live source. The tool now refuses to start when a `.mutate-orig` exists,
+  but the dirty-tree half is still on you.
+
 ## Build & deploy
 
 - `npm start` — dev server at `http://localhost:3000/quakerankings/` (path prefix comes from `PUBLIC_URL` in `.env.development.local`).

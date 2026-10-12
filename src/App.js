@@ -5,6 +5,7 @@ import PlayerPage from "./components/PlayerPage";
 import AdvancedStats from "./components/AdvancedStats";
 import EventsBrowser from "./components/EventsBrowser";
 import RecordsPage from "./components/RecordsPage";
+import ComparePage from "./components/ComparePage";
 import Methodology from "./components/Methodology";
 import AdminPage from "./components/AdminPage";
 import ReactGA from "react-ga4";
@@ -53,6 +54,7 @@ const NavTabs = () => {
     { label: "Home", hash: "#/", active: pathname === "/" || pathname.startsWith("/players") },
     { label: "Events", hash: "#/events", active: pathname === "/events" },
     { label: "Records", hash: "#/records", active: pathname === "/records" },
+    { label: "Compare", hash: "#/compare", active: pathname === "/compare" },
     { label: "Advanced Stats", hash: "#/charts", active: pathname === "/charts" },
   ];
   return (
@@ -371,6 +373,24 @@ const App = () => {
                 path="/records"
                 element={
                   <RecordsPage
+                    pointsConfig={pointsConfig}
+                    pointsVisibility={pointsVisibility}
+                    gameWeights={gameWeights}
+                    gameVisibility={gameVisibility}
+                    tierWeights={tierWeights}
+                    tierVisibility={tierVisibility}
+                    modeWeights={modeWeights}
+                    modeVisibility={modeVisibility}
+                    minEventsForPpe={minEventsForPpe}
+                  />
+                }
+              />
+              {/* Compare — two players under the visitor's formula (gear only,
+                  no home filters), same scoring props as Records */}
+              <Route
+                path="/compare"
+                element={
+                  <ComparePage
                     pointsConfig={pointsConfig}
                     pointsVisibility={pointsVisibility}
                     gameWeights={gameWeights}

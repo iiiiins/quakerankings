@@ -1913,3 +1913,95 @@ footer a.method-link:hover {
   font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
+
+/* ---------- compare ---------- */
+.cmp-page {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.cmp-card {
+  margin-top: 18px;
+}
+
+.cmp-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #2e2922;
+}
+
+.cmp-name {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: 0.05em;
+  color: #ffff72;
+  text-transform: lowercase;
+  text-shadow: 0 0 14px rgba(255, 255, 114, 0.25);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cmp-name:hover {
+  text-shadow: 0 0 18px rgba(255, 255, 114, 0.5);
+}
+
+.cmp-vs {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #e05a1f;
+  text-transform: uppercase;
+}
+
+.cmp-right {
+  text-align: right;
+}
+
+.cmp-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cmp-row:last-child {
+  border-bottom: none;
+}
+
+.cmp-stat {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #6e6859;
+  text-transform: uppercase;
+}
+
+.cmp-stat.t-g { color: #f5c518; }
+.cmp-stat.t-s { color: #c8ccd4; }
+.cmp-stat.t-b { color: #e2a35e; }
+.cmp-stat.t-c { color: #b06a1e; }
+
+.cmp-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.cmp-val.lead {
+  color: #f5c518;
+  text-shadow: 0 0 12px rgba(245, 197, 24, 0.25);
+}
+
+@media (max-width: 899px) {
+  .cmp-name { font-size: 15px; }
+  .cmp-row { grid-template-columns: 1fr 84px 1fr; }
+  .cmp-val { font-size: 14px; }
+}

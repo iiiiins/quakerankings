@@ -1,3 +1,12 @@
 node_modules
 build
 .env*.local
+
+# local agent and tool state, never committed
+room/
+.claude/
+.mcp.json
+.vscode/
+.repowise/
+FLAGS.jsonl
+.env*.local
