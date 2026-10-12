@@ -15,3 +15,31 @@ test("toggleFocus: tapping the same item resets", () => {
   expect(toggleFocus("a", "a")).toBeNull();
   expect(toggleFocus("a", "b")).toBe("b");
 });
+
+// Regression: hovering a legend entry used to reorder the legend (chart.js
+// builds legend items in `order`), so the cursor landed on another player.
+test("legend order stays fixed whoever is focused", async () => {
+  const { drawOrder, legendSort } = await import("./lineFocus");
+  const names = ["thresh", "stelam", "cypher", "serious"];
+  const base = [0, 1, 1, 1];
+  const legendFor = (focus) => {
+    // mimic chart.js: items generated from metas sorted by `order`, then labels.sort
+    const items = names
+      .map((text, datasetIndex) => ({ text, datasetIndex, order: drawOrder(text, focus, base[datasetIndex]) }))
+      .sort((a, b) => a.order - b.order || a.datasetIndex - b.datasetIndex);
+    return items.sort(legendSort).map((i) => i.text);
+  };
+  for (const focus of [null, ...names]) expect(legendFor(focus)).toEqual(names);
+  // the focused line still draws on top
+  expect(drawOrder("serious", "serious", 1)).toBeLessThan(drawOrder("thresh", "serious", 0));
+});
+
+test("added-player palette keeps >= 7:1 contrast on the page background", async () => {
+  const { ADDED_PALETTE } = await import("../components/WhoWasOnePage");
+  const lum = (h) => {
+    const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const bg = lum("#14120e");
+  ADDED_PALETTE.forEach((h) => expect((lum(h) + 0.05) / (bg + 0.05)).toBeGreaterThanOrEqual(7));
+});

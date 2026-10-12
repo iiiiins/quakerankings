@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import useTournaments from "../hooks/useTournaments";
-import { focusStyle, toggleFocus } from "../lib/lineFocus";
+import { focusStyle, toggleFocus, drawOrder, legendSort } from "../lib/lineFocus";
 import { resolveSelection, addPlayer, removePlayer, togglePlayer, searchPlayers } from "../lib/chartSelection";
 import computeWhoWasOne, { numberOnes, contenders, latestBoard } from "../lib/computeWhoWasOne";
 
@@ -30,7 +30,8 @@ const FADED = "#6e6859";
 // Contenders: cooler/pastel hues, dashed, so #1 holders still lead the eye.
 const CONTENDER_PALETTE = ["#9fa8da", "#80deea", "#c5e1a5", "#ffcc80", "#bcaaa4"];
 // Players the visitor adds: solid, mid-weight, their own hues.
-const ADDED_PALETTE = ["#ef5350", "#26c6da", "#d4e157", "#ab47bc", "#ffa726", "#29b6f6", "#66bb6a", "#ec407a"];
+// All >= 7:1 contrast on #14120e.
+export const ADDED_PALETTE = ["#ff8a80", "#26c6da", "#d4e157", "#b39ddb", "#ffa726", "#29b6f6", "#66bb6a", "#f48fb1"];
 const PALETTE = ["#e05a1f", "#ffff72", "#4fc3f7", "#81c784", "#ce93d8", "#ff8a65", "#f06292", "#4db6ac", "#fff176", "#90a4ae"];
 
 const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
@@ -99,7 +100,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
       borderColor: f.color,
       backgroundColor: f.color,
       borderWidth: f.width,
-      order: name === focus ? -1 : base.order,
+      order: drawOrder(name, focus, base.order),
     };
   };
   const labels = years.map((y) => `'${String(y).slice(2)}`);
@@ -156,7 +157,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     },
   };
   const legend = {
-    labels: { color: TEXT, usePointStyle: true, padding: 14 },
+    labels: { color: TEXT, usePointStyle: true, padding: 14, sort: legendSort },
     onHover: (evt, item) => setHovered(item.text),
     onLeave: () => setHovered(null),
     onClick: (evt, item) => pin(item.text),

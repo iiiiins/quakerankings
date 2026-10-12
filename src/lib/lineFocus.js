@@ -18,3 +18,13 @@ export function focusStyle(name, focus, color, baseWidth) {
 export function toggleFocus(pinned, name) {
   return pinned === name ? null : name;
 }
+
+// chart.js draws AND builds legend items in `order` (via sorted metas), so
+// lifting the focused line with order alone would reorder the legend under
+// the cursor (hover lands on a neighbour -> feedback loop). Draw order may
+// change; the legend is pinned to the dataset array index with legendSort.
+export function drawOrder(name, focus, baseOrder) {
+  return name === focus ? -1 : baseOrder;
+}
+
+export const legendSort = (a, b) => a.datasetIndex - b.datasetIndex;
