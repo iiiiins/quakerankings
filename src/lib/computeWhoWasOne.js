@@ -149,3 +149,8 @@ export function yearBest(perYear, selected, years) {
     return { year, ...(best || { player: null, points: 0 }) };
   });
 }
+
+// The page's Points-per-year view: always all events (Bruno's call — a single
+// year rarely has 25 events, so Power Ranking is ignored there).
+export const pointsPerYearForPage = (tournaments, config) =>
+  pointsPerYear(tournaments, { ...config, powerRanking: false });

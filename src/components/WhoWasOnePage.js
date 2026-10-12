@@ -14,7 +14,7 @@ import useTournaments from "../hooks/useTournaments";
 import { focusStyle, toggleFocus, drawOrder, legendSort } from "../lib/lineFocus";
 import { assignColors } from "../lib/colorAssign";
 import { resolveSelection, addPlayer, removePlayer, togglePlayer, searchPlayers } from "../lib/chartSelection";
-import computeWhoWasOne, { numberOnes, contenders, latestBoard, selectionView, pointsPerYear, yearBest } from "../lib/computeWhoWasOne";
+import computeWhoWasOne, { numberOnes, contenders, latestBoard, selectionView, pointsPerYearForPage, yearBest } from "../lib/computeWhoWasOne";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -138,8 +138,9 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
 
   // Points per year (non-cumulative, /charts rule) + best of the selection each year.
   const perYear = useMemo(
-    () => pointsPerYear(tournaments, { ...config, powerRanking }),
-    [tournaments, powerRanking, ...Object.values(config)]
+    // Always all events: Power Ranking doesn't apply to a single year.
+    () => pointsPerYearForPage(tournaments, config),
+    [tournaments, ...Object.values(config)]
   );
   const best = useMemo(() => yearBest(perYear, highlighted, years), [perYear, years, selection, reigns]);
   const yearData = useMemo(
@@ -290,17 +291,22 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
         </div>
         {/* Scoring switch, deliberately not a view plate */}
         <label
-          className="who-pr"
+          className={`who-pr${view === "year" ? " disabled" : ""}`}
           title="Power Ranking scores each player on their best 25 events only, so long careers full of minor results don't outweigh peak performance."
         >
           <Switch
             size="small"
             color="primary"
             checked={powerRanking}
+            disabled={view === "year"}
             onChange={() => setPowerRanking(!powerRanking)}
           />
           <span className="who-pr-label">Power Ranking</span>
-          <span className="who-pr-note">Only counts the top 25 events of each player</span>
+          <span className="who-pr-note">
+            {view === "year"
+              ? "Power Ranking doesn't apply here, since a single year rarely has 25 events."
+              : "Only counts the top 25 events of each player"}
+          </span>
         </label>
         <div className="who-picker-bar">
           <div className="filter-field search-field" style={{ position: "relative" }}>
@@ -413,7 +419,6 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             Points earned in each year alone (not cumulative), same as Performance Per Year on
             Advanced Stats. ★ / ringed point = best of the selection that year; the top band shows
             it, the bottom band and the reign list stay the all-time standings.
-            {powerRanking ? " Power Ranking keeps each player's best 25 events over the whole career." : ""}
           </p>
         )}
         {view === "ranks" && (

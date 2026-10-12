@@ -2029,3 +2029,5 @@ footer a.method-link:hover {
 .who-pr-note { color: #a39c8d; font-size: 12px; }
 .who-band-label { color: #a39c8d; font-size: 11px; margin-top: 10px; text-transform: uppercase; letter-spacing: .05em; }
 .who-band-best { margin-top: 4px; }
+.who-pr.disabled { border-color: #463e32; cursor: default; }
+.who-pr.disabled .who-pr-label { color: #6e6859; }

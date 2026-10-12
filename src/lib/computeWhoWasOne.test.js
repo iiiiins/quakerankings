@@ -132,3 +132,13 @@ test("pointsPerYear: non-cumulative, and Power Ranking keeps the career-best 25 
   expect(pointsPerYear(pr, { ...config, powerRanking: true }).g).toEqual({ 2000: 240, 2001: 100 });
   expect(pointsPerYear([], config)).toEqual({});
 });
+
+test("Points per year ignores Power Ranking when called the way the page does", async () => {
+  const { pointsPerYearForPage, yearBest } = await import("./computeWhoWasOne");
+  const pr = [...Array.from({ length: 30 }, () => ev(2000, "h", null, 5)), ev(2001, "h")];
+  const page = (powerRanking) => pointsPerYearForPage(pr, { ...config, powerRanking });
+  expect(page(true)).toEqual(page(false));
+  expect(page(true).h).toEqual({ 2000: 300, 2001: 100 });
+  // best-that-year uses all events too
+  expect(yearBest(page(true), ["h"], [2000])[0]).toEqual({ year: 2000, player: "h", points: 300 });
+});
