@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container, Paper, TextField } from "@mui/material";
-import useTournaments from "../hooks/useTournaments";
+import { useTournamentsStatus } from "../hooks/useTournaments";
+import LoadState from "./LoadState";
 import computeRankings from "../lib/computeRankings";
 import comparePlayers from "../lib/comparePlayers";
 import { formatPpe } from "../lib/sortPlayers";
@@ -88,7 +89,7 @@ const ComparePage = ({
   modeVisibility,
   minEventsForPpe,
 }) => {
-  const tournamentList = useTournaments();
+  const { tournaments: tournamentList, loading: tLoading, error: tError } = useTournamentsStatus();
   const [nameA, setNameA] = useState("");
   const [nameB, setNameB] = useState("");
 
@@ -132,6 +133,14 @@ const ComparePage = ({
     () => (nameA && nameB ? comparePlayers(players, nameA, nameB) : null),
     [players, nameA, nameB]
   );
+
+  if (tLoading || tError) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <LoadState error={tError} label="Loading players…" />
+      </Container>
+    );
+  }
 
   return (
     <Container disableGutters maxWidth={false}>

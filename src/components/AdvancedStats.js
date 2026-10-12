@@ -14,7 +14,8 @@ import {
   Slider,
   Checkbox,
 } from "@mui/material";
-import useTournaments from "../hooks/useTournaments";
+import { useTournamentsStatus } from "../hooks/useTournaments";
+import LoadState from "./LoadState";
 import computeRankings from "../lib/computeRankings";
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from "chart.js";
@@ -67,7 +68,7 @@ const AdvancedStats = ({
   const [selectedToggle, setSelectedToggle] = useState("overall"); // 'performance' or 'overall'
   const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
-  const tournamentList = useTournaments();
+  const { tournaments: tournamentList, loading: tLoading, error: tError } = useTournamentsStatus();
 
   const { players, filteredCount, totalTournaments } = useMemo(
     () =>
@@ -249,6 +250,14 @@ const AdvancedStats = ({
         : [...prev, player] // Add player
     );
   };
+
+  if (tLoading || tError) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <LoadState error={tError} label="Loading stats…" />
+      </Container>
+    );
+  }
 
   return (
     <Container disableGutters maxWidth={false}>

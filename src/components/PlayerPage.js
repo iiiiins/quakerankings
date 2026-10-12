@@ -16,6 +16,7 @@ import {
   MenuItem,
   Slider,
 } from "@mui/material";
+import LoadState from "./LoadState";
 import fetchAllRows from "../services/fetchAllRows";
 import { supabase } from "../services/supabaseClient";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +37,7 @@ const PlayerPage = ({
   const navigate = useNavigate();
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [sortConfig, setSortConfig] = useState({});
   const [selectedGame, setSelectedGame] = useState("None");
   const [selectedMode, setSelectedMode] = useState("None");
@@ -97,6 +99,7 @@ const PlayerPage = ({
 
       if (error) {
         console.error("Error fetching player data:", error.message);
+        setFetchError(true);
         setLoading(false);
         return;
       }
@@ -382,7 +385,13 @@ const PlayerPage = ({
     }));
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <LoadState label="Loading player…" />;
+  if (fetchError)
+    return (
+      <div className="load-state load-error" role="alert">
+        Couldn't load this player's data. Check your connection and reload the page.
+      </div>
+    );
   if (!playerData) return <p>No data found for player: {playerName}</p>;
 
   const { roundedPoints, groupedTournaments, yearRanges } = playerData;

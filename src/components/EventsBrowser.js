@@ -23,7 +23,8 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
-import useTournaments from "../hooks/useTournaments";
+import { useTournamentsStatus } from "../hooks/useTournaments";
+import LoadState from "./LoadState";
 import useSession from "../hooks/useSession";
 import groupEvents from "../lib/groupEvents";
 import gameLogos from "../lib/gameLogos";
@@ -99,7 +100,7 @@ const EventsBrowser = () => {
   const [suggesting, setSuggesting] = useState(null); // grouped event | "new" | null
   const isMobile = useMediaQuery("(max-width:899px)");
 
-  const tournamentList = useTournaments();
+  const { tournaments: tournamentList, loading: tLoading, error: tError } = useTournamentsStatus();
   const { session } = useSession();
   const events = useMemo(() => groupEvents(tournamentList), [tournamentList]);
 
@@ -167,6 +168,14 @@ const EventsBrowser = () => {
   };
 
   const tierLabel = (tier) => (tier === "All" ? "All tiers" : `Tier ${tier}`);
+
+  if (tLoading || tError) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <LoadState error={tError} label="Loading events…" />
+      </Container>
+    );
+  }
 
   return (
     <Container disableGutters maxWidth={false}>

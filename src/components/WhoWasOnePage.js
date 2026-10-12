@@ -11,7 +11,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import useTournaments from "../hooks/useTournaments";
+import { useTournamentsStatus } from "../hooks/useTournaments";
+import LoadState from "./LoadState";
 import { focusStyle, toggleFocus, drawOrder, legendSort } from "../lib/lineFocus";
 import { assignColors } from "../lib/colorAssign";
 import { resolveSelection, addPlayer, removePlayer, togglePlayer, searchPlayers } from "../lib/chartSelection";
@@ -41,7 +42,7 @@ export const ADDED_PALETTE = ["#33ff9c", "#b399ff", "#ff80dd", "#66ff33"];
 export const PALETTE = ["#e05a1f", "#ffff72", "#4fc3f7", "#81c784", "#ce93d8", "#ff8a65", "#f06292", "#4db6ac", "#fff176", "#90a4ae"];
 
 const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
-  const tournaments = useTournaments();
+  const { tournaments: tournaments, loading: tLoading, error: tError } = useTournamentsStatus();
   const [view, setView] = useState("ranks");
   const [powerRanking, setPowerRanking] = useState(Boolean(initialPowerRanking));
   // hover = transient (mouse); pinned = click/tap, survives mouse leave.
@@ -269,6 +270,14 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
       },
     },
   };
+
+  if (tLoading || tError) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <LoadState error={tError} label="Loading history…" />
+      </Container>
+    );
+  }
 
   return (
     <Container disableGutters maxWidth={false}>

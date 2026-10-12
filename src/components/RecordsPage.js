@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container, Paper, Typography } from "@mui/material";
-import useTournaments from "../hooks/useTournaments";
+import { useTournamentsStatus } from "../hooks/useTournaments";
+import LoadState from "./LoadState";
 import computeRankings from "../lib/computeRankings";
 import groupEvents from "../lib/groupEvents";
 import computeRecords, {
@@ -98,7 +99,7 @@ const RecordsPage = ({
   modeVisibility,
   minEventsForPpe,
 }) => {
-  const tournamentList = useTournaments();
+  const { tournaments: tournamentList, loading: tLoading, error: tError } = useTournamentsStatus();
   const [lanOnly, setLanOnly] = useState(false);
 
   const records = useMemo(() => {
@@ -150,6 +151,14 @@ const RecordsPage = ({
     mostEvents,
     prizeEvents,
   } = records;
+
+  if (tLoading || tError) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <LoadState error={tError} label="Loading records…" />
+      </Container>
+    );
+  }
 
   return (
     <Container disableGutters maxWidth={false}>

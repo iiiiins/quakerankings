@@ -20,7 +20,8 @@ import {
   Button,
   useMediaQuery,
 } from "@mui/material";
-import useTournaments from "../hooks/useTournaments";
+import { useTournamentsStatus } from "../hooks/useTournaments";
+import LoadState from "./LoadState";
 import computeRankings from "../lib/computeRankings";
 import gameLogos from "../lib/gameLogos";
 import sortPlayers, { formatPpe } from "../lib/sortPlayers";
@@ -57,7 +58,7 @@ const PlayerList = ({
   const [loadMore, setLoadMore] = useState(100);
   const isMobile = useMediaQuery("(max-width:899px)");
 
-  const tournamentList = useTournaments();
+  const { tournaments: tournamentList, loading: tLoading, error: tError } = useTournamentsStatus();
 
   const { players, filteredCount, totalTournaments } = useMemo(
     () =>
@@ -163,6 +164,14 @@ const PlayerList = ({
   const maxPoints = players.length > 0 ? players[0].points : 0;
   const podiumPlayers =
     players.length >= 3 ? [players[1], players[0], players[2]] : [];
+
+  if (tLoading || tError) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <LoadState error={tError} label="Loading rankings…" />
+      </Container>
+    );
+  }
 
   return (
     <Container disableGutters maxWidth={false}>

@@ -2050,3 +2050,11 @@ footer a.method-link:hover {
 .who-tip-arrow.MuiTooltip-arrow::before { border: 1px solid #463e32; }
 .who-tip-title { display: block; color: #e05a1f; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; font-size: 11px; margin-bottom: 4px; }
 .who-tip-body { display: block; color: #a39c8d; }
+
+/* Loading / error state (LoadState.js) */
+.load-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 16px; color: #a39c8d; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+.load-error { color: #ece8df; text-transform: none; letter-spacing: 0; font-size: 14px; }
+.load-skeleton { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.load-skel-row { display: block; height: 34px; border-radius: 4px; background: linear-gradient(90deg, #1b1813 0%, #2e2922 50%, #1b1813 100%); background-size: 200% 100%; animation: load-shimmer 1.4s ease-in-out infinite; }
+@keyframes load-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .load-skel-row { animation: none; } }
