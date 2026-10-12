@@ -2036,3 +2036,17 @@ footer a.method-link:hover {
 /* Same width as /charts: no rec-page cap; compact PR note under the bar */
 .who-pr-note-line { margin: -6px 0 4px; line-height: 1.2; }
 .who-pr-note-line .who-pr-note { font-size: 11px; color: #a39c8d; }
+/* Power Ranking: two-line plate (same 36px height as LAN Only) + info tooltip */
+.plate-2l { padding-right: 13px; }
+.plate-lines { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.1; }
+.plate-main { font-size: 12px; }
+.plate-sub { font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: none; color: #6e6859; }
+.plate.on .plate-sub { color: #a39c8d; }
+.pr-group { display: inline-flex; align-items: center; gap: 6px; }
+.pr-info { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; color: #a39c8d; font-size: 17px; cursor: help; outline: none; }
+.pr-info:hover, .pr-info:focus-visible { color: #e05a1f; box-shadow: 0 0 0 2px rgba(224, 90, 31, .45); }
+.who-tip.MuiTooltip-tooltip { background: #1b1813; border: 1px solid #463e32; color: #ece8df; padding: 10px 12px; max-width: 260px; font-size: 12px; line-height: 1.45; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+.who-tip-arrow.MuiTooltip-arrow { color: #1b1813; }
+.who-tip-arrow.MuiTooltip-arrow::before { border: 1px solid #463e32; }
+.who-tip-title { display: block; color: #e05a1f; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; font-size: 11px; margin-bottom: 4px; }
+.who-tip-body { display: block; color: #a39c8d; }

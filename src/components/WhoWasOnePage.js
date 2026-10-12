@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Container, Paper, Typography, FormControl, Select, MenuItem, Slider, TextField, List, ListItem, Checkbox, ListItemText } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { Tooltip as MuiTooltip, Container, Paper, Typography, FormControl, Select, MenuItem, Slider, TextField, List, ListItem, Checkbox, ListItemText } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -390,24 +391,43 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
               <span className="led" />
               LAN Only
             </button>
-            <button
-              type="button"
-              className={`plate${powerRanking ? " on" : ""}${view === "year" ? " disabled" : ""}`}
-              onClick={() => view !== "year" && setPowerRanking(!powerRanking)}
-              disabled={view === "year"}
-              title="Power Ranking scores each player on their best 25 events only, so long careers full of minor results don't outweigh peak performance."
-            >
-              <span className="led" />
-              Power Ranking
-            </button>
+            <span className="pr-group">
+              <button
+                type="button"
+                className={`plate plate-2l${powerRanking ? " on" : ""}${view === "year" ? " disabled" : ""}`}
+                onClick={() => view !== "year" && setPowerRanking(!powerRanking)}
+                disabled={view === "year"}
+                aria-describedby="pr-info"
+              >
+                <span className="led" />
+                <span className="plate-lines">
+                  <span className="plate-main">Power Ranking</span>
+                  <span className="plate-sub">{view === "year" ? "not used here" : "best 25 events"}</span>
+                </span>
+              </button>
+              <MuiTooltip
+                arrow
+                placement="bottom"
+                enterTouchDelay={0}
+                leaveTouchDelay={4000}
+                slotProps={{ tooltip: { className: "who-tip" }, arrow: { className: "who-tip-arrow" } }}
+                title={
+                  <span id="pr-info">
+                    <span className="who-tip-title">Power Ranking</span>
+                    <span className="who-tip-body">
+                      {view === "year"
+                        ? "Doesn't apply to Points per year: a single year rarely has 25 events."
+                        : "Only each player's best 25 events count, so long careers full of minor results don't outweigh peak performance."}
+                    </span>
+                  </span>
+                }
+              >
+                <span className="pr-info" tabIndex={0} role="button" aria-label="About Power Ranking">
+                  <InfoOutlinedIcon fontSize="inherit" />
+                </span>
+              </MuiTooltip>
+            </span>
           </div>
-        </div>
-        <div className="who-pr-note-line">
-          <span className="who-pr-note">
-            {view === "year"
-              ? "Power Ranking doesn't apply here, since a single year rarely has 25 events."
-              : "Power Ranking only counts the top 25 events of each player."}
-          </span>
         </div>
 
         {/* Summary Message (same as /charts) */}
