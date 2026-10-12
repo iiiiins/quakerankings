@@ -2031,3 +2031,5 @@ footer a.method-link:hover {
 .who-band-best { margin-top: 4px; }
 .who-pr.disabled { border-color: #463e32; cursor: default; }
 .who-pr.disabled .who-pr-label { color: #6e6859; }
+.plate.disabled { opacity: .45; cursor: default; }
+.who-pr-note-line { margin: -4px 0 6px; }

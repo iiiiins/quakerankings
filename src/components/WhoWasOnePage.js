@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Container, Paper, Switch, TextField, List, ListItem, Checkbox, ListItemText } from "@mui/material";
+import { Container, Paper, Typography, FormControl, Select, MenuItem, Slider, TextField, List, ListItem, Checkbox, ListItemText } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -14,6 +14,8 @@ import useTournaments from "../hooks/useTournaments";
 import { focusStyle, toggleFocus, drawOrder, legendSort } from "../lib/lineFocus";
 import { assignColors } from "../lib/colorAssign";
 import { resolveSelection, addPlayer, removePlayer, togglePlayer, searchPlayers } from "../lib/chartSelection";
+import computeRankings from "../lib/computeRankings";
+import { CURRENT_YEAR, YEAR_MIN, GAMES, MODES } from "../lib/formulaDefaults";
 import computeWhoWasOne, { numberOnes, contenders, latestBoard, selectionView, pointsPerYearForPage, yearBest } from "../lib/computeWhoWasOne";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
@@ -50,14 +52,26 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   // null = default set (follows the formula); array once edited.
   const [selection, setSelection] = useState(null);
   const [query, setQuery] = useState("");
+  // /charts filter bar (same defaults as AdvancedStats)
+  const [selectedGame, setSelectedGame] = useState("All");
+  const [selectedMode, setSelectedMode] = useState("All");
+  const [yearRange, setYearRange] = useState([YEAR_MIN, CURRENT_YEAR]);
+  const [lanOnly, setLanOnly] = useState(false);
+  const filters = { selectedGame, selectedMode, yearRange, lanOnly };
+  const filterKey = `${selectedGame}|${selectedMode}|${yearRange.join("-")}|${lanOnly}`;
   const pin = (name) => {
     setHovered(null);
     setPinned((p) => toggleFocus(p, name));
   };
 
   const { years, snapshots, reigns } = useMemo(
-    () => computeWhoWasOne(tournaments, { ...config, powerRanking }),
-    [tournaments, powerRanking, ...Object.values(config)]
+    () => computeWhoWasOne(tournaments, { ...config, ...filters, powerRanking }),
+    [tournaments, powerRanking, filterKey, ...Object.values(config)]
+  );
+  // Stats line, same numbers /charts shows for these filters.
+  const summary = useMemo(
+    () => computeRankings(tournaments, { ...config, ...filters, powerRanking }),
+    [tournaments, powerRanking, filterKey, ...Object.values(config)]
   );
 
   const leaders = numberOnes(reigns);
@@ -139,8 +153,8 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   // Points per year (non-cumulative, /charts rule) + best of the selection each year.
   const perYear = useMemo(
     // Always all events: Power Ranking doesn't apply to a single year.
-    () => pointsPerYearForPage(tournaments, config),
-    [tournaments, ...Object.values(config)]
+    () => pointsPerYearForPage(tournaments, { ...config, ...filters }),
+    [tournaments, filterKey, ...Object.values(config)]
   );
   const best = useMemo(() => yearBest(perYear, highlighted, years), [perYear, years, selection, reigns]);
   const yearData = useMemo(
@@ -289,26 +303,55 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             Points per year
           </button>
         </div>
-        {/* Scoring switch, deliberately not a view plate */}
-        <label
-          className={`who-pr${view === "year" ? " disabled" : ""}`}
-          title="Power Ranking scores each player on their best 25 events only, so long careers full of minor results don't outweigh peak performance."
-        >
-          <Switch
-            size="small"
-            color="primary"
-            checked={powerRanking}
-            disabled={view === "year"}
-            onChange={() => setPowerRanking(!powerRanking)}
-          />
-          <span className="who-pr-label">Power Ranking</span>
-          <span className="who-pr-note">
-            {view === "year"
-              ? "Power Ranking doesn't apply here, since a single year rarely has 25 events."
-              : "Only counts the top 25 events of each player"}
-          </span>
-        </label>
-        <div className="who-picker-bar">
+        {/* Filter bar: same markup/classes as AdvancedStats (/charts) */}
+        <div className="filter-bar">
+          <div className="filter-field">
+            <span className="filter-label">Game</span>
+            <FormControl size="small" style={{ minWidth: "150px" }}>
+              <Select
+                value={selectedGame}
+                onChange={(e) => setSelectedGame(e.target.value)}
+                renderValue={(v) => (v === "All" ? "All games" : v)}
+              >
+                {["All", ...GAMES].map((game) => (
+                  <MenuItem key={game} value={game}>
+                    {game}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+
+          <div className="filter-field">
+            <span className="filter-label">Mode</span>
+            <FormControl size="small" style={{ minWidth: "110px" }}>
+              <Select value={selectedMode} onChange={(e) => setSelectedMode(e.target.value)}>
+                {["All", ...MODES].map((mode) => (
+                  <MenuItem key={mode} value={mode}>
+                    {mode}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+
+          <div className="filter-field years-field">
+            <span className="filter-label">Years</span>
+            <div className="yearline">
+              <Slider
+                value={yearRange}
+                onChange={(e, v) => setYearRange(v)}
+                valueLabelDisplay="auto"
+                min={YEAR_MIN}
+                max={CURRENT_YEAR}
+                step={1}
+              />
+              <span className="yearval">
+                {yearRange[0]}–{yearRange[1]}
+              </span>
+            </div>
+          </div>
+
           <div className="filter-field search-field" style={{ position: "relative" }}>
             <span className="filter-label">Add player to chart</span>
             <TextField
@@ -336,6 +379,45 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
               </div>
             )}
           </div>
+
+          <div className="toggle-plates">
+            <button
+              type="button"
+              className={`plate${lanOnly ? " on" : ""}`}
+              onClick={() => setLanOnly(!lanOnly)}
+              title="Only LAN tournaments"
+            >
+              <span className="led" />
+              LAN Only
+            </button>
+            <button
+              type="button"
+              className={`plate${powerRanking ? " on" : ""}${view === "year" ? " disabled" : ""}`}
+              onClick={() => view !== "year" && setPowerRanking(!powerRanking)}
+              disabled={view === "year"}
+              title="Power Ranking scores each player on their best 25 events only, so long careers full of minor results don't outweigh peak performance."
+            >
+              <span className="led" />
+              Power Ranking
+            </button>
+          </div>
+        </div>
+        <div className="who-pr-note-line">
+          <span className="who-pr-note">
+            {view === "year"
+              ? "Power Ranking doesn't apply here, since a single year rarely has 25 events."
+              : "Power Ranking only counts the top 25 events of each player."}
+          </span>
+        </div>
+
+        {/* Summary Message (same as /charts) */}
+        <Typography component="div" className="summary-line">
+          <b>{summary.players.length.toLocaleString("en-US")}</b> players ·{" "}
+          <b>{(summary.totalTournaments - summary.filteredCount).toLocaleString("en-US")}</b>{" "}
+          tournaments · {summary.filteredCount.toLocaleString("en-US")} filtered
+        </Typography>
+
+        <div className="who-picker-bar">
           <button
             type="button"
             className={`plate${selection === null ? " on" : ""}`}

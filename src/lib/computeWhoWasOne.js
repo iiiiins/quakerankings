@@ -8,9 +8,14 @@ export const TOP_N = 8;
 
 export default function computeWhoWasOne(tournaments, config, { topN = TOP_N } = {}) {
   const list = Object.values(tournaments || {});
-  const years = [...new Set(list.map((t) => t.Year).filter(Boolean))].sort((a, b) => a - b);
+  // Optional config.yearRange works like /charts: only events inside the
+  // range count, so totals are cumulative FROM the range start.
+  const [lo, hi] = config.yearRange || [-Infinity, Infinity];
+  const years = [...new Set(list.map((t) => t.Year).filter(Boolean))]
+    .filter((y) => y >= lo && y <= hi)
+    .sort((a, b) => a - b);
   if (!years.length) return { years: [], snapshots: [], reigns: [] };
-  const first = years[0];
+  const first = Number.isFinite(lo) ? lo : years[0];
 
   const snapshots = years.map((year) => {
     const { players } = computeRankings(list, {
@@ -123,7 +128,7 @@ export function pointsPerYear(tournaments, config) {
     lanOnly: false,
     powerRanking: false,
     ...config,
-    yearRange: [Math.min(...years), Math.max(...years)],
+    yearRange: config.yearRange || [Math.min(...years), Math.max(...years)],
   });
   const out = {};
   players.forEach((p) => {

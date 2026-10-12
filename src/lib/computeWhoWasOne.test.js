@@ -142,3 +142,30 @@ test("Points per year ignores Power Ranking when called the way the page does", 
   // best-that-year uses all events too
   expect(yearBest(page(true), ["h"], [2000])[0]).toEqual({ year: 2000, player: "h", points: 300 });
 });
+
+test("filters feed the replay: year range restarts totals, game/mode/LAN narrow events", async () => {
+  const { pointsPerYearForPage } = await import("./computeWhoWasOne");
+  const rows = [
+    ev(2000, "a"), ev(2000, "a"), ev(2000, "a"),
+    ev(2001, "b"), ev(2002, "b"),
+    { ...ev(2002, "c"), Game: "Quake World", LAN: true },
+    { ...ev(2002, "c"), Game: "Quake World", Mode: "TDM", LAN: true },
+  ];
+  // All years: a (300) leads throughout.
+  expect(computeWhoWasOne(rows, config).reigns[0]).toEqual({ player: "a", from: 2000, to: 2002 });
+  // Range 2001–2002: a's 2000 wins don't count, years start at 2001.
+  const r = computeWhoWasOne(rows, { ...config, yearRange: [2001, 2002] });
+  expect(r.years).toEqual([2001, 2002]);
+  expect(r.snapshots[0].all.a).toBeUndefined();
+  expect(r.snapshots[1].top[0]).toMatchObject({ player: "b", points: 200 });
+  expect(r.snapshots[1].all.c.points).toBe(200);
+  // Game filter
+  const qw = computeWhoWasOne(rows, { ...config, selectedGame: "Quake World" });
+  expect(qw.years).toEqual([2000, 2001, 2002]);
+  expect(Object.keys(qw.snapshots[2].all)).toEqual(["c"]);
+  // Mode + LAN
+  expect(computeWhoWasOne(rows, { ...config, selectedMode: "TDM" }).snapshots[2].all.c.points).toBe(100);
+  expect(Object.keys(computeWhoWasOne(rows, { ...config, lanOnly: true }).snapshots[2].all)).toEqual(["c"]);
+  // Points per year respects the range too
+  expect(pointsPerYearForPage(rows, { ...config, yearRange: [2001, 2002] }).a).toBeUndefined();
+});
