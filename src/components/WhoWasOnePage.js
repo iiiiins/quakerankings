@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 import useTournaments from "../hooks/useTournaments";
 import { focusStyle, toggleFocus, drawOrder, legendSort } from "../lib/lineFocus";
+import { assignColors } from "../lib/colorAssign";
 import { resolveSelection, addPlayer, removePlayer, togglePlayer, searchPlayers } from "../lib/chartSelection";
 import computeWhoWasOne, { numberOnes, contenders, latestBoard, selectionView } from "../lib/computeWhoWasOne";
 
@@ -30,6 +31,7 @@ const FADED = "#6e6859";
 // Contenders: cooler/pastel hues, dashed, so #1 holders still lead the eye.
 export const CONTENDER_PALETTE = ["#9fa8da", "#80deea", "#c5e1a5", "#ffcc80", "#bcaaa4"];
 // Players the visitor adds: solid, mid-weight, their own hues.
+// (kept for reference; colours now come from lib/colorAssign's pool)
 // >= 7:1 contrast on #14120e and >= 15deg hue from every #1-holder/contender
 // colour (pinned by tests) — the free hue gaps are few, so 4 that cycle.
 export const ADDED_PALETTE = ["#33ff9c", "#b399ff", "#ff80dd", "#66ff33"];
@@ -62,7 +64,6 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   const chasers = contenders(snapshots, reigns).map((c) => c.player);
   const defaults = [...leaders, ...chasers];
   const highlighted = resolveSelection(selection, defaults);
-  const added = highlighted.filter((n) => !defaults.includes(n));
   const board = useMemo(() => latestBoard(snapshots), [snapshots]);
   const matches = searchPlayers(board, query, highlighted);
   const onChart = (name) => highlighted.includes(name);
@@ -81,14 +82,15 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     if (pinned && !next.includes(pinned)) setPinned(null);
     setHovered(null);
   };
-  const colorOf = (name) => {
-    const i = leaders.indexOf(name);
-    if (i >= 0) return PALETTE[i % PALETTE.length];
-    const j = chasers.indexOf(name);
-    if (j >= 0) return CONTENDER_PALETTE[j % CONTENDER_PALETTE.length];
-    const k = added.indexOf(name);
-    return k >= 0 ? ADDED_PALETTE[k % ADDED_PALETTE.length] : FADED;
-  };
+  // One combined pool: defaults keep their usual colour; everyone else gets
+  // the most distinct free colour (see lib/colorAssign).
+  const palette = useMemo(() => {
+    const usual = {};
+    leaders.forEach((n, i) => (usual[n] = PALETTE[i % PALETTE.length]));
+    chasers.forEach((n, i) => (usual[n] = CONTENDER_PALETTE[i % CONTENDER_PALETTE.length]));
+    return assignColors(highlighted, usual);
+  }, [reigns, snapshots, selection]);
+  const colorOf = (name) => palette[name] || FADED;
   const styleOf = (name) =>
     leaders.includes(name)
       ? { borderWidth: 3, order: 0 }
@@ -110,6 +112,9 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     };
   };
   const labels = years.map((y) => `'${String(y).slice(2)}`);
+  // Crop to the first year any selected player has points.
+  const firstIdx = Math.max(0, rel.byYear.findIndex((y) => y.leader));
+
 
   const rankData = useMemo(
     () => ({
@@ -175,12 +180,13 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   };
 
   const axis = { grid: { color: GRID }, ticks: { color: MUTED } };
+  const xAxis = { ...axis, min: labels[firstIdx] };
   const rankOptions = {
     responsive: true,
     maintainAspectRatio: false,
     ...interaction,
     scales: {
-      x: axis,
+      x: xAxis,
       y: { ...axis, reverse: true, min: 1, max: yMax, ticks: { color: MUTED, stepSize: 1, callback: (v) => `#${v}` } },
     },
     plugins: {
@@ -191,7 +197,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   const pointsOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    scales: { x: axis, y: { ...axis, beginAtZero: true } },
+    scales: { x: xAxis, y: { ...axis, beginAtZero: true } },
     ...interaction,
     plugins: {
       legend,
@@ -323,7 +329,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
           )}
           {years.length > 0 && (
             <div className="who-band" aria-label="#1 at each year end">
-              {rel.byYear.map((y) => (
+              {rel.byYear.slice(firstIdx).map((y) => (
                 <span
                   key={y.year}
                   className="who-band-cell"
