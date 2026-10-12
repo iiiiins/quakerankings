@@ -14,7 +14,7 @@ const LoadState = ({ error, label = "Loading rankings…" }) =>
     </div>
   ) : (
     <div className="load-state" role="status" aria-live="polite">
-      <CircularProgress size={28} thickness={4} color="primary" />
+      <CircularProgress size={40} thickness={4} color="primary" />
       <span>{label}</span>
       <div className="load-skeleton" aria-hidden="true">
         {Array.from({ length: 6 }, (_, i) => (

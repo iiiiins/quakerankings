@@ -2058,3 +2058,6 @@ footer a.method-link:hover {
 .load-skel-row { display: block; height: 34px; border-radius: 4px; background: linear-gradient(90deg, #1b1813 0%, #2e2922 50%, #1b1813 100%); background-size: 200% 100%; animation: load-shimmer 1.4s ease-in-out infinite; }
 @keyframes load-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @media (prefers-reduced-motion: reduce) { .load-skel-row { animation: none; } }
+/* Hold the page height while loading/failed so the footer doesn't jump */
+.load-state { min-height: 60vh; justify-content: center; text-align: center; }
+.load-state .load-skeleton { margin-top: 20px; }
