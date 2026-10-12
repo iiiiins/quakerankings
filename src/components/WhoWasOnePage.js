@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import useTournaments from "../hooks/useTournaments";
-import computeWhoWasOne, { numberOnes } from "../lib/computeWhoWasOne";
+import computeWhoWasOne, { numberOnes, contenders } from "../lib/computeWhoWasOne";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -25,6 +25,8 @@ const GRID = "#2e2922";
 const TEXT = "#ece8df";
 const MUTED = "#a39c8d";
 const FADED = "rgba(110,104,89,0.45)";
+// Contenders: cooler/pastel hues, dashed, so #1 holders still lead the eye.
+const CONTENDER_PALETTE = ["#9fa8da", "#80deea", "#c5e1a5", "#ffcc80", "#bcaaa4"];
 const PALETTE = ["#e05a1f", "#ffff72", "#4fc3f7", "#81c784", "#ce93d8", "#ff8a65", "#f06292", "#4db6ac", "#fff176", "#90a4ae"];
 
 const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
@@ -38,10 +40,20 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   );
 
   const leaders = numberOnes(reigns);
+  const chasers = contenders(snapshots, reigns).map((c) => c.player);
+  const highlighted = [...leaders, ...chasers];
   const colorOf = (name) => {
     const i = leaders.indexOf(name);
-    return i >= 0 ? PALETTE[i % PALETTE.length] : FADED;
+    if (i >= 0) return PALETTE[i % PALETTE.length];
+    const j = chasers.indexOf(name);
+    return j >= 0 ? CONTENDER_PALETTE[j % CONTENDER_PALETTE.length] : FADED;
   };
+  const styleOf = (name) =>
+    leaders.includes(name)
+      ? { borderWidth: 3, order: 0 }
+      : chasers.includes(name)
+      ? { borderWidth: 2, borderDash: [6, 4], order: 1 }
+      : { borderWidth: 1, order: 2 };
   const labels = years.map((y) => `'${String(y).slice(2)}`);
 
   const rankData = useMemo(() => {
@@ -50,16 +62,16 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
       labels,
       datasets: names.map((name) => {
         const lead = leaders.includes(name);
+        const chase = chasers.includes(name);
         const data = snapshots.map((s) => s.top.find((p) => p.player === name)?.rank ?? null);
         return {
           label: name,
           data,
           borderColor: colorOf(name),
           backgroundColor: colorOf(name),
-          borderWidth: lead ? 3 : 1,
-          pointRadius: data.map((r) => (r === 1 && lead ? 6 : lead ? 3 : 0)),
+          ...styleOf(name),
+          pointRadius: data.map((r) => (r === 1 && lead ? 6 : lead || chase ? 3 : 0)),
           spanGaps: false,
-          order: lead ? 0 : 1,
         };
       }),
     };
@@ -68,12 +80,12 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   const pointsData = useMemo(
     () => ({
       labels,
-      datasets: leaders.map((name) => ({
+      datasets: highlighted.map((name) => ({
         label: name,
         data: snapshots.map((s) => s.top.find((p) => p.player === name)?.points ?? null),
         borderColor: colorOf(name),
         backgroundColor: colorOf(name),
-        borderWidth: 2.5,
+        ...styleOf(name),
         pointRadius: 2,
       })),
     }),
@@ -89,7 +101,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
       y: { ...axis, reverse: true, min: 1, max: 8, ticks: { color: MUTED, stepSize: 1, callback: (v) => `#${v}` } },
     },
     plugins: {
-      legend: { labels: { color: TEXT, filter: (item) => leaders.includes(item.text) } },
+      legend: { labels: { color: TEXT, usePointStyle: true, padding: 14, filter: (item) => highlighted.includes(item.text) } },
       tooltip: { callbacks: { label: (c) => `${c.dataset.label}: #${c.parsed.y}` } },
     },
   };
@@ -97,7 +109,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     responsive: true,
     maintainAspectRatio: false,
     scales: { x: axis, y: { ...axis, beginAtZero: true } },
-    plugins: { legend: { labels: { color: TEXT } } },
+    plugins: { legend: { labels: { color: TEXT, usePointStyle: true, padding: 14 } } },
   };
 
   return (
@@ -160,6 +172,12 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             </div>
           )}
         </Paper>
+        {chasers.length > 0 && (
+          <p className="method-lede who-contenders">
+            Dashed: closest players who never held #1 under this formula (sum over year-ends of
+            9 − rank while in the top 8): {chasers.join(", ")}.
+          </p>
+        )}
         <ul className="who-reigns">
           {reigns.map((r) => (
             <li key={`${r.player}-${r.from}`}>

@@ -43,3 +43,26 @@ export default function computeWhoWasOne(tournaments, config, { topN = TOP_N } =
 export function numberOnes(reigns) {
   return [...new Set(reigns.map((r) => r.player))];
 }
+
+// "Contenders": players who never held #1 but kept close. Each year-end in
+// the top 8 scores (topN + 1 - rank) — #2 earns 7, #8 earns 1 — summed over
+// the whole history, so it rewards both closeness and staying power. Ties:
+// more year-ends at #2–#3, then better best rank, then name.
+export const CONTENDERS = 5;
+
+export function contenders(snapshots, reigns, { count = CONTENDERS, topN = TOP_N } = {}) {
+  const ones = new Set(numberOnes(reigns));
+  const stats = {};
+  snapshots.forEach(({ top }) =>
+    top.forEach(({ player, rank }) => {
+      if (ones.has(player)) return;
+      const s = (stats[player] ||= { player, score: 0, nearTop: 0, best: rank });
+      s.score += topN + 1 - rank;
+      if (rank <= 3) s.nearTop++;
+      s.best = Math.min(s.best, rank);
+    })
+  );
+  return Object.values(stats)
+    .sort((a, b) => b.score - a.score || b.nearTop - a.nearTop || a.best - b.best || a.player.localeCompare(b.player))
+    .slice(0, count);
+}

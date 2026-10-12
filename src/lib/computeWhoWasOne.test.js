@@ -50,3 +50,22 @@ test("caps the snapshot at the top 8 and handles no data", () => {
   expect(computeWhoWasOne(rows, config).snapshots[0].top).toHaveLength(8);
   expect(computeWhoWasOne([], config)).toEqual({ years: [], snapshots: [], reigns: [] });
 });
+
+test("contenders: never-#1 players ranked by summed top-8 closeness", async () => {
+  const { contenders } = await import("./computeWhoWasOne");
+  const snap = (year, names) => ({ year, top: names.map((player, i) => ({ player, points: 0, rank: i + 1 })) });
+  const snapshots = [snap(2000, ["a", "b", "c", "d"]), snap(2001, ["a", "c", "b", "e"]), snap(2002, ["a", "b", "d", "c"])];
+  const reigns = [{ player: "a", from: 2000, to: 2002 }];
+  // b: 7+6+7=20, c: 6+7+5=18, d: 5+6=11, e: 5
+  expect(contenders(snapshots, reigns).map((c) => c.player)).toEqual(["b", "c", "d", "e"]);
+  expect(contenders(snapshots, reigns, { count: 2 })[0]).toMatchObject({ player: "b", score: 20, nearTop: 3, best: 2 });
+});
+
+test("Power Ranking can turn a #1 holder into a contender", async () => {
+  const { contenders } = await import("./computeWhoWasOne");
+  const rows = [...Array.from({ length: 40 }, () => ev(2010, "grinder", null, 5)), ev(2010, "star"), ev(2010, "star"), ev(2010, "star")];
+  const off = computeWhoWasOne(rows, config);
+  const on = computeWhoWasOne(rows, { ...config, powerRanking: true });
+  expect(contenders(off.snapshots, off.reigns)[0].player).toBe("star");
+  expect(contenders(on.snapshots, on.reigns)[0].player).toBe("grinder");
+});
