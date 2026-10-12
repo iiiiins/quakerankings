@@ -270,8 +270,8 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   };
 
   return (
-    <Container maxWidth="lg">
-      <div className="rec-page who-page">
+    <Container disableGutters maxWidth={false}>
+      <div className="who-page">
         <h2 className="method-title">Who was #1</h2>
         <p className="method-lede">
           The all-time board replayed at the end of every year, using only events up to that

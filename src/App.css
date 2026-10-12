@@ -2033,3 +2033,6 @@ footer a.method-link:hover {
 .who-pr.disabled .who-pr-label { color: #6e6859; }
 .plate.disabled { opacity: .45; cursor: default; }
 .who-pr-note-line { margin: -4px 0 6px; }
+/* Same width as /charts: no rec-page cap; compact PR note under the bar */
+.who-pr-note-line { margin: -6px 0 4px; line-height: 1.2; }
+.who-pr-note-line .who-pr-note { font-size: 11px; color: #6e6859; }
