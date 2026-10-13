@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { HashRouter as Router, Routes, Route, useLocation, Link } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, useLocation, Link, Navigate } from "react-router-dom";
 import PlayerList from "./components/PlayerList";
 import PlayerPage from "./components/PlayerPage";
-import AdvancedStats from "./components/AdvancedStats";
 import EventsBrowser from "./components/EventsBrowser";
 import RecordsPage from "./components/RecordsPage";
 import ComparePage from "./components/ComparePage";
@@ -57,7 +56,6 @@ const NavTabs = () => {
     { label: "Records", hash: "#/records", active: pathname === "/records" },
     { label: "Compare", hash: "#/compare", active: pathname === "/compare" },
     { label: "Who was #1", hash: "#/who-was-1", active: pathname === "/who-was-1" },
-    { label: "Advanced Stats", hash: "#/charts", active: pathname === "/charts" },
   ];
   return (
     <nav className="site-tabs">
@@ -428,22 +426,8 @@ const App = () => {
               <Route path="/methodology" element={<Methodology />} />
               {/* Admin (no nav tab — direct URL; security lives in RLS) */}
               <Route path="/admin" element={<AdminPage />} />
-              {/* Stats Page */}
-              <Route
-                path="/charts"
-                element={
-                  <AdvancedStats
-                    pointsConfig={pointsConfig}
-                    pointsVisibility={pointsVisibility}
-                    gameWeights={gameWeights}
-                    gameVisibility={gameVisibility}
-                    tierWeights={tierWeights}
-                    tierVisibility={tierVisibility}
-                    modeWeights={modeWeights}
-                    modeVisibility={modeVisibility}
-                  />
-                }
-              />
+              {/* Old Advanced Stats URL: its charts now live on Who was #1 */}
+              <Route path="/charts" element={<Navigate to="/who-was-1" replace />} />
               {/* Player Details Page */}
               <Route
                 path="/players/:playerName"

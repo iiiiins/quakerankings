@@ -8,7 +8,7 @@ export const TOP_N = 8;
 
 export default function computeWhoWasOne(tournaments, config, { topN = TOP_N } = {}) {
   const list = Object.values(tournaments || {});
-  // Optional config.yearRange works like /charts: only events inside the
+  // Optional config.yearRange works like the home board: only events inside the
   // range count, so totals are cumulative FROM the range start.
   const [lo, hi] = config.yearRange || [-Infinity, Infinity];
   const years = [...new Set(list.map((t) => t.Year).filter(Boolean))]
@@ -114,9 +114,9 @@ export function selectionView(snapshots, selected) {
   return { byYear, reigns };
 }
 
-// "Points per year" — same rule as AdvancedStats' "Performance Per Year":
+// "Points per year" (the former /charts "Performance Per Year" rule):
 // run computeRankings once over the whole history (so Power Ranking keeps
-// each player's best 25 events CAREER-WIDE, exactly like /charts), then sum
+// each player's best 25 events CAREER-WIDE), then sum
 // each player's kept tournament points by year. Non-cumulative.
 export function pointsPerYear(tournaments, config) {
   const list = Object.values(tournaments || {});

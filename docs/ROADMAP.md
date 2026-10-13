@@ -121,7 +121,7 @@ B2-full expensive. Decision logged 2026-06-12.
 - Build-time decision to settle at discuss-phase: *season* rank (results in year Y only) vs
   *career-to-date* rank (results ≤ Y). Lean: season for the #1 timeline ("best of 2005"),
   career-to-date for per-player rank curves — both views from one engine.
-- Surfaces: rank-over-time as an AdvancedStats chart mode (player picker already exists);
+- Surfaces: rank-over-time — shipped on Who was #1 (`/who-was-1`; Advanced Stats was removed 2026-10-13 and `/charts` redirects there);
   the #1 timeline strip lands wherever it reads best (records page or charts — build-time).
 - This engine also feeds feature 9's "peak year" — that's why it precedes PlayerPage upgrades.
 

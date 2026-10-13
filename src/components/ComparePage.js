@@ -38,7 +38,7 @@ const leader = (a, b, better) => {
 
 const fmt = (stat, v) => (stat.format ? stat.format(v) : v);
 
-// Same search-and-pick surface as the AdvancedStats "add player" field. The
+// Same search-and-pick surface as the Who was #1 "add player" field. The
 // picked name stays in the box; typing anything else reopens the matches.
 const PlayerPicker = ({ label, value, players, onPick }) => {
   const [query, setQuery] = useState("");

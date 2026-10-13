@@ -284,7 +284,7 @@ describe("power ranking", () => {
   });
 
   test("on: player.tournaments is truncated too, not just the total", () => {
-    // AdvancedStats plots player.tournaments directly — if the array kept all 30
+    // Who was #1 plots player.tournaments directly — if the array kept all 30
     // while points counted 25, the charts would disagree with the table.
     const { players } = run(thirty(), { powerRanking: true });
     const alpha = byName(players, "alpha");

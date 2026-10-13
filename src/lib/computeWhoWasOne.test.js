@@ -112,7 +112,7 @@ test("selectionView: a gap year breaks a reign", async () => {
   ]);
 });
 
-test("pointsPerYear: non-cumulative, and Power Ranking keeps the career-best 25 like /charts", async () => {
+test("pointsPerYear: non-cumulative, and Power Ranking keeps the career-best 25", async () => {
   const { pointsPerYear, yearBest } = await import("./computeWhoWasOne");
   const rows = [ev(2000, "a", "b"), ev(2001, "a"), ev(2001, "b"), ev(2001, "b")];
   const py = pointsPerYear(rows, config);

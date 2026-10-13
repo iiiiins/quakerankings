@@ -46,7 +46,7 @@ Visual redesign of the whole site. Two phases, strictly in order:
 
 - `PlayerList` ("/") — header, nav buttons, filter bar (game, mode, year slider, search, LAN +
   Power Ranking checkboxes), summary line, the leaderboard table, scroll-to-load-more.
-- `AdvancedStats` ("/charts") — same filter bar, chart.js line chart, player picker list.
+- `AdvancedStats` ("/charts", removed 2026-10-13 — now a redirect to Who was #1) — same filter bar, chart.js line chart, player picker list.
 - `PlayerPage` ("/players/:name") — stat header block, per-game tournament tables.
 - `SettingsMenu` — the gear popover (4 sections of checkbox + weight input rows).
 - Header/footer (title, nav, X/Twitch links).

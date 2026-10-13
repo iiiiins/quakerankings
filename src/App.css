@@ -1808,43 +1808,7 @@ footer a.method-link:hover {
   margin-top: 10px;
 }
 
-/* ---------- charts ---------- */
-.chart-panel {
-  background: #14120e;
-  border: 1px solid #2e2922;
-  border-radius: 10px;
-  padding: 14px 18px 18px;
-  margin-top: 10px;
-}
-
-.chart-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 8px;
-  flex-wrap: wrap;
-}
-
-.MuiTypography-root.chart-title {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #e05a1f;
-  margin-right: auto;
-}
-
-.chart-box {
-  position: relative;
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.chart-box canvas {
-  max-width: 100%;
-}
-
+/* ---------- chart pickers (Who was #1) ---------- */
 .search-results {
   position: absolute;
   top: 100%;
@@ -2033,7 +1997,7 @@ footer a.method-link:hover {
 .who-pr.disabled .who-pr-label { color: #6e6859; }
 .plate.disabled { opacity: .45; cursor: default; }
 .who-pr-note-line { margin: -4px 0 6px; }
-/* Same width as /charts: no rec-page cap; compact PR note under the bar */
+/* Full width: no rec-page cap; compact PR note under the bar */
 .who-pr-note-line { margin: -6px 0 4px; line-height: 1.2; }
 .who-pr-note-line .who-pr-note { font-size: 11px; color: #a39c8d; }
 /* Power Ranking: two-line plate (same 36px height as LAN Only) + info tooltip */

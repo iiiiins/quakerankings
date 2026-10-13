@@ -1,4 +1,4 @@
-// Pure scoring/filter/rank pipeline shared by PlayerList and AdvancedStats.
+// Pure scoring/filter/rank pipeline shared by PlayerList, Records, Compare and Who was #1.
 // Takes the raw Supabase tournament rows + the full filter/formula config and
 // returns ranked players. No React, no fetching — callers memoize on their own deps.
 
@@ -144,7 +144,7 @@ export default function computeRankings(
   if (powerRanking) {
     players.forEach((player) => {
       // Tournaments are truncated to the kept top 25 (not just summed) so that
-      // downstream consumers of player.tournaments — the AdvancedStats charts —
+      // downstream consumers of player.tournaments — the Who was #1 charts —
       // plot exactly the events the power-ranking points come from.
       player.tournaments.sort((a, b) => b.points - a.points);
       player.tournaments = player.tournaments.slice(0, POWER_RANKING_LIMIT);

@@ -54,7 +54,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
   // null = default set (follows the formula); array once edited.
   const [selection, setSelection] = useState(null);
   const [query, setQuery] = useState("");
-  // /charts filter bar (same defaults as AdvancedStats)
+  // Filter bar (same defaults as the home board)
   const [selectedGame, setSelectedGame] = useState("All");
   const [selectedMode, setSelectedMode] = useState("All");
   const [yearRange, setYearRange] = useState([YEAR_MIN, CURRENT_YEAR]);
@@ -70,7 +70,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     () => computeWhoWasOne(tournaments, { ...config, ...filters, powerRanking }),
     [tournaments, powerRanking, filterKey, ...Object.values(config)]
   );
-  // Stats line, same numbers /charts shows for these filters.
+  // Stats line for these filters (players · tournaments · filtered).
   const summary = useMemo(
     () => computeRankings(tournaments, { ...config, ...filters, powerRanking }),
     [tournaments, powerRanking, filterKey, ...Object.values(config)]
@@ -152,7 +152,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
     [snapshots, reigns, focus, selection, rel]
   );
 
-  // Points per year (non-cumulative, /charts rule) + best of the selection each year.
+  // Points per year (non-cumulative) + best of the selection each year.
   const perYear = useMemo(
     // Always all events: Power Ranking doesn't apply to a single year.
     () => pointsPerYearForPage(tournaments, { ...config, ...filters }),
@@ -167,7 +167,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
         const isBest = years.map((y, i) => best[i].player === name);
         return lineOf(name, {
           data,
-          spanGaps: true, // like /charts: years without points are skipped
+          spanGaps: true, // years without points are skipped
           pointRadius: isBest.map((b) => (b ? 7 : 2)),
           pointBorderColor: isBest.map((b) => (b ? TEXT : undefined)),
           pointBorderWidth: isBest.map((b) => (b ? 2 : 1)),
@@ -313,7 +313,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             Points per year
           </button>
         </div>
-        {/* Filter bar: same markup/classes as AdvancedStats (/charts) */}
+        {/* Filter bar: same markup/classes as the home board */}
         <div className="filter-bar">
           <div className="filter-field">
             <span className="filter-label">Game</span>
@@ -439,7 +439,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
           </div>
         </div>
 
-        {/* Summary Message (same as /charts) */}
+        {/* Summary Message */}
         <Typography component="div" className="summary-line">
           <b>{summary.players.length.toLocaleString("en-US")}</b> players ·{" "}
           <b>{(summary.totalTournaments - summary.filteredCount).toLocaleString("en-US")}</b>{" "}
@@ -527,8 +527,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
         </Paper>
         {view === "year" && (
           <p className="method-lede who-note">
-            Points earned in each year alone (not cumulative), same as Performance Per Year on
-            Advanced Stats. ★ / ringed point = best of the selection that year; the top band shows
+            Points earned in each year alone (not cumulative). ★ / ringed point = best of the selection that year; the top band shows
             it, the bottom band and the reign list stay the all-time standings.
           </p>
         )}
@@ -559,7 +558,7 @@ const WhoWasOnePage = ({ initialPowerRanking = false, ...config }) => {
             </li>
           ))}
         </ul>
-        {/* Same "top 25" picker as /charts, from the latest year-end board */}
+        {/* "Top 25" picker, from the latest year-end board */}
         <div className="picker-panel">
           <span className="filter-label">Player selection — top 25</span>
           <List dense className="picker-list">

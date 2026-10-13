@@ -18,7 +18,7 @@ export function togglePlayer(selection, defaults, name) {
   return cur.includes(name) ? removePlayer(selection, defaults, name) : addPlayer(selection, defaults, name);
 }
 
-// Autocomplete, same rule as AdvancedStats: substring, case-insensitive, 10 max,
+// Autocomplete, substring, case-insensitive, 10 max,
 // skipping players already on the chart.
 export function searchPlayers(board, query, selected, limit = 10) {
   const q = query.trim().toLowerCase();
