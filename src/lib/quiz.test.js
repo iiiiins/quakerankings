@@ -24,11 +24,12 @@ test("a profile sums the career", () => {
   expect(ace.bestFinish.event.name).toBe("Bigger Cup"); // tier 1, bigger prize
 });
 
-test("clue 1 is years and main game, clue 2 every game with the main one first", () => {
+test("clue 1 is the years only, clue 2 every game with the main one first", () => {
   const c = cluesFor(profiles.get("dan"));
-  expect(c.map((x) => x.key)).toEqual(["career", "games", "titles", "lan", "best", "name"]);
+  expect(c.map((x) => x.key)).toEqual(["years", "games", "titles", "lan", "best", "name"]);
+  expect(c[0].text).toBe("1999 to 2009");
+  expect(c[0].games).toBeUndefined(); // no main game in clue 1
   // dan: 1 Quake World, 1 Quake Live; a tie goes to the older game
-  expect(c[0].text).toBe("1999 to 2009 · Quake World");
   expect(c[1].games).toEqual(["Quake World", "Quake Live"]);
   expect(c.slice(2).map((x) => x.text)).toEqual(["1", "0", "2nd at Late Cup (2009)", "D, 3 letters"]);
 });

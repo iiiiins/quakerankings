@@ -1,6 +1,6 @@
 // Quiz: guess the hidden player, one of the top 100 on the default all-time
-// board. Clue 1 is the career (years active + main game), clue 2 every game
-// they played (main game first), then titles, LAN events, best finish and the
+// board. Clue 1 is the years active, clue 2 every game they played (main
+// game first), then titles, LAN events, best finish and the
 // name's first letter; one more clue unlocks per wrong guess. Each guess is
 // compared with the answer: same main game or not, earlier or later start,
 // more or fewer titles and LAN events.
@@ -95,7 +95,9 @@ export function cluesFor(p) {
   const best = p.bestFinish;
   const years = p.first === p.last ? `${p.first}` : `${p.first} to ${p.last}`;
   return [
-    { key: "career", label: "Career", games: [p.mainGame], text: `${years} · ${p.mainGame}` },
+    // years alone first: it starts people thinking about an era; the main
+    // game waits for clue 2, where it leads the list (Bruno, 2026-11-22)
+    { key: "years", label: "Years", text: years },
     { key: "games", label: "Games", games: p.gameList, text: p.gameList.join(", ") },
     { key: "titles", label: "Titles", text: `${p.titles}` },
     { key: "lan", label: "LAN events", text: `${p.lan}` },
