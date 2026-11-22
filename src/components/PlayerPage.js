@@ -20,6 +20,7 @@ import LoadState from "./LoadState";
 import fetchAllRows from "../services/fetchAllRows";
 import { supabase } from "../services/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import CrownCard from "./CrownCard";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -419,6 +420,8 @@ const PlayerPage = ({
             </span>
           </div>
         </div>
+
+        <CrownCard playerName={playerName} />
 
         <div className="filter-bar">
           <div className="filter-field">

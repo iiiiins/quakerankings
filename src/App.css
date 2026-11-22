@@ -2025,3 +2025,74 @@ footer a.method-link:hover {
 /* Hold the page height while loading/failed so the footer doesn't jump */
 .load-state { min-height: 60vh; justify-content: center; text-align: center; }
 .load-state .load-skeleton { margin-top: 20px; }
+
+/* ---------- crown card (player page) ---------- */
+.crown-card {
+  padding: 14px 18px 14px;
+}
+
+.crown-card.king {
+  border-color: rgba(245, 197, 24, 0.45);
+  box-shadow: 0 0 22px rgba(245, 197, 24, 0.08);
+}
+
+.crown-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.crown-mark {
+  font-size: 18px;
+  line-height: 1;
+  color: #6e6859;
+}
+
+.crown-card.king .crown-mark {
+  color: #f5c518;
+  text-shadow: 0 0 10px rgba(245, 197, 24, 0.5);
+}
+
+.crown-line {
+  color: #a39c8d;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.crown-line b {
+  color: #ece8df;
+}
+
+.crown-route {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 0 2px;
+}
+
+.crown-route .filter-label {
+  min-width: 64px;
+}
+
+.crown-chips {
+  flex: 1;
+  min-width: 0;
+}
+
+.crown-none {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6e6859;
+}
+
+a.plate.crown-go,
+a.plate.crown-go:link,
+a.plate.crown-go:visited {
+  color: #ece8df;
+  display: inline-flex;
+}
