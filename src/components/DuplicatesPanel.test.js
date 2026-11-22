@@ -41,6 +41,7 @@ const ROWS = [
 let container;
 let root;
 beforeEach(() => {
+  window.localStorage.clear();
   useTournaments.mockReturnValue(ROWS);
   updateTournament.mockClear();
   refreshTournaments.mockClear();
@@ -58,6 +59,43 @@ const button = (text) =>
   [...container.querySelectorAll("button")].find((b) => b.textContent.trim().startsWith(text));
 const click = (el) =>
   act(async () => el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })));
+
+const pairShown = () => [...container.querySelectorAll(".dup-item")].some((i) => i.textContent.includes("busdriver / busdriverx"));
+
+test("Not the same player hides the pair for good, and Restore brings it back", async () => {
+  await render({});
+  await click(button("Not the same player"));
+  expect(pairShown()).toBe(false);
+  expect(container).toHaveTextContent("1 hidden, show");
+  expect(window.localStorage.getItem("qpr.duplicates.dismissed.v1")).toContain("busdriverx");
+  expect(updateTournament).not.toHaveBeenCalled();
+
+  // a fresh page load still hides it
+  act(() => root.unmount());
+  root = createRoot(container);
+  await render({});
+  expect(pairShown()).toBe(false);
+
+  await click(button("1 hidden, show"));
+  await click(button("Restore"));
+  expect(pairShown()).toBe(true);
+  expect(container).not.toHaveTextContent("hidden, show");
+  expect(JSON.parse(window.localStorage.getItem("qpr.duplicates.dismissed.v1"))).toEqual([]);
+});
+
+test("blocked storage still renders, and hiding works for this visit", async () => {
+  const spy = jest.spyOn(window, "localStorage", "get").mockImplementation(() => {
+    throw new Error("blocked");
+  });
+  try {
+    await render({});
+    expect(pairShown()).toBe(true);
+    await click(button("Not the same player"));
+    expect(pairShown()).toBe(false);
+  } finally {
+    spy.mockRestore();
+  }
+});
 
 test("the strong pair shows first with its evidence", async () => {
   await render({});

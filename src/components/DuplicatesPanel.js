@@ -2,7 +2,25 @@ import React, { useMemo, useState } from "react";
 import { Paper, Typography, Button, TextField } from "@mui/material";
 import useTournaments, { refreshTournaments } from "../hooks/useTournaments";
 import { updateTournament } from "../services/tournamentWrites";
-import { findDuplicates, oddNames, planRename, applyPlan, cleanName } from "../lib/duplicates";
+import {
+  findDuplicates,
+  oddNames,
+  planRename,
+  applyPlan,
+  cleanName,
+  pairKey,
+  loadDismissed,
+  saveDismissed,
+} from "../lib/duplicates";
+
+// window.localStorage itself can throw (blocked storage); the lib guards the rest
+const storage = () => {
+  try {
+    return window.localStorage;
+  } catch (e) {
+    return null;
+  }
+};
 
 // /admin Duplicates section: likely pairs (one player under two names) with
 // their evidence, strongest first, plus names that break the data's rules.
@@ -89,7 +107,7 @@ const Preview = ({ rows, from, to, dryRun, onDone, onCancel }) => {
   );
 };
 
-const PairItem = ({ pair, rows, dryRun, onMerged }) => {
+const PairItem = ({ pair, rows, dryRun, onMerged, onDismiss }) => {
   const [open, setOpen] = useState(false);
   // default: keep the name with more events
   const [keep, setKeep] = useState(pair.a.events >= pair.b.events ? pair.a.name : pair.b.name);
@@ -113,6 +131,9 @@ const PairItem = ({ pair, rows, dryRun, onMerged }) => {
         <div className="tform-actions">
           <Button variant="outlined" color="primary" onClick={() => setOpen(true)}>
             Merge
+          </Button>
+          <Button variant="text" className="tab-idle" onClick={() => onDismiss(pair)}>
+            Not the same player
           </Button>
         </div>
       ) : (
@@ -193,11 +214,24 @@ const DuplicatesPanel = ({ dryRun = false }) => {
   const rows = useTournaments();
   const [showAll, setShowAll] = useState(false);
   const [last, setLast] = useState(null);
+  const [dismissed, setDismissed] = useState(() => loadDismissed(storage()));
+  const [showHidden, setShowHidden] = useState(false);
   const pairs = useMemo(() => findDuplicates(rows), [rows]);
   const odd = useMemo(() => oddNames(rows), [rows]);
-  const strong = pairs.filter((p) => p.strong);
-  const weak = pairs.filter((p) => !p.strong);
-  const key = (p) => `${p.a.name}|${p.b.name}`;
+  const shown = pairs.filter((p) => !dismissed.has(pairKey(p)));
+  const hidden = pairs.filter((p) => dismissed.has(pairKey(p)));
+  const strong = shown.filter((p) => p.strong);
+  const weak = shown.filter((p) => !p.strong);
+  const key = pairKey;
+
+  const setPair = (pair, hide) => {
+    const next = new Set(dismissed);
+    if (hide) next.add(pairKey(pair));
+    else next.delete(pairKey(pair));
+    saveDismissed(storage(), next);
+    setDismissed(next);
+  };
+  const onDismiss = (pair) => setPair(pair, true);
 
   return (
     <Paper elevation={0} className="game-section dup-panel">
@@ -211,15 +245,33 @@ const DuplicatesPanel = ({ dryRun = false }) => {
       </div>
       {dryRun && <div className="admin-warn">Dry run: buttons show the plan and write nothing.</div>}
       <p className="sub-summary">
-        Name pairs that never played the same event. Strong means 5+ shared rivals, at least 30% of
-        the smaller name's rivals. Merge renames the dropped name in every row; you see each row
-        first.
+        Name pairs that never played the same event. Strong means both names have 2+ events and
+        share 5+ rivals, at least 30% of the smaller name's rivals. Merge renames the dropped name in
+        every row; you see each row first.
       </p>
       {last && <div className="admin-success">{last}</div>}
+      {hidden.length > 0 && (
+        <div className="dup-hidden">
+          <button type="button" className="dup-link" onClick={() => setShowHidden(!showHidden)}>
+            {hidden.length} hidden, {showHidden ? "close" : "show"}
+          </button>
+          {showHidden &&
+            hidden.map((p) => (
+              <div key={key(p)} className="dup-hidden-row">
+                <span>
+                  {p.a.name} / {p.b.name}
+                </span>
+                <button type="button" className="dup-link" onClick={() => setPair(p, false)}>
+                  Restore
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
 
       <div className="sub-list">
         {strong.map((p) => (
-          <PairItem key={key(p)} pair={p} rows={rows} dryRun={dryRun} onMerged={setLast} />
+          <PairItem key={key(p)} pair={p} rows={rows} dryRun={dryRun} onMerged={setLast} onDismiss={onDismiss} />
         ))}
       </div>
 
@@ -240,7 +292,7 @@ const DuplicatesPanel = ({ dryRun = false }) => {
           {showAll && (
             <div className="sub-list dup-weak">
               {weak.map((p) => (
-                <PairItem key={key(p)} pair={p} rows={rows} dryRun={dryRun} onMerged={setLast} />
+                <PairItem key={key(p)} pair={p} rows={rows} dryRun={dryRun} onMerged={setLast} onDismiss={onDismiss} />
               ))}
             </div>
           )}

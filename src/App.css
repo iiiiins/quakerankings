@@ -1849,6 +1849,36 @@ footer a.method-link:hover {
   margin-bottom: 6px;
 }
 
+.dup-hidden {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #6e6859;
+}
+
+.dup-hidden-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0 0 2px;
+  color: #a39c8d;
+}
+
+.dup-link {
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  color: #6e6859;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dup-link:hover {
+  color: #e05a1f;
+}
+
 /* ---------- chart pickers (Who was #1) ---------- */
 .search-results {
   position: absolute;

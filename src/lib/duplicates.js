@@ -12,12 +12,16 @@
 //                                                       "busdriverx" / "busdriver"
 //   lookalike one letter apart (two for 9+ letters) and sharing a game
 // Evidence: each name's events, years and games, and the rivals both names
-// shared a top 8 with. STRONG = 5+ shared rivals that make up 30%+ of the
-// smaller name's rivals: the same crowd, so very likely the same person.
+// shared a top 8 with. STRONG = both names have 2+ events, and they share 5+
+// rivals that make up 30%+ of the smaller name's rivals: the same crowd at
+// different events, so very likely the same person. With a single event,
+// shared rivals only mean both played the same cup (Bruno, 2026-11-22), so
+// those pairs stay listed as "maybe".
 
 const SLOTS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
 export const STRONG_SHARED = 5;
 export const STRONG_OVERLAP = 0.3;
+export const STRONG_MIN_EVENTS = 2;
 
 const caseKey = (n) => n.toLowerCase().replace(/\s+/g, " ").trim();
 const symbolKey = (n) => caseKey(n).replace(/[^a-z0-9]/g, "");
@@ -146,7 +150,10 @@ export function findDuplicates(rows) {
         b: side(y),
         sharedRivals,
         overlap,
-        strong: sharedRivals >= STRONG_SHARED && overlap >= STRONG_OVERLAP,
+        strong:
+          sharedRivals >= STRONG_SHARED &&
+          overlap >= STRONG_OVERLAP &&
+          Math.min(x.events.size, y.events.size) >= STRONG_MIN_EVENTS,
       };
     })
     .sort(
@@ -228,4 +235,30 @@ export async function applyPlan(plan, update) {
     done.push(c.id);
   }
   return { done, failed: null };
+}
+
+// "Not the same player": pairs the admin ruled apart, kept in this browser's
+// localStorage under one key (one admin, one machine). A shared table would be
+// the step up if the list should follow him across browsers. Every storage
+// call is guarded: private windows and blocked storage just forget.
+export const DISMISS_KEY = "qpr.duplicates.dismissed.v1";
+export const pairKey = (p) => [p.a.name, p.b.name].sort().join("\u0000");
+
+export function loadDismissed(storage) {
+  try {
+    const raw = storage && storage.getItem(DISMISS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(list) ? list.filter((k) => typeof k === "string") : []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+export function saveDismissed(storage, set) {
+  try {
+    if (storage) storage.setItem(DISMISS_KEY, JSON.stringify([...set].sort()));
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
