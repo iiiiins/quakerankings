@@ -6,6 +6,7 @@ import EventsBrowser from "./components/EventsBrowser";
 import RecordsPage from "./components/RecordsPage";
 import ComparePage from "./components/ComparePage";
 import WhoWasOnePage from "./components/WhoWasOnePage";
+import QuizPage from "./components/QuizPage";
 import Methodology from "./components/Methodology";
 import AdminPage from "./components/AdminPage";
 import ReactGA from "react-ga4";
@@ -56,6 +57,7 @@ const NavTabs = () => {
     { label: "Records", hash: "#/records", active: pathname === "/records" },
     { label: "Compare", hash: "#/compare", active: pathname === "/compare" },
     { label: "Who was #1", hash: "#/who-was-1", active: pathname === "/who-was-1" },
+    { label: "Quiz", hash: "#/quiz", active: pathname === "/quiz" },
   ];
   return (
     <nav className="site-tabs">
@@ -422,6 +424,8 @@ const App = () => {
                   />
                 }
               />
+              {/* Quiz — guess a hidden top-100 player (raw data, no scoring props) */}
+              <Route path="/quiz" element={<QuizPage />} />
               {/* Methodology */}
               <Route path="/methodology" element={<Methodology />} />
               {/* Admin (no nav tab — direct URL; security lives in RLS) */}
