@@ -1808,6 +1808,47 @@ footer a.method-link:hover {
   margin-top: 10px;
 }
 
+/* admin duplicates */
+.dup-item.strong {
+  border-color: rgba(245, 197, 24, 0.4);
+}
+
+.dup-sides {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dup-sides b {
+  color: #ece8df;
+}
+
+.dup-keep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.dup-preview .sub-summary b {
+  color: #ece8df;
+}
+
+.dup-event {
+  color: #a39c8d;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dup-weak {
+  margin-top: 12px;
+}
+
+.dup-panel > .plate {
+  margin-bottom: 6px;
+}
+
 /* ---------- chart pickers (Who was #1) ---------- */
 .search-results {
   position: absolute;

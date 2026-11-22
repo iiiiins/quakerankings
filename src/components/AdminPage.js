@@ -8,6 +8,15 @@ import { insertTournament } from "../services/tournamentWrites";
 import TournamentForm from "./TournamentForm";
 import SubmissionQueue from "./SubmissionQueue";
 import IncompleteEvents from "./IncompleteEvents";
+import DuplicatesPanel from "./DuplicatesPanel";
+
+// Dev-only preview (same pattern as useTournaments' ?slow / ?fail): ?dryrun
+// shows the Duplicates section signed out, with a writer that writes nothing.
+// e.g. http://localhost:3000/quakerankings/?dryrun#/admin
+const dryRunPreview =
+  process.env.NODE_ENV !== "production" &&
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).has("dryrun");
 
 // Single-user admin: login gate + data entry. Security lives entirely in RLS
 // (uid-scoped write policies + signups disabled) — shipping this UI in the
@@ -53,6 +62,17 @@ const AdminPage = () => {
   };
 
   if (loading) return null;
+
+  if (!session && dryRunPreview) {
+    return (
+      <Container disableGutters maxWidth={false}>
+        <div className="admin-page">
+          <h2 className="method-title">Admin</h2>
+          <DuplicatesPanel dryRun />
+        </div>
+      </Container>
+    );
+  }
 
   if (!session) {
     return (
@@ -124,6 +144,7 @@ const AdminPage = () => {
         </Typography>
         <SubmissionQueue />
         <IncompleteEvents />
+        <DuplicatesPanel />
         <Paper elevation={0} className="game-section">
           <div className="game-section-head">
             <Typography component="h3" className="game-section-title">
